@@ -23,21 +23,36 @@ class DataService:
             try:
                 if "InboundData" in filename and filename.endswith(".csv"):
                     df = pd.read_csv(file_path)
+                    # CSV는 'Date' 컬럼 사용 가정
                     all_inbound_dfs.append(df)
                 elif "OutboundData" in filename and filename.endswith(".csv"):
                     df = pd.read_csv(file_path)
+                    # CSV는 'Date' 컬럼 사용 가정
                     all_outbound_dfs.append(df)
                 elif "입고데이터" in filename and filename.endswith(('.xlsx', '.xls')):
                     df = pd.read_excel(file_path)
+                    # Excel은 '거래일자' 컬럼을 'Date'로 변경
+                    if '거래일자' in df.columns: df.rename(columns={'거래일자': 'Date'}, inplace=True)
                     all_inbound_dfs.append(df)
                 elif "출고데이터" in filename and filename.endswith(('.xlsx', '.xls')):
                     df = pd.read_excel(file_path)
+                    # Excel은 '거래일자' 컬럼을 'Date'로 변경
+                    if '거래일자' in df.columns: df.rename(columns={'거래일자': 'Date'}, inplace=True)
                     all_outbound_dfs.append(df)
                 elif "product_data" in filename and filename.endswith(".csv"):
                     self.product_master = pd.read_csv(file_path)
                     print(f"상품 마스터 데이터 로드 완료: {filename}")
                 elif "상품데이터" in filename and filename.endswith(('.xlsx', '.xls')):
                     self.product_master = pd.read_excel(file_path)
+                    # 상품데이터.xlsx에 '현재고' 컬럼이 없으면 'Start Pallete Qty'를 '현재고'로 사용 (예시)
+                    if '현재고' not in self.product_master.columns and 'Start Pallete Qty' in self.product_master.columns:
+                         self.product_master.rename(columns={'Start Pallete Qty': '현재고'}, inplace=True)
+                    # '랙위치' 컬럼도 통일 (예시)
+                    if 'Rack Name' in self.product_master.columns and '랙위치' not in self.product_master.columns:
+                        self.product_master.rename(columns={'Rack Name': '랙위치'}, inplace=True)
+                    if 'ProductCode' in self.product_master.columns and '상품코드' not in self.product_master.columns:
+                        self.product_master.rename(columns={'ProductCode': '상품코드'}, inplace=True)
+
                     print(f"상품 마스터 데이터 로드 완료: {filename}")
 
             except Exception as e:
@@ -46,9 +61,13 @@ class DataService:
 
         if all_inbound_dfs:
             self.inbound_data = pd.concat(all_inbound_dfs, ignore_index=True)
+            # 'Date' 컬럼이 datetime 형식인지 확인 및 변환
+            if 'Date' in self.inbound_data.columns: self.inbound_data['Date'] = pd.to_datetime(self.inbound_data['Date'], errors='coerce')
             print(f"총 입고 데이터 로드 완료: {len(self.inbound_data)} 건")
         if all_outbound_dfs:
             self.outbound_data = pd.concat(all_outbound_dfs, ignore_index=True)
+            # 'Date' 컬럼이 datetime 형식인지 확인 및 변환
+            if 'Date' in self.outbound_data.columns: self.outbound_data['Date'] = pd.to_datetime(self.outbound_data['Date'], errors='coerce')
             print(f"총 출고 데이터 로드 완료: {len(self.outbound_data)} 건")
 
         self.data_loaded = True

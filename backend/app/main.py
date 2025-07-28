@@ -4,6 +4,7 @@ from pydantic import BaseModel
 from backend.app.utils.ai_chat import WarehouseChatbot
 from backend.app.services.data_service import DataService
 from backend.app.models.ml_models import DemandPredictor, ProductClusterer
+from backend.app.services.data_analysis_service import DataAnalysisService
 import logging
 import io
 import pandas as pd
@@ -24,11 +25,12 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# DataService 및 Chatbot 인스턴스 초기화
+# DataService, Chatbot, ML Models, DataAnalysisService 인스턴스 초기화
 data_service = DataService()
 chatbot = WarehouseChatbot()
 demand_predictor = DemandPredictor()
 product_clusterer = ProductClusterer()
+data_analysis_service = DataAnalysisService(data_service)
 
 # ML 모델 학습 상태
 model_trained = {"demand_predictor": False, "product_clusterer": False}
@@ -81,7 +83,7 @@ async def train_product_clusterer():
     try:
         # TODO: 실제 데이터 전처리 및 피처 엔지니어링 필요
         # 여기서는 임시 데이터로 대체
-        # 실제로는 product_master와 입출고 데이터를 결합하여 제품별 특성을 만들어야 합니다.
+        # 실제로는 product_master와 입출고 데이터를 결합하여 제품별 특성을 만들어야 합니다。
 
         # 예시: 제품의 특정 속성 (회전율, 재고량 등)을 기반으로 클러스터링
         # 편의상 현재는 임의의 데이터 생성
@@ -148,7 +150,7 @@ async def get_daily_trends():
     outbound_df = data_service.outbound_data
 
     # 날짜 컬럼을 datetime으로 변환 (파일마다 컬럼명이 다를 수 있으므로 일반화 필요)
-    # 여기서는 '거래일자' 또는 유사한 컬럼을 가정합니다.
+    # 여기서는 'Date' 또는 유사한 컬럼을 가정합니다.
     # 실제 컬럼명은 데이터 로드 후 확인 필요
     def preprocess_df(df, date_col):
         if date_col in df.columns:
@@ -156,8 +158,8 @@ async def get_daily_trends():
             df['date'] = df[date_col].dt.date # 날짜만 추출
         return df
 
-    inbound_df = preprocess_df(inbound_df.copy(), '거래일자') # 예시 컬럼명
-    outbound_df = preprocess_df(outbound_df.copy(), '거래일자') # 예시 컬럼명
+    inbound_df = preprocess_df(inbound_df.copy(), 'Date') # 예시 컬럼명 수정
+    outbound_df = preprocess_df(outbound_df.copy(), 'Date') # 예시 컬럼명 수정
 
     # 일별 입출고 건수 집계
     daily_inbound = inbound_df.groupby('date').size().reset_index(name='inbound')
@@ -189,6 +191,34 @@ async def get_product_category_distribution():
             return product_df[['name', 'value']].to_dict(orient='records')
         else:
             return []
+
+@app.get("/api/analysis/stats/{df_name}")
+async def get_analysis_stats(df_name: str):
+    if not data_service.data_loaded:
+        raise HTTPException(status_code=404, detail="데이터가 로드되지 않았습니다.")
+    stats = data_analysis_service.get_descriptive_stats(df_name)
+    return stats
+
+@app.get("/api/analysis/daily-movement")
+async def get_analysis_daily_movement():
+    if not data_service.data_loaded:
+        raise HTTPException(status_code=404, detail="데이터가 로드되지 않았습니다.")
+    summary = data_analysis_service.get_daily_movement_summary()
+    return summary
+
+@app.get("/api/analysis/product-insights")
+async def get_analysis_product_insights():
+    if not data_service.data_loaded:
+        raise HTTPException(status_code=404, detail="데이터가 로드되지 않았습니다.")
+    insights = data_analysis_service.get_product_insights()
+    return insights
+
+@app.get("/api/analysis/rack-utilization")
+async def get_analysis_rack_utilization():
+    if not data_service.data_loaded:
+        raise HTTPException(status_code=404, detail="데이터가 로드되지 않았습니다.")
+    summary = data_analysis_service.get_rack_utilization_summary()
+    return summary
 
 class DemandPredictionRequest(BaseModel):
     features: Dict[str, Any] # 예측에 필요한 피처를 클라이언트에서 전달한다고 가정
