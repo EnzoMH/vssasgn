@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from backend.app.utils.ai_chat import WarehouseChatbot
 from backend.app.services.data_service import DataService
-from backend.app.models.ml_models import DemandPredictor, ProductClusterer
+from backend.app.models.ml_models import DemandPredictor, ProductClusterer, AnomalyDetector # AnomalyDetector 추가
 from backend.app.services.data_analysis_service import DataAnalysisService
 import logging
 import io
@@ -30,10 +30,11 @@ data_service = DataService()
 chatbot = WarehouseChatbot()
 demand_predictor = DemandPredictor()
 product_clusterer = ProductClusterer()
-data_analysis_service = DataAnalysisService(data_service)
+anomaly_detector = AnomalyDetector() # AnomalyDetector 인스턴스 추가
+data_analysis_service = DataAnalysisService(data_service, anomaly_detector) # anomaly_detector 전달
 
 # ML 모델 학습 상태
-model_trained = {"demand_predictor": False, "product_clusterer": False}
+model_trained = {"demand_predictor": False, "product_clusterer": False, "anomaly_detector": False} # anomaly_detector 상태 추가
 
 @app.on_event("startup")
 async def startup_event():
@@ -45,6 +46,15 @@ async def startup_event():
     try:
         await train_demand_predictor()
         await train_product_clusterer()
+        # 이상 탐지 모델은 data_analysis_service.detect_anomalies_data() 호출 시 내부적으로 학습될 수 있음
+        # 여기서는 단순히 학습 상태만 True로 설정
+        if data_service.data_loaded:
+            anomaly_result = await data_analysis_service.detect_anomalies_data() # 학습 및 탐지 수행
+            if anomaly_result["anomalies"] is not None: # 학습 성공 여부 판단
+                model_trained["anomaly_detector"] = True
+            else:
+                logger.warning(f"이상 탐지 모델 사전 학습 실패: {anomaly_result.get("message", "알 수 없는 오류")}")
+
     except Exception as e:
         logger.warning(f"ML 모델 사전 학습 중 오류 발생: {e}")
 
@@ -83,7 +93,7 @@ async def train_product_clusterer():
     try:
         # TODO: 실제 데이터 전처리 및 피처 엔지니어링 필요
         # 여기서는 임시 데이터로 대체
-        # 실제로는 product_master와 입출고 데이터를 결합하여 제품별 특성을 만들어야 합니다。
+        # 실제로는 product_master와 입출고 데이터를 결합하여 제품별 특성을 만들어야 합니다.
 
         # 예시: 제품의 특정 속성 (회전율, 재고량 등)을 기반으로 클러스터링
         # 편의상 현재는 임의의 데이터 생성
@@ -99,6 +109,10 @@ async def train_product_clusterer():
     except Exception as e:
         logger.error(f"제품 클러스터링 모델 학습 중 오류 발생: {e}")
         model_trained["product_clusterer"] = False
+
+# train_anomaly_detector 함수는 data_analysis_service.detect_anomalies_data()로 이동되었으므로 주석 처리 또는 삭제
+# async def train_anomaly_detector():
+#    ...
 
 @app.get("/api/dashboard/kpi")
 async def get_kpi_data():
@@ -146,30 +160,8 @@ async def get_daily_trends():
     if not data_service.data_loaded:
         raise HTTPException(status_code=404, detail="데이터가 로드되지 않았습니다.")
     
-    inbound_df = data_service.inbound_data
-    outbound_df = data_service.outbound_data
-
-    # 날짜 컬럼을 datetime으로 변환 (파일마다 컬럼명이 다를 수 있으므로 일반화 필요)
-    # 여기서는 'Date' 또는 유사한 컬럼을 가정합니다.
-    # 실제 컬럼명은 데이터 로드 후 확인 필요
-    def preprocess_df(df, date_col):
-        if date_col in df.columns:
-            df[date_col] = pd.to_datetime(df[date_col])
-            df['date'] = df[date_col].dt.date # 날짜만 추출
-        return df
-
-    inbound_df = preprocess_df(inbound_df.copy(), 'Date') # 예시 컬럼명 수정
-    outbound_df = preprocess_df(outbound_df.copy(), 'Date') # 예시 컬럼명 수정
-
-    # 일별 입출고 건수 집계
-    daily_inbound = inbound_df.groupby('date').size().reset_index(name='inbound')
-    daily_outbound = outbound_df.groupby('date').size().reset_index(name='outbound')
-
-    # 두 데이터프레임 병합
-    daily_trends = pd.merge(daily_inbound, daily_outbound, on='date', how='outer').fillna(0)
-    daily_trends['date'] = daily_trends['date'].astype(str) # 직렬화를 위해 문자열로 변환
-    daily_trends = daily_trends.sort_values(by='date').to_dict(orient='records')
-    return daily_trends
+    daily_trends_df = data_analysis_service.get_daily_movement_summary() # data_analysis_service에서 가져옴
+    return daily_trends_df.to_dict(orient='records') # DataFrame을 리스트 오브 딕트로 변환
 
 @app.get("/api/product/category-distribution")
 async def get_product_category_distribution():
@@ -203,8 +195,9 @@ async def get_analysis_stats(df_name: str):
 async def get_analysis_daily_movement():
     if not data_service.data_loaded:
         raise HTTPException(status_code=404, detail="데이터가 로드되지 않았습니다.")
-    summary = data_analysis_service.get_daily_movement_summary()
-    return summary
+    # data_analysis_service.get_daily_movement_summary()는 이제 DataFrame을 반환
+    summary_df = data_analysis_service.get_daily_movement_summary()
+    return summary_df.to_dict(orient='records') # 리스트 오브 딕트로 변환
 
 @app.get("/api/analysis/product-insights")
 async def get_analysis_product_insights():
@@ -219,6 +212,14 @@ async def get_analysis_rack_utilization():
         raise HTTPException(status_code=404, detail="데이터가 로드되지 않았습니다.")
     summary = data_analysis_service.get_rack_utilization_summary()
     return summary
+
+@app.get("/api/analysis/anomalies")
+async def get_anomalies():
+    # 이상 탐지 로직은 data_analysis_service로 이동
+    anomalies_result = await data_analysis_service.detect_anomalies_data()
+    if not anomalies_result["anomalies"] and anomalies_result.get("message") and "오류" in anomalies_result["message"]:
+        raise HTTPException(status_code=500, detail=anomalies_result["message"])
+    return anomalies_result
 
 class DemandPredictionRequest(BaseModel):
     features: Dict[str, Any] # 예측에 필요한 피처를 클라이언트에서 전달한다고 가정
@@ -271,6 +272,7 @@ async def upload_data(file: UploadFile = File(...)):
         await data_service.load_all_data(rawdata_path="rawdata") # 다시 모든 데이터 로드 (임시)
         model_trained["demand_predictor"] = False # 모델 재학습 필요
         model_trained["product_clusterer"] = False # 모델 재학습 필요
+        model_trained["anomaly_detector"] = False # 모델 재학습 필요
 
         return {"message": f"파일 \'{file.filename}\'이 성공적으로 업로드되었습니다. 총 {len(df)}개의 행이 처리되었습니다.", "rows_processed": len(df)}
 

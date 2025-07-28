@@ -1,9 +1,11 @@
 import pandas as pd
 from typing import Dict, Any, List, Optional
+from backend.app.models.ml_models import AnomalyDetector # AnomalyDetector 임포트
 
 class DataAnalysisService:
-    def __init__(self, data_service):
+    def __init__(self, data_service, anomaly_detector: AnomalyDetector = None):
         self.data_service = data_service
+        self.anomaly_detector = anomaly_detector # AnomalyDetector 인스턴스 저장
 
     def get_descriptive_stats(self, df_name: str) -> Dict[str, Any]:
         df = getattr(self.data_service, df_name, pd.DataFrame())
@@ -20,30 +22,74 @@ class DataAnalysisService:
         }
         return stats
 
-    def get_daily_movement_summary(self) -> List[Dict[str, Any]]:
+    def get_daily_movement_summary(self) -> pd.DataFrame:
         inbound_df = self.data_service.inbound_data
         outbound_df = self.data_service.outbound_data
 
         if inbound_df.empty and outbound_df.empty:
-            return []
+            return pd.DataFrame() # 빈 데이터프레임 반환
 
         # 날짜 컬럼 통합 및 일별 집계
-        # 'Date' 컬럼을 가정 (실제 데이터에 따라 유동적으로 변경 필요)
+        def preprocess_df_for_daily_movement(df):
+            if 'Date' in df.columns:
+                df['Date'] = pd.to_datetime(df['Date'])
+                df['date'] = df['Date'].dt.date # 날짜만 추출
+            return df
+
         inbound_daily = pd.DataFrame()
-        if 'Date' in inbound_df.columns:
-            inbound_daily = inbound_df.groupby(pd.to_datetime(inbound_df['Date']).dt.date).size().reset_index(name='inbound_count')
-            inbound_daily.columns = ['date', 'inbound_count']
+        if not inbound_df.empty:
+            inbound_processed = preprocess_df_for_daily_movement(inbound_df.copy())
+            inbound_daily = inbound_processed.groupby('date').size().reset_index(name='inbound') # 컬럼명 'inbound'로 통일
         
         outbound_daily = pd.DataFrame()
-        if 'Date' in outbound_df.columns:
-            outbound_daily = outbound_df.groupby(pd.to_datetime(outbound_df['Date']).dt.date).size().reset_index(name='outbound_count')
-            outbound_daily.columns = ['date', 'outbound_count']
+        if not outbound_df.empty:
+            outbound_processed = preprocess_df_for_daily_movement(outbound_df.copy())
+            outbound_daily = outbound_processed.groupby('date').size().reset_index(name='outbound') # 컬럼명 'outbound'로 통일
 
         merged_df = pd.merge(inbound_daily, outbound_daily, on='date', how='outer').fillna(0)
+        # 'inbound'와 'outbound' 컬럼이 존재하도록 확인
+        if 'inbound' not in merged_df.columns: merged_df['inbound'] = 0
+        if 'outbound' not in merged_df.columns: merged_df['outbound'] = 0
+
         merged_df['date'] = merged_df['date'].astype(str)
         merged_df = merged_df.sort_values(by='date')
-        return merged_df.to_dict(orient='records')
+        return merged_df
     
+    async def detect_anomalies_data(self) -> Dict[str, Any]:
+        if not self.data_service.data_loaded:
+            return {"anomalies": [], "message": "데이터가 로드되지 않았습니다."}
+        
+        if not self.anomaly_detector:
+            return {"anomalies": [], "message": "이상 탐지 모델이 초기화되지 않았습니다."}
+
+        daily_movement_summary = self.get_daily_movement_summary()
+        if daily_movement_summary.empty:
+            return {"anomalies": [], "message": "이상 탐지 분석을 위한 데이터가 없습니다."}
+        
+        # 'inbound'와 'outbound' 컬럼이 있는지 확인
+        required_features = ['inbound', 'outbound']
+        if not all(feature in daily_movement_summary.columns for feature in required_features):
+            return {"anomalies": [], "message": "이상 탐지를 위한 필수 컬럼(inbound, outbound)이 데이터에 없습니다."}
+
+        features = daily_movement_summary[required_features].copy()
+
+        # 모델 학습 (만약 이미 학습되었다면 건너뛸 수 있도록 AnomalyDetector 내부에서 처리)
+        # 여기서는 DataAnalysisService에서 직접 학습을 트리거
+        try:
+            self.anomaly_detector.train(features)
+        except Exception as e:
+            return {"anomalies": [], "message": f"이상 탐지 모델 학습 중 오류 발생: {e}"}
+
+        anomalies_scores = self.anomaly_detector.detect_anomalies(features)
+
+        # 이상치로 분류된 데이터만 필터링
+        anomaly_dates = daily_movement_summary[anomalies_scores == -1]['date'].tolist()
+
+        if anomaly_dates:
+            return {"anomalies": anomaly_dates, "message": f"{len(anomaly_dates)}개의 이상 징후가 감지되었습니다."}
+        else:
+            return {"anomalies": [], "message": "이상 징후가 감지되지 않았습니다."}
+
     def get_product_insights(self) -> List[Dict[str, Any]]:
         product_df = self.data_service.product_master
         inbound_df = self.data_service.inbound_data

@@ -168,6 +168,27 @@ class RateLimiter:
                 "request_bucket_capacity": request_bucket.capacity,
                 "token_bucket_capacity": token_bucket.capacity}
 
+    def get_best_available_key(self, api_keys: List[str], estimated_tokens: int = 1) -> Optional[str]:
+        """가장 사용 가능한 API 키 반환 (rate_limiter.py 참조)"""
+        best_key = None
+        best_score = -1
+        
+        for api_key in api_keys:
+            stats = self.get_usage_stats(api_key)
+            
+            # 사용 가능한지 확인
+            if (stats["requests_available"] >= 1 and 
+                stats["tokens_available"] >= estimated_tokens):
+                
+                # 점수 계산 (사용률이 낮을수록 좋음, 요청 가능 토큰이 많을수록 좋음)
+                score = (1 - stats["usage_rate"]) * stats["tokens_available"]
+                
+                if score > best_score:
+                    best_score = score
+                    best_key = api_key
+        
+        return best_key
+
 class WarehouseAI:
     def __init__(self, logger=None):
         self.logger = logger or logging.getLogger(__name__)
@@ -265,12 +286,27 @@ class WarehouseAI:
             try:
                 model_instance = current_model_info['model']
                 prompt = f"""
-        창고 데이터를 바탕으로 질문에 답하세요:
-        데이터: {data_context}
-        질문: {question}
+        당신은 스마트 물류 창고 관리 시스템을 위한 전문 AI 어시스턴트입니다. 주어진 데이터 분석 결과를 바탕으로 사용자의 질문에 대해 심층적이고 실행 가능한 인사이트를 제공해야 합니다. 특히, ML 모델 활용 및 ML Ops 설계 관점에서의 제안도 포함해 주세요.
+
+        다음 단계에 따라 사고하고 답변을 구성하세요:
+
+        1.  **데이터 요약 및 핵심 파악**: 제공된 `data_context`를 빠르게 스캔하여 각 분석 결과(기술 통계, 일별 물동량, 상품 인사이트, 랙 활용률, 이상 징후)의 주요 내용을 요약합니다.
+        2.  **트렌드 및 패턴 식별**: 데이터에서 나타나는 명확한 트렌드(예: 안정적인 입출고, 특정 랙의 낮은 활용률)와 반복되는 패턴을 식별합니다.
+        3.  **문제점 및 특이사항 분석**: AI가 이전에 지적한 Date 결측치, Unnamed 컬럼, ProductCode/ProductName 불일치, 현재고의 일관성과 같은 데이터 품질 문제와 감지된 이상 징후(`anomalies`)를 심층적으로 분석하고, 그 잠재적 원인과 영향에 대해 추론합니다.
+        4.  **개선점 도출 및 ML 모델 제안**: 식별된 문제점과 특이사항을 해결하기 위한 구체적인 개선 방안을 제시합니다. 이 과정에서 현재 구축된 ML 모델(수요 예측, 제품 클러스터링) 외에 추가적으로 활용 가능한 ML 모델(예: 이상 탐지를 위한 Isolation Forest)을 제안하고, 해당 모델이 어떤 문제를 해결할 수 있는지 명확히 설명합니다.
+        5.  **ML Ops 설계 고려사항**: ML 모델을 실제 운영 환경에 적용하고 지속적으로 관리하기 위한 ML Ops 관점의 필요 사항(예: 데이터 파이프라인, 모델 모니터링, 재학습 전략)에 대해 간략히 언급합니다.
+        6.  **질문에 대한 최종 답변 구성**: 위 단계들의 추론을 바탕으로 사용자의 `질문`에 대해 포괄적이고 체계적인 답변을 한국어로 제공합니다. 각 섹션(주요 트렌드, 특이사항, 개선점 및 ML 모델 제안, ML Ops 고려사항, 추가 분석 가능성 등)을 명확히 구분하여 가독성을 높입니다.
+
+        **데이터:**
+        ```json
+        {data_context}
+        ```
+
+        **질문:**
+        {question}
         """
                 # Gemini API 호출
-                response = await model_instance.generate_content(prompt)
+                response = await model_instance.generate_content_async(prompt) # generate_content_async로 변경
                 result_text = response.text
 
                 self.logger.info(f"✅ {current_model_info['name']} API 성공 - 응답 (일부): {result_text[:200]}...")

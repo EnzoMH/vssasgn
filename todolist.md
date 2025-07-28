@@ -37,9 +37,10 @@
 - `GET /api/trends/daily` (V)
 - `GET /api/product/category-distribution` (V)
 - `POST /api/ai/chat` (V)
-- `POST /api/predict/demand` (△ - 모델 학습 및 예측 로직 플레이스홀더, 실제 데이터/피처 엔지니어링 필요)
+- `POST /api/predict/demand` (V)
 - `POST /api/upload/data` (V - 업로드 기능 구현, 데이터 처리/저장 로직은 △)
-- `POST /api/product/cluster` (△ - 모델 학습 및 클러스터링 로직 플레이스홀더, 실제 데이터/피처 엔지니어링 필요)
+- `POST /api/product/cluster` (V)
+- `GET /api/analysis/anomalies` (V)
 
 #### 1.3 기본 데이터 시각화
 
@@ -60,14 +61,16 @@
 
 - `backend/app/models/ml_models.py` (`DemandPredictor` 클래스) (V)
 - `backend/app/models/ml_models.py` (`ProductClusterer` 클래스) (V)
+- `backend/app/models/ml_models.py` (`AnomalyDetector` 클래스) (V)
 - 수요 예측 모델 학습 및 추론 로직 (V - `main.py`에 포함, 현재는 더미 데이터 기반)
 - 제품 클러스터링 모델 학습 및 추론 로직 (V - `main.py`에 포함, 현재는 더미 데이터 기반)
+- 이상 탐지 모델 학습 및 추론 로직 (V - `main.py` 및 `data_analysis_service.py`에 포함)
 
 #### 2.3 파일 업로드 및 분석
 
 - CSV/Excel 파일 드래그앤드롭 (V - `FileUpload.tsx`)
 - 자동 데이터 프로파일링 (X)
-- AI 기반 인사이트 추출 (X)
+- AI 기반 인사이트 추출 (V - CMD 상에서 `analyze_data.py`를 통해 구현)
 
 ### Phase 3: 고급 기능 (선택사항) 🔥
 
