@@ -1,0 +1,12 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* plan.md에 제시된 전역 컴포넌트 스타일 (필요시 추가) */
+.kpi-card {
+  @apply bg-white rounded-lg shadow-md p-6 border border-gray-200;
+}
+
+.chart-container {
+  @apply bg-white rounded-lg shadow-md p-4;
+}

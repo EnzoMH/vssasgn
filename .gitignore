@@ -1,0 +1,41 @@
+.env
+.xlsx
+.csv
+
+# IDE-specific files
+.idea/
+.vscode/
+*.iml
+
+# Node.js and Frontend
+/frontend/node_modules/
+/frontend/build/
+/frontend/dist/
+/frontend/npm-debug.log*
+/frontend/yarn-debug.log*
+/frontend/yarn-error.log*
+/frontend/.env.local
+/frontend/.env.development.local
+/frontend/.env.test.local
+/frontend/.env.production.local
+
+# Python and Backend
+/backend/__pycache__/
+/backend/*.pyc
+/backend/*.pyo
+/backend/venv/
+/backend/.venv/
+/backend/env/
+/backend/.env/
+/backend/pip-log.txt
+/backend/pip-delete-this-directory.txt
+/backend/htmlcov/
+/backend/.pytest_cache/
+/backend/.mypy_cache/
+/backend/instance/
+
+# Legacy directory (excluding from repo)
+/legacy/
+
+# Rawdata files (already listed, but ensure no new rawdata files are added)
+/rawdata/
