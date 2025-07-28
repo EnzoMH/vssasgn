@@ -1,5 +1,5 @@
-from backend.app.services.ai_service import WarehouseAI
-from backend.app.services.data_service import DataService
+from ..services.ai_service import WarehouseAI
+from ..services.data_service import DataService
 
 class WarehouseChatbot:
     def __init__(self):
@@ -27,4 +27,4 @@ class WarehouseChatbot:
         # 3. LLM으로 응답 생성
         response = await self.llm_client.answer_query(question, context_data)
 
-        return response 
+        return response

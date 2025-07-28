@@ -1,16 +1,22 @@
 from fastapi import FastAPI, Request, File, UploadFile, HTTPException, Depends
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import HTMLResponse
 from pydantic import BaseModel
-from backend.app.utils.ai_chat import WarehouseChatbot
-from backend.app.services.data_service import DataService
-from backend.app.models.ml_models import DemandPredictor, ProductClusterer, AnomalyDetector # AnomalyDetector 추가
-from backend.app.services.data_analysis_service import DataAnalysisService
+from .utils.ai_chat import WarehouseChatbot
+from .services.data_service import DataService
+from .models.ml_models import DemandPredictor, ProductClusterer, AnomalyDetector # AnomalyDetector 추가
+from .services.data_analysis_service import DataAnalysisService
 import logging
 import io
 import pandas as pd
 import os
 from datetime import datetime
 from typing import Dict, Any
+from dotenv import load_dotenv
+
+# .env 파일 로드 (backend 디렉토리에서)
+load_dotenv("../.env")
 
 # 로거 설정
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -20,10 +26,20 @@ app = FastAPI(title="Warehouse Management API")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],
+    allow_origins=["*"],  # 단일 서버이므로 모든 origin 허용
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# 정적 파일 서빙 설정
+app.mount("/static", StaticFiles(directory="static"), name="static")
+
+# 메인 페이지 라우트
+@app.get("/", response_class=HTMLResponse)
+async def main_page():
+    with open("static/index.html", "r", encoding="utf-8") as f:
+        content = f.read()
+    return HTMLResponse(content=content)
 
 # DataService, Chatbot, ML Models, DataAnalysisService 인스턴스 초기화
 data_service = DataService()
@@ -39,7 +55,7 @@ model_trained = {"demand_predictor": False, "product_clusterer": False, "anomaly
 @app.on_event("startup")
 async def startup_event():
     logger.info("서버 시작 이벤트 발생: 데이터 로딩 시작...")
-    await data_service.load_all_data(rawdata_path="rawdata")
+    await data_service.load_all_data(rawdata_path="../rawdata")
     logger.info("데이터 로딩 완료.")
     
     # 서버 시작 시 ML 모델 사전 학습 (선택 사항)
@@ -53,7 +69,7 @@ async def startup_event():
             if anomaly_result["anomalies"] is not None: # 학습 성공 여부 판단
                 model_trained["anomaly_detector"] = True
             else:
-                logger.warning(f"이상 탐지 모델 사전 학습 실패: {anomaly_result.get("message", "알 수 없는 오류")}")
+                logger.warning(f"이상 탐지 모델 사전 학습 실패: {anomaly_result.get('message', '알 수 없는 오류')}")
 
     except Exception as e:
         logger.warning(f"ML 모델 사전 학습 중 오류 발생: {e}")
@@ -269,7 +285,7 @@ async def upload_data(file: UploadFile = File(...)):
         # 이 부분은 데이터의 성격과 활용 방식에 따라 복잡도가 달라질 수 있습니다.
         # 예를 들어, 입출고 데이터면 기존 데이터에 concat, 상품 데이터면 replace 등
         # 여기서는 간단히 새로 로드하는 것으로 가정 (실제 서비스에서는 데이터 병합 등 필요)
-        await data_service.load_all_data(rawdata_path="rawdata") # 다시 모든 데이터 로드 (임시)
+        await data_service.load_all_data(rawdata_path="../rawdata") # 다시 모든 데이터 로드 (임시)
         model_trained["demand_predictor"] = False # 모델 재학습 필요
         model_trained["product_clusterer"] = False # 모델 재학습 필요
         model_trained["anomaly_detector"] = False # 모델 재학습 필요

@@ -1,6 +1,6 @@
 import pandas as pd
 from typing import Dict, Any, List, Optional
-from backend.app.models.ml_models import AnomalyDetector # AnomalyDetector 임포트
+from ..models.ml_models import AnomalyDetector # AnomalyDetector 임포트
 
 class DataAnalysisService:
     def __init__(self, data_service, anomaly_detector: AnomalyDetector = None):

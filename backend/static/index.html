@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Smart Warehouse Management System</title>
+    <link rel="stylesheet" href="/static/css/style.css" />
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Font Awesome for icons -->
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
+    />
+  </head>
+  <body>
+    <!-- 헤더 -->
+    <header class="header">
+      <div class="header-content">
+        <h1>
+          <i class="fas fa-warehouse"></i> Smart Warehouse Management System
+        </h1>
+        <div class="header-actions">
+          <button id="refreshBtn" class="btn btn-primary">
+            <i class="fas fa-sync-alt"></i> 새로고침
+          </button>
+          <button id="uploadBtn" class="btn btn-secondary">
+            <i class="fas fa-upload"></i> 데이터 업로드
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <!-- 메인 대시보드 -->
+    <main class="main-content">
+      <!-- KPI 카드 섹션 -->
+      <section class="kpi-section">
+        <div class="kpi-card" id="totalInventoryCard">
+          <div class="kpi-icon">
+            <i class="fas fa-boxes"></i>
+          </div>
+          <div class="kpi-content">
+            <h3>총 재고량</h3>
+            <div class="kpi-value" id="totalInventory">--</div>
+            <div class="kpi-unit">개</div>
+          </div>
+        </div>
+
+        <div class="kpi-card" id="dailyThroughputCard">
+          <div class="kpi-icon">
+            <i class="fas fa-truck"></i>
+          </div>
+          <div class="kpi-content">
+            <h3>일일 처리량</h3>
+            <div class="kpi-value" id="dailyThroughput">--</div>
+            <div class="kpi-unit">건</div>
+          </div>
+        </div>
+
+        <div class="kpi-card" id="rackUtilizationCard">
+          <div class="kpi-icon">
+            <i class="fas fa-chart-pie"></i>
+          </div>
+          <div class="kpi-content">
+            <h3>랙 활용률</h3>
+            <div class="kpi-value" id="rackUtilization">--%</div>
+            <div class="kpi-unit">%</div>
+          </div>
+        </div>
+
+        <div class="kpi-card" id="inventoryTurnoverCard">
+          <div class="kpi-icon">
+            <i class="fas fa-redo"></i>
+          </div>
+          <div class="kpi-content">
+            <h3>재고 회전율</h3>
+            <div class="kpi-value" id="inventoryTurnover">--</div>
+            <div class="kpi-unit">회</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 차트 섹션 -->
+      <section class="charts-section">
+        <!-- 랙별 재고 현황 -->
+        <div class="chart-container">
+          <div class="chart-header">
+            <h3><i class="fas fa-chart-bar"></i> 랙별 재고 현황</h3>
+          </div>
+          <canvas id="inventoryChart"></canvas>
+        </div>
+
+        <!-- 일별 입출고 트렌드 -->
+        <div class="chart-container">
+          <div class="chart-header">
+            <h3><i class="fas fa-chart-line"></i> 일별 입출고 트렌드</h3>
+          </div>
+          <canvas id="trendChart"></canvas>
+        </div>
+
+        <!-- 제품 카테고리 분포 -->
+        <div class="chart-container">
+          <div class="chart-header">
+            <h3><i class="fas fa-chart-pie"></i> 제품 카테고리 분포</h3>
+          </div>
+          <canvas id="categoryChart"></canvas>
+        </div>
+
+        <!-- ML 모델 결과 -->
+        <div class="chart-container">
+          <div class="chart-header">
+            <h3><i class="fas fa-brain"></i> AI 분석 결과</h3>
+            <div class="ml-controls">
+              <button id="demandPredictBtn" class="btn btn-sm btn-primary">
+                수요 예측
+              </button>
+              <button id="clusterAnalysisBtn" class="btn btn-sm btn-secondary">
+                제품 클러스터링
+              </button>
+              <button id="anomalyDetectionBtn" class="btn btn-sm btn-warning">
+                이상 탐지
+              </button>
+            </div>
+          </div>
+          <div id="mlResults" class="ml-results">
+            <p>AI 분석 버튼을 클릭하여 결과를 확인하세요.</p>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- AI 챗봇 (우측 하단 고정) -->
+    <div id="aiChatWidget" class="ai-chat-widget">
+      <div class="chat-toggle" id="chatToggle">
+        <i class="fas fa-robot"></i>
+        <span>AI 어시스턴트</span>
+      </div>
+      <div class="chat-container" id="chatContainer" style="display: none">
+        <div class="chat-header">
+          <h4><i class="fas fa-robot"></i> 창고 AI 어시스턴트</h4>
+          <button id="closeChatBtn" class="close-btn">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+        <div class="chat-messages" id="chatMessages">
+          <div class="message bot-message">
+            <div class="message-content">
+              안녕하세요! 창고 관리에 대해 무엇이든 물어보세요.
+              <br />예: "A랙의 재고량은?", "오늘 입고 현황은?", "재고 부족
+              제품은?"
+            </div>
+            <div class="message-time"></div>
+          </div>
+        </div>
+        <div class="chat-input-container">
+          <input
+            type="text"
+            id="chatInput"
+            placeholder="질문을 입력하세요..."
+            class="chat-input"
+          />
+          <button id="sendChatBtn" class="send-btn">
+            <i class="fas fa-paper-plane"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 파일 업로드 모달 -->
+    <div id="uploadModal" class="modal" style="display: none">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3><i class="fas fa-upload"></i> 데이터 파일 업로드</h3>
+          <button id="closeUploadModal" class="close-btn">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+        <div class="modal-body">
+          <div class="upload-area" id="uploadArea">
+            <div class="upload-icon">
+              <i class="fas fa-cloud-upload-alt"></i>
+            </div>
+            <p>CSV 또는 Excel 파일을 드래그하거나 클릭하여 업로드하세요</p>
+            <input
+              type="file"
+              id="fileInput"
+              accept=".csv,.xlsx,.xls"
+              style="display: none"
+            />
+            <button id="selectFileBtn" class="btn btn-primary">
+              파일 선택
+            </button>
+          </div>
+          <div
+            id="uploadProgress"
+            class="upload-progress"
+            style="display: none"
+          >
+            <div class="progress-bar">
+              <div class="progress-fill" id="progressFill"></div>
+            </div>
+            <div class="progress-text" id="progressText">업로드 중...</div>
+          </div>
+          <div
+            id="uploadResult"
+            class="upload-result"
+            style="display: none"
+          ></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 로딩 오버레이 -->
+    <div id="loadingOverlay" class="loading-overlay" style="display: none">
+      <div class="loading-spinner">
+        <i class="fas fa-spinner fa-spin"></i>
+        <p>데이터를 불러오는 중...</p>
+      </div>
+    </div>
+
+    <!-- JavaScript 파일들 -->
+    <script src="/static/js/utils.js"></script>
+    <script src="/static/js/charts.js"></script>
+    <script src="/static/js/aiChat.js"></script>
+    <script src="/static/js/fileUpload.js"></script>
+    <script src="/static/js/dashboard.js"></script>
+  </body>
+</html>

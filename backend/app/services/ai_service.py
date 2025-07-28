@@ -10,6 +10,13 @@ from threading import Lock
 
 import google.generativeai as genai
 
+from dotenv import load_dotenv
+load_dotenv()
+os.environ['GEMINI_API_KEY_1'] = os.getenv('GEMINI_API_KEY_1')
+os.environ['GEMINI_API_KEY_2'] = os.getenv('GEMINI_API_KEY_2')
+os.environ['GEMINI_API_KEY_3'] = os.getenv('GEMINI_API_KEY_3')
+os.environ['GEMINI_API_KEY_4'] = os.getenv('GEMINI_API_KEY_4')
+
 # AI 모델 설정 (legacy/crad_lcrag/utils/ai_model_manager.py 참조)
 AI_MODEL_CONFIG = {
     "temperature": 0.1,
