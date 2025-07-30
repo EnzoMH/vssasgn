@@ -40,3 +40,7 @@
 # Rawdata files (already listed, but ensure no new rawdata files are added)
 /rawdata/
 *.pdf
+*.log
+*.json
+! analyze_assignment.py
+!

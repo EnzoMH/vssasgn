@@ -277,7 +277,7 @@ async def analyze_vss_assignment(pdf_path: str = None) -> Dict[str, Any]:
     """VSS 과제 PDF 분석을 위한 특화된 함수"""
     
     if pdf_path is None:
-        pdf_path = r"C:\Users\MyoengHo Shin\pjt\vss_asgnM\VSS_입사테스트과제_AI.pdf"
+        pdf_path = r"C:\Users\MyoengHo Shin\pjt\vss_asgnM\legacy\VSS_입사테스트과제_AI.pdf"
     
     vss_prompt = """
 당신은 VSS 입사 테스트 과제를 분석하는 전문 컨설턴트입니다. 
