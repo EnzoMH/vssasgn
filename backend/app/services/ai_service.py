@@ -203,6 +203,15 @@ class WarehouseAI:
         self.gemini_config = AI_MODEL_CONFIG
         self.current_model_index = 0
         self.rate_limiter = RateLimiter() # RateLimiter 인스턴스 추가
+        
+        # 차트 생성 전용 설정 (더 일관된 JSON 출력을 위해)
+        self.chart_config = genai.GenerationConfig(
+            temperature=0.1,  # 더 일관된 출력을 위해 낮은 temperature
+            top_p=0.9,
+            top_k=20,
+            max_output_tokens=2048
+        )
+        
         self._setup_models()
 
     def _setup_models(self):
@@ -222,9 +231,14 @@ class WarehouseAI:
             for model_name, api_key in valid_keys.items():
                 try:
                     genai.configure(api_key=api_key)
+                    
+                    # 사고 기능 비활성화 설정 추가
+                    model_config = self.gemini_config.copy()
+                    # 2.5 모델의 사고 기능으로 인한 응답 문제 방지
+                    
                     model = genai.GenerativeModel(
-                        "gemini-2.0-flash-lite-001", # ai_model_manager.py에서 사용된 모델명
-                        generation_config=self.gemini_config
+                        "gemini-1.5-flash",  # 더 안정적인 1.5 모델 사용 (사고 기능 없음)
+                        generation_config=model_config
                     )
                     self.gemini_models.append({
                         'model': model,
@@ -292,30 +306,125 @@ class WarehouseAI:
 
             try:
                 model_instance = current_model_info['model']
-                prompt = f"""
-        당신은 스마트 물류 창고 관리 시스템을 위한 전문 AI 어시스턴트입니다. 주어진 데이터 분석 결과를 바탕으로 사용자의 질문에 대해 심층적이고 실행 가능한 인사이트를 제공해야 합니다. 특히, ML 모델 활용 및 ML Ops 설계 관점에서의 제안도 포함해 주세요.
+                # 벡터 DB 검색 결과가 있는지 확인
+                has_vector_search = data_context and 'vector_search' in data_context and data_context['vector_search'].get('success')
+                
+                if has_vector_search:
+                    # 벡터 DB 검색 결과가 있을 때 - 간단하고 직접적인 답변
+                    vector_data = data_context['vector_search']
+                    chart_data = vector_data.get('chart_data', {})
+                    documents = vector_data.get('results', {}).get('documents', [[]])[0] if vector_data.get('results') else []
+                    
+                    prompt = f"""
+당신은 창고 관리 AI 어시스턴트입니다. 실제 창고 데이터를 바탕으로 간단하고 명확한 답변을 제공하세요.
 
-        다음 단계에 따라 사고하고 답변을 구성하세요:
+**실제 데이터 검색 결과:**
+- 검색된 문서 수: {len(documents)}개
+- 차트 데이터: {chart_data}
+- 관련 문서: {documents[:3]}  // 상위 3개만 표시
 
-        1.  **데이터 요약 및 핵심 파악**: 제공된 `data_context`를 빠르게 스캔하여 각 분석 결과(기술 통계, 일별 물동량, 상품 인사이트, 랙 활용률, 이상 징후)의 주요 내용을 요약합니다.
-        2.  **트렌드 및 패턴 식별**: 데이터에서 나타나는 명확한 트렌드(예: 안정적인 입출고, 특정 랙의 낮은 활용률)와 반복되는 패턴을 식별합니다.
-        3.  **문제점 및 특이사항 분석**: AI가 이전에 지적한 Date 결측치, Unnamed 컬럼, ProductCode/ProductName 불일치, 현재고의 일관성과 같은 데이터 품질 문제와 감지된 이상 징후(`anomalies`)를 심층적으로 분석하고, 그 잠재적 원인과 영향에 대해 추론합니다.
-        4.  **개선점 도출 및 ML 모델 제안**: 식별된 문제점과 특이사항을 해결하기 위한 구체적인 개선 방안을 제시합니다. 이 과정에서 현재 구축된 ML 모델(수요 예측, 제품 클러스터링) 외에 추가적으로 활용 가능한 ML 모델(예: 이상 탐지를 위한 Isolation Forest)을 제안하고, 해당 모델이 어떤 문제를 해결할 수 있는지 명확히 설명합니다.
-        5.  **ML Ops 설계 고려사항**: ML 모델을 실제 운영 환경에 적용하고 지속적으로 관리하기 위한 ML Ops 관점의 필요 사항(예: 데이터 파이프라인, 모델 모니터링, 재학습 전략)에 대해 간략히 언급합니다.
-        6.  **질문에 대한 최종 답변 구성**: 위 단계들의 추론을 바탕으로 사용자의 `질문`에 대해 포괄적이고 체계적인 답변을 한국어로 제공합니다. 각 섹션(주요 트렌드, 특이사항, 개선점 및 ML 모델 제안, ML Ops 고려사항, 추가 분석 가능성 등)을 명확히 구분하여 가독성을 높입니다.
+**응답 규칙:**
+1. 질문에 대해 직접적이고 간단한 답변을 하세요
+2. 구체적인 숫자가 있으면 명시하세요  
+3. 3-5문장 이내로 답변하세요
+4. 기술적 분석은 요청받을 때만 제공하세요
 
-        **데이터:**
-        ```json
-        {data_context}
-        ```
+**질문:** {question}
 
-        **질문:**
-        {question}
-        """
+**답변 예시:**
+- "총 재고량은 약 1,234개입니다. 현재 A랙에 456개, B랙에 789개가 있습니다."
+- "오늘 입고량은 50개, 출고량은 30개로 순증가 20개입니다."
+- "재고가 부족한 제품은 제품A(5개 남음), 제품B(3개 남음)입니다."
+"""
+                else:
+                    # 벡터 DB 검색 결과가 없을 때 - 기존 데이터 분석 방식
+                    prompt = f"""
+당신은 창고 관리 AI 어시스턴트입니다. 제공된 데이터를 바탕으로 질문에 답변하세요.
+
+**데이터 컨텍스트:**
+{data_context}
+
+**응답 규칙:**
+1. 데이터가 있으면 구체적인 수치를 포함한 답변
+2. 데이터가 부족하면 그 사실을 명시하고 간단한 가이드 제공
+3. 5문장 이내로 간결하게 답변
+4. 불필요한 기술적 분석은 피하세요
+
+**질문:** {question}
+"""
                 # Gemini API 호출
-                response = await model_instance.generate_content_async(prompt) # generate_content_async로 변경
-                result_text = response.text
-
+                self.logger.info(f"🔄 {current_model_info['name']} API 호출 시작...")
+                self.logger.debug(f"📤 프롬프트 길이: {len(prompt)}")
+                
+                try:
+                    # Gemini API 안전 설정 추가
+                    safety_settings = [
+                        {
+                            "category": "HARM_CATEGORY_HARASSMENT",
+                            "threshold": "BLOCK_MEDIUM_AND_ABOVE"
+                        },
+                        {
+                            "category": "HARM_CATEGORY_HATE_SPEECH", 
+                            "threshold": "BLOCK_MEDIUM_AND_ABOVE"
+                        },
+                        {
+                            "category": "HARM_CATEGORY_SEXUALLY_EXPLICIT",
+                            "threshold": "BLOCK_MEDIUM_AND_ABOVE"
+                        },
+                        {
+                            "category": "HARM_CATEGORY_DANGEROUS_CONTENT",
+                            "threshold": "BLOCK_MEDIUM_AND_ABOVE"
+                        }
+                    ]
+                    
+                    # async 우선 시도
+                    try:
+                        response = await model_instance.generate_content_async(
+                            prompt,
+                            safety_settings=safety_settings
+                        )
+                    except AttributeError:
+                        # generate_content_async가 없는 경우 sync 호출
+                        self.logger.info(f"🔄 Async 메서드 없음, sync 호출로 대체")
+                        response = model_instance.generate_content(
+                            prompt,
+                            safety_settings=safety_settings
+                        )
+                except Exception as api_error:
+                    self.logger.warning(f"⚠️ API 호출 실패: {api_error}")
+                    # 안전 설정 없이 재시도
+                    try:
+                        response = model_instance.generate_content(prompt)
+                    except Exception as fallback_error:
+                        raise Exception(f"모든 API 호출 방식 실패: {fallback_error}")
+                
+                # 응답 상세 로깅
+                self.logger.debug(f"📥 응답 객체 타입: {type(response)}")
+                self.logger.debug(f"📥 응답 객체 속성: {[attr for attr in dir(response) if not attr.startswith('_')]}")
+                
+                # 안전한 텍스트 추출
+                result_text = ""
+                if hasattr(response, 'text'):
+                    result_text = response.text
+                elif hasattr(response, 'content'):
+                    result_text = str(response.content)
+                elif hasattr(response, 'candidates') and response.candidates:
+                    # Gemini 응답 구조에 따른 처리
+                    candidate = response.candidates[0]
+                    if hasattr(candidate, 'content'):
+                        if hasattr(candidate.content, 'parts'):
+                            result_text = candidate.content.parts[0].text
+                        else:
+                            result_text = str(candidate.content)
+                else:
+                    result_text = str(response)
+                
+                self.logger.info(f"📝 응답 텍스트 길이: {len(result_text)}")
+                
+                if not result_text or result_text.strip() == "":
+                    self.logger.error(f"❌ 빈 응답을 받았습니다!")
+                    return "오류: Gemini API에서 빈 응답을 받았습니다."
+                
                 self.logger.info(f"✅ {current_model_info['name']} API 성공 - 응답 (일부): {result_text[:200]}...")
                 return result_text
 
@@ -333,4 +442,173 @@ class WarehouseAI:
                     self.logger.error(f"❌ 모든 Gemini 모델 시도 실패")
                     return f"오류: 모든 API 호출 실패 - 마지막 오류: {str(e)}"
 
-        return "오류: 모든 모델 시도 실패" 
+        return "오류: 모든 모델 시도 실패"
+    
+    async def generate_chart_config(self, user_request: str, available_data: dict) -> dict:
+        """사용자 요청을 분석하여 차트 설정을 생성합니다."""
+        
+        # 사용 가능한 데이터 요약
+        data_summary = self._summarize_available_data(available_data)
+        
+        chart_prompt = f"""
+당신은 데이터 시각화 전문가입니다. 사용자의 자연어 요청을 분석하여 Chart.js 호환 차트 설정을 생성해주세요.
+
+**사용자 요청**: {user_request}
+
+**사용 가능한 데이터**:
+{data_summary}
+
+**응답 형식**: 반드시 아래 JSON 구조로만 응답해주세요.
+
+```json
+{{
+    "chart_type": "bar|line|pie|doughnut|radar|scatter",
+    "title": "차트 제목",
+    "data": {{
+        "labels": ["라벨1", "라벨2", "라벨3"],
+        "datasets": [{{
+            "label": "데이터셋 이름",
+            "data": [값1, 값2, 값3],
+            "backgroundColor": ["색상1", "색상2", "색상3"],
+            "borderColor": "테두리색상",
+            "borderWidth": 1
+        }}]
+    }},
+    "options": {{
+        "responsive": true,
+        "plugins": {{
+            "title": {{
+                "display": true,
+                "text": "차트 제목"
+            }},
+            "legend": {{
+                "display": true,
+                "position": "top"
+            }}
+        }},
+        "scales": {{
+            "y": {{
+                "beginAtZero": true
+            }}
+        }}
+    }},
+    "query_info": {{
+        "data_source": "사용된 데이터 소스",
+        "filters_applied": "적용된 필터링",
+        "aggregation": "집계 방식"
+    }}
+}}
+```
+
+**주의사항**:
+1. 사용자 요청에 가장 적합한 차트 타입을 선택하세요
+2. 실제 데이터에 기반하여 realistic한 값을 제공하세요
+3. 색상은 시각적으로 구분이 잘 되도록 선택하세요
+4. JSON 형식을 정확히 지켜주세요
+"""
+        
+        try:
+            # 차트 전용 설정으로 API 호출
+            original_config = self.gemini_config
+            self.gemini_config = self.chart_config
+            
+            response = await self.process_query(chart_prompt)
+            
+            # 원래 설정으로 복원
+            self.gemini_config = original_config
+            
+            # JSON 파싱 시도
+            import json
+            import re
+            
+            # JSON 부분만 추출
+            json_match = re.search(r'```json\s*(\{.*?\})\s*```', response, re.DOTALL)
+            if json_match:
+                json_str = json_match.group(1)
+            else:
+                # ```json 태그가 없다면 전체에서 JSON 찾기
+                json_match = re.search(r'\{.*\}', response, re.DOTALL)
+                if json_match:
+                    json_str = json_match.group(0)
+                else:
+                    raise ValueError("JSON 형식을 찾을 수 없습니다")
+            
+            chart_config = json.loads(json_str)
+            
+            # 필수 필드 검증
+            required_fields = ['chart_type', 'title', 'data']
+            for field in required_fields:
+                if field not in chart_config:
+                    raise ValueError(f"필수 필드 '{field}'가 없습니다")
+            
+            self.logger.info(f"✅ 차트 설정 생성 성공: {chart_config['chart_type']} - {chart_config['title']}")
+            return {
+                "success": True,
+                "chart_config": chart_config,
+                "message": "차트 설정이 성공적으로 생성되었습니다."
+            }
+            
+        except Exception as e:
+            self.logger.error(f"❌ 차트 설정 생성 실패: {str(e)}")
+            return {
+                "success": False,
+                "error": str(e),
+                "message": "차트 설정 생성에 실패했습니다.",
+                "fallback_config": self._get_fallback_chart_config(user_request)
+            }
+    
+    def _summarize_available_data(self, available_data: dict) -> str:
+        """사용 가능한 데이터를 요약하여 문자열로 반환합니다."""
+        summary_lines = []
+        
+        for data_name, data_info in available_data.items():
+            if isinstance(data_info, dict):
+                summary_lines.append(f"- {data_name}: {data_info.get('description', '설명 없음')}")
+                if 'columns' in data_info:
+                    summary_lines.append(f"  컬럼: {', '.join(data_info['columns'][:5])}{'...' if len(data_info['columns']) > 5 else ''}")
+                if 'row_count' in data_info:
+                    summary_lines.append(f"  행 수: {data_info['row_count']}")
+            else:
+                summary_lines.append(f"- {data_name}: {str(data_info)[:100]}...")
+        
+        return '\n'.join(summary_lines) if summary_lines else "사용 가능한 데이터 정보가 없습니다."
+    
+    def _get_fallback_chart_config(self, user_request: str) -> dict:
+        """AI 생성 실패 시 사용할 기본 차트 설정을 반환합니다."""
+        return {
+            "chart_type": "bar",
+            "title": "데이터 차트",
+            "data": {
+                "labels": ["데이터 1", "데이터 2", "데이터 3"],
+                "datasets": [{
+                    "label": "기본 데이터셋",
+                    "data": [10, 20, 30],
+                    "backgroundColor": ["#FF6384", "#36A2EB", "#FFCE56"],
+                    "borderColor": "#36A2EB",
+                    "borderWidth": 1
+                }]
+            },
+            "options": {
+                "responsive": True,
+                "plugins": {
+                    "title": {
+                        "display": True,
+                        "text": "기본 차트"
+                    },
+                    "legend": {
+                        "display": True,
+                        "position": "top"
+                    }
+                },
+                "scales": {
+                    "y": {
+                        "beginAtZero": True
+                    }
+                }
+            },
+            "query_info": {
+                "data_source": "기본 데이터",
+                "filters_applied": "없음",
+                "aggregation": "기본"
+            }
+        } 

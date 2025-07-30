@@ -357,6 +357,388 @@ const dashboardManager = new DashboardManager();
 // 전역에서 접근 가능하도록 설정
 window.dashboardManager = dashboardManager;
 
+// AI 차트 생성 기능 초기화
+function initializeAIChartGeneration() {
+  const generateChartBtn = document.getElementById("generateChartBtn");
+  const chartRequestInput = document.getElementById("chartRequestInput");
+  const quickChartButtons = document.querySelectorAll(".quick-chart-btn");
+
+  // 차트 생성 버튼 클릭 이벤트
+  if (generateChartBtn) {
+    generateChartBtn.addEventListener("click", async () => {
+      const userRequest = chartRequestInput.value.trim();
+      if (!userRequest) {
+        NotificationManager.warning("차트 요청을 입력해주세요.");
+        chartRequestInput.focus();
+        return;
+      }
+
+      console.log(`🎯 사용자 차트 요청: ${userRequest}`);
+
+      // 버튼 로딩 상태
+      const originalText = generateChartBtn.innerHTML;
+      generateChartBtn.innerHTML =
+        '<i class="fas fa-spinner fa-spin"></i> 생성 중...';
+      generateChartBtn.disabled = true;
+
+      try {
+        // AI 차트 생성 호출
+        const result = await chartManager.generateAIChart(
+          userRequest,
+          "aiGeneratedChart"
+        );
+
+        if (result.success) {
+          console.log("✅ AI 차트 생성 성공:", result.config);
+          // 입력 필드 클리어
+          chartRequestInput.value = "";
+        } else {
+          console.error("❌ AI 차트 생성 실패:", result.error);
+        }
+      } catch (error) {
+        console.error("❌ AI 차트 생성 오류:", error);
+        NotificationManager.error(
+          `차트 생성 중 오류가 발생했습니다: ${error.message}`
+        );
+      } finally {
+        // 버튼 상태 복원
+        generateChartBtn.innerHTML = originalText;
+        generateChartBtn.disabled = false;
+      }
+    });
+  }
+
+  // 입력 필드에서 Enter 키 처리
+  if (chartRequestInput) {
+    chartRequestInput.addEventListener("keypress", (e) => {
+      if (e.key === "Enter" && !e.shiftKey) {
+        e.preventDefault();
+        generateChartBtn.click();
+      }
+    });
+
+    // 플레이스홀더 텍스트 동적 변경
+    const placeholderTexts = [
+      "최근 일주일 입고량을 막대차트로 보여줘",
+      "랙별 재고를 파이차트로 그려줘",
+      "공급업체별 입고 현황을 도넛차트로",
+      "상품별 출고량 추이를 선그래프로",
+      "일별 입출고 차이를 막대차트로",
+    ];
+
+    let placeholderIndex = 0;
+    setInterval(() => {
+      if (document.activeElement !== chartRequestInput) {
+        chartRequestInput.placeholder = placeholderTexts[placeholderIndex];
+        placeholderIndex = (placeholderIndex + 1) % placeholderTexts.length;
+      }
+    }, 3000);
+  }
+
+  // 빠른 차트 버튼들 이벤트
+  quickChartButtons.forEach((button) => {
+    button.addEventListener("click", async () => {
+      const request = button.getAttribute("data-request");
+      if (request) {
+        // 입력 필드에 요청 텍스트 설정
+        chartRequestInput.value = request;
+
+        console.log(`🚀 빠른 차트 요청: ${request}`);
+
+        // 버튼 로딩 상태
+        const originalText = button.innerHTML;
+        button.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+        button.disabled = true;
+
+        try {
+          // AI 차트 생성 호출
+          const result = await chartManager.generateAIChart(
+            request,
+            "aiGeneratedChart"
+          );
+
+          if (result.success) {
+            console.log("✅ 빠른 차트 생성 성공:", result.config);
+            // 입력 필드 클리어
+            setTimeout(() => (chartRequestInput.value = ""), 1000);
+          } else {
+            console.error("❌ 빠른 차트 생성 실패:", result.error);
+          }
+        } catch (error) {
+          console.error("❌ 빠른 차트 생성 오류:", error);
+          NotificationManager.error(
+            `차트 생성 중 오류가 발생했습니다: ${error.message}`
+          );
+        } finally {
+          // 버튼 상태 복원
+          setTimeout(() => {
+            button.innerHTML = originalText;
+            button.disabled = false;
+          }, 1500);
+        }
+      }
+    });
+  });
+
+  console.log("🎨 AI 차트 생성 기능이 초기화되었습니다.");
+}
+
+// AI 분석 버튼 기능 초기화
+function initializeAIAnalysisButtons() {
+  const demandPredictBtn = document.getElementById("demandPredictBtn");
+  const clusterAnalysisBtn = document.getElementById("clusterAnalysisBtn");
+  const anomalyDetectionBtn = document.getElementById("anomalyDetectionBtn");
+  const mlResults = document.getElementById("mlResults");
+
+  // 수요 예측 버튼
+  if (demandPredictBtn) {
+    demandPredictBtn.addEventListener("click", async () => {
+      console.log("🔮 수요 예측 분석 시작");
+
+      const originalText = demandPredictBtn.innerHTML;
+      demandPredictBtn.innerHTML =
+        '<i class="fas fa-spinner fa-spin"></i> 분석 중...';
+      demandPredictBtn.disabled = true;
+
+      try {
+        // 수요 예측 API 호출
+        const response = await fetch("/api/predict/demand", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            features: {
+              feature1: 15, // 예시 피처
+              feature2: 8,
+            },
+          }),
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+
+        const result = await response.json();
+
+        // 결과 표시
+        mlResults.innerHTML = `
+          <div class="analysis-result">
+            <h4><i class="fas fa-chart-line text-primary"></i> 수요 예측 결과</h4>
+            <div class="result-content">
+              <div class="prediction-value">
+                <span class="label">예측 수요량:</span>
+                <span class="value">${
+                  result.prediction ? result.prediction[0].toFixed(1) : "N/A"
+                }개</span>
+              </div>
+              <div class="result-description">
+                <p>머신러닝 모델을 통해 예측된 다음 기간의 예상 수요량입니다.</p>
+                <small class="text-muted">* 과거 데이터 패턴을 기반으로 한 예측값입니다.</small>
+              </div>
+            </div>
+          </div>
+        `;
+
+        NotificationManager.success("수요 예측 분석이 완료되었습니다!");
+      } catch (error) {
+        console.error("❌ 수요 예측 오류:", error);
+        mlResults.innerHTML = `
+          <div class="analysis-error">
+            <h4><i class="fas fa-exclamation-triangle text-danger"></i> 수요 예측 실패</h4>
+            <p>수요 예측 분석 중 오류가 발생했습니다: ${error.message}</p>
+            <small>데이터 로딩 상태를 확인하고 다시 시도해주세요.</small>
+          </div>
+        `;
+        NotificationManager.error(`수요 예측 실패: ${error.message}`);
+      } finally {
+        demandPredictBtn.innerHTML = originalText;
+        demandPredictBtn.disabled = false;
+      }
+    });
+  }
+
+  // 제품 클러스터링 버튼
+  if (clusterAnalysisBtn) {
+    clusterAnalysisBtn.addEventListener("click", async () => {
+      console.log("📊 제품 클러스터링 분석 시작");
+
+      const originalText = clusterAnalysisBtn.innerHTML;
+      clusterAnalysisBtn.innerHTML =
+        '<i class="fas fa-spinner fa-spin"></i> 분석 중...';
+      clusterAnalysisBtn.disabled = true;
+
+      try {
+        // 클러스터링 API 호출
+        const response = await fetch("/api/product/cluster", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+
+        const result = await response.json();
+
+        // 결과 표시
+        const clusters = result.clusters || [];
+        const clusterCounts = clusters.reduce((acc, cluster) => {
+          acc[cluster] = (acc[cluster] || 0) + 1;
+          return acc;
+        }, {});
+
+        mlResults.innerHTML = `
+          <div class="analysis-result">
+            <h4><i class="fas fa-project-diagram text-secondary"></i> 제품 클러스터링 결과</h4>
+            <div class="result-content">
+              <div class="cluster-summary">
+                <span class="label">발견된 클러스터:</span>
+                <span class="value">${
+                  Object.keys(clusterCounts).length
+                }개</span>
+              </div>
+              <div class="cluster-distribution">
+                ${Object.entries(clusterCounts)
+                  .map(
+                    ([cluster, count], index) => `
+                  <div class="cluster-item">
+                    <span class="cluster-badge cluster-${index}">클러스터 ${cluster}</span>
+                    <span class="cluster-count">${count}개 제품</span>
+                  </div>
+                `
+                  )
+                  .join("")}
+              </div>
+              <div class="result-description">
+                <p>유사한 특성을 가진 제품들을 그룹화한 결과입니다.</p>
+                <small class="text-muted">* 제품 특성 및 판매 패턴을 기반으로 분류됩니다.</small>
+              </div>
+            </div>
+          </div>
+        `;
+
+        NotificationManager.success("제품 클러스터링 분석이 완료되었습니다!");
+      } catch (error) {
+        console.error("❌ 클러스터링 오류:", error);
+        mlResults.innerHTML = `
+          <div class="analysis-error">
+            <h4><i class="fas fa-exclamation-triangle text-danger"></i> 클러스터링 실패</h4>
+            <p>제품 클러스터링 분석 중 오류가 발생했습니다: ${error.message}</p>
+            <small>데이터 로딩 상태를 확인하고 다시 시도해주세요.</small>
+          </div>
+        `;
+        NotificationManager.error(`클러스터링 실패: ${error.message}`);
+      } finally {
+        clusterAnalysisBtn.innerHTML = originalText;
+        clusterAnalysisBtn.disabled = false;
+      }
+    });
+  }
+
+  // 이상 탐지 버튼
+  if (anomalyDetectionBtn) {
+    anomalyDetectionBtn.addEventListener("click", async () => {
+      console.log("🚨 이상 탐지 분석 시작");
+
+      const originalText = anomalyDetectionBtn.innerHTML;
+      anomalyDetectionBtn.innerHTML =
+        '<i class="fas fa-spinner fa-spin"></i> 분석 중...';
+      anomalyDetectionBtn.disabled = true;
+
+      try {
+        // 이상 탐지 API 호출
+        const response = await fetch("/api/analysis/anomalies");
+
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+
+        const result = await response.json();
+
+        // 결과 표시
+        const anomalies = result.anomalies || [];
+        const anomalyCount = Array.isArray(anomalies) ? anomalies.length : 0;
+
+        mlResults.innerHTML = `
+          <div class="analysis-result">
+            <h4><i class="fas fa-shield-alt text-warning"></i> 이상 탐지 결과</h4>
+            <div class="result-content">
+              <div class="anomaly-summary">
+                <span class="label">발견된 이상 항목:</span>
+                <span class="value ${
+                  anomalyCount > 0 ? "text-warning" : "text-success"
+                }">${anomalyCount}개</span>
+              </div>
+              ${
+                anomalyCount > 0
+                  ? `
+                <div class="anomaly-list">
+                  <h5>이상 항목 상세:</h5>
+                  <ul>
+                    ${anomalies
+                      .slice(0, 5)
+                      .map(
+                        (anomaly, index) => `
+                      <li class="anomaly-item">
+                        <strong>항목 ${index + 1}:</strong> 
+                        ${
+                          typeof anomaly === "object"
+                            ? JSON.stringify(anomaly)
+                            : anomaly
+                        }
+                      </li>
+                    `
+                      )
+                      .join("")}
+                    ${
+                      anomalies.length > 5
+                        ? `<li class="text-muted">... 외 ${
+                            anomalies.length - 5
+                          }개</li>`
+                        : ""
+                    }
+                  </ul>
+                </div>
+              `
+                  : `
+                <div class="no-anomalies">
+                  <p class="text-success"><i class="fas fa-check-circle"></i> 정상 상태입니다.</p>
+                  <small>현재 데이터에서 특별한 이상 징후가 발견되지 않았습니다.</small>
+                </div>
+              `
+              }
+              <div class="result-description">
+                <p>머신러닝을 통해 비정상적인 패턴을 탐지한 결과입니다.</p>
+                <small class="text-muted">* 통계적 이상치 및 패턴 분석을 기반으로 합니다.</small>
+              </div>
+            </div>
+          </div>
+        `;
+
+        NotificationManager.success("이상 탐지 분석이 완료되었습니다!");
+      } catch (error) {
+        console.error("❌ 이상 탐지 오류:", error);
+        mlResults.innerHTML = `
+          <div class="analysis-error">
+            <h4><i class="fas fa-exclamation-triangle text-danger"></i> 이상 탐지 실패</h4>
+            <p>이상 탐지 분석 중 오류가 발생했습니다: ${error.message}</p>
+            <small>데이터 로딩 상태를 확인하고 다시 시도해주세요.</small>
+          </div>
+        `;
+        NotificationManager.error(`이상 탐지 실패: ${error.message}`);
+      } finally {
+        anomalyDetectionBtn.innerHTML = originalText;
+        anomalyDetectionBtn.disabled = false;
+      }
+    });
+  }
+
+  console.log("🧠 AI 분석 버튼 기능이 초기화되었습니다.");
+}
+
 // 페이지 로드 완료 후 초기화
 document.addEventListener("DOMContentLoaded", async () => {
   // 대시보드 초기화
@@ -367,6 +749,12 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   // 키보드 단축키 설정
   dashboardManager.setupKeyboardShortcuts();
+
+  // AI 차트 생성 기능 초기화
+  initializeAIChartGeneration();
+
+  // AI 분석 버튼 기능 초기화
+  initializeAIAnalysisButtons();
 
   console.log(
     "🎉 Smart Warehouse Management System이 성공적으로 로드되었습니다!"

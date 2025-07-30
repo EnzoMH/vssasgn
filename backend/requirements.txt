@@ -7,4 +7,6 @@ openai
 python-multipart
 python-dotenv
 PyMuPDF
-google-generativeai 
+google-generativeai
+chromadb
+sentence-transformers 

@@ -126,6 +126,55 @@
             <p>AI 분석 버튼을 클릭하여 결과를 확인하세요.</p>
           </div>
         </div>
+
+        <!-- AI 차트 생성 -->
+        <div class="chart-container ai-chart-container">
+          <div class="chart-header">
+            <h3><i class="fas fa-magic"></i> AI 차트 생성</h3>
+            <div class="ai-chart-controls">
+              <div class="input-group">
+                <input
+                  type="text"
+                  id="chartRequestInput"
+                  class="form-control"
+                  placeholder="원하는 차트를 자연어로 요청하세요. 예: '최근 일주일 입고량을 막대차트로', '랙별 재고를 파이차트로'"
+                />
+                <button id="generateChartBtn" class="btn btn-primary">
+                  <i class="fas fa-chart-bar"></i> 차트 생성
+                </button>
+              </div>
+              <div class="quick-chart-buttons mt-2">
+                <button
+                  class="btn btn-sm btn-outline-primary quick-chart-btn"
+                  data-request="최근 7일간 입고량을 막대차트로 보여줘"
+                >
+                  입고 트렌드
+                </button>
+                <button
+                  class="btn btn-sm btn-outline-secondary quick-chart-btn"
+                  data-request="랙별 재고 현황을 막대차트로 보여줘"
+                >
+                  랙별 재고
+                </button>
+                <button
+                  class="btn btn-sm btn-outline-success quick-chart-btn"
+                  data-request="공급업체별 입고량을 파이차트로 보여줘"
+                >
+                  공급업체 분석
+                </button>
+                <button
+                  class="btn btn-sm btn-outline-warning quick-chart-btn"
+                  data-request="상품별 출고량을 막대차트로 보여줘"
+                >
+                  상품별 출고
+                </button>
+              </div>
+            </div>
+          </div>
+          <div class="ai-chart-content">
+            <canvas id="aiGeneratedChart" style="min-height: 400px"></canvas>
+          </div>
+        </div>
       </section>
     </main>
 

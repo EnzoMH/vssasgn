@@ -45,15 +45,61 @@ async def main():
             print(f"   - 페이지 수: {result['extracted_data']['page_count']}")
             print(f"   - 텍스트 길이: {len(result['extracted_data']['full_text']):,}자")
             
-            print(f"\n🤖 AI 분석 미리보기:")
+            print(f"\n🤖 AI 분석 결과:")
+            print("=" * 80)
             analysis = result["ai_analysis"]
             if analysis["analysis_method"] == "multi_page_analysis":
-                preview = analysis["integrated_analysis"][:500] + "..."
+                analysis_text = analysis["integrated_analysis"]
             else:
-                preview = analysis["analysis_result"][:500] + "..."
-            print(f"   {preview}")
+                analysis_text = analysis["analysis_result"]
             
-            print(f"\n📝 전체 분석 결과는 {output_file}에서 확인하세요!")
+            # JSON 형태인지 확인하고 파싱 시도
+            try:
+                import re
+                json_match = re.search(r'```json\s*(\{.*?\})\s*```', analysis_text, re.DOTALL)
+                if json_match:
+                    json_str = json_match.group(1)
+                    parsed_json = json.loads(json_str)
+                    
+                    print("🎯 핵심 인사이트:")
+                    if "critical_insights" in parsed_json:
+                        insights = parsed_json["critical_insights"]
+                        for key, value in insights.items():
+                            print(f"   • {key}: {value}")
+                    
+                    print(f"\n📋 즉시 실행 가능한 작업들:")
+                    if "immediate_action_items" in parsed_json:
+                        actions = parsed_json["immediate_action_items"]
+                        if "today" in actions:
+                            print(f"   🚀 오늘: {', '.join(actions['today'][:3])}...")
+                        if "this_week" in actions:
+                            print(f"   📅 이번 주: {', '.join(actions['this_week'][:3])}...")
+                    
+                    print(f"\n⚠️ 주요 위험 요소:")
+                    if "risk_mitigation" in parsed_json:
+                        risks = parsed_json["risk_mitigation"]
+                        for key, value in list(risks.items())[:3]:
+                            print(f"   • {key}: {value[:100]}...")
+                    
+                    print(f"\n💡 기술 선택 추천:")
+                    if "technical_roadmap" in parsed_json and "technology_choices" in parsed_json["technical_roadmap"]:
+                        tech = parsed_json["technical_roadmap"]["technology_choices"]
+                        for key, value in tech.items():
+                            print(f"   • {key}: {value}")
+                            
+                else:
+                    # JSON 파싱 실패시 기존 방식
+                    preview = analysis_text[:1000] + "..."
+                    print(f"{preview}")
+                    
+            except Exception as e:
+                # 파싱 오류시 기존 방식
+                preview = analysis_text[:1000] + "..."
+                print(f"{preview}")
+            
+            print("=" * 80)
+            print(f"\n📝 전체 상세 분석 결과는 {output_file}에서 확인하세요!")
+            print(f"💡 다음 단계: 분석 결과를 바탕으로 구체적인 개발 계획을 세워보세요!")
         else:
             print(f"❌ PDF 처리 실패: {result['pdf_info'].get('error', '알 수 없는 오류')}")
             

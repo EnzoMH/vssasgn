@@ -280,94 +280,93 @@ async def analyze_vss_assignment(pdf_path: str = None) -> Dict[str, Any]:
         pdf_path = r"C:\Users\MyoengHo Shin\pjt\vss_asgnM\VSS_입사테스트과제_AI.pdf"
     
     vss_prompt = """
-당신은 VSS 입사 테스트 과제를 분석하는 전문가입니다. 
-이 과제는 AI/ML 관련 기술 과제로 보이며, 단계별로 구성되어 있을 것입니다.
+당신은 VSS 입사 테스트 과제를 분석하는 전문 컨설턴트입니다. 
+현재 우리는 창고 관리 시스템(입고/출고 데이터, 상품 데이터)과 Gemini AI 기반 RAG를 이미 구축한 상태입니다.
 
-다음 형태로 분석 결과를 제공해주세요:
+**매우 구체적이고 실행 가능한 분석을 요청합니다. 반드시 다음 JSON 구조로 답변해주세요:**
 
 ```json
 {
-    "assignment_overview": {
-        "company": "VSS",
-        "position": "AI/ML 관련 직무",
-        "assignment_type": "입사 테스트 과제",
-        "main_objective": "과제의 주요 목표"
+    "critical_insights": {
+        "main_challenge": "이 과제에서 가장 어려운 부분은 무엇인가?",
+        "competitive_advantage": "우리가 이미 가진 강점은 무엇인가?",
+        "time_bottlenecks": "시간이 가장 많이 걸릴 작업들",
+        "must_have_vs_nice_to_have": "필수 구현 vs 선택적 구현 구분"
     },
-    "steps_breakdown": {
+    "step_by_step_detailed": {
         "step1": {
-            "title": "Step 1 제목",
-            "objective": "목표",
-            "requirements": ["요구사항들"],
-            "deliverables": ["제출물들"],
-            "technologies": ["필요 기술들"],
-            "difficulty": "난이도 (1-5)",
-            "estimated_time": "예상 소요 시간"
+            "exact_requirements": ["정확히 무엇을 구현해야 하는지"],
+            "current_status": "우리 프로젝트에서 이미 완료된 부분",
+            "gap_analysis": "추가로 개발해야 할 부분들",
+            "specific_tasks": ["구체적인 개발 작업 리스트"],
+            "code_components": ["구현해야 할 코드 컴포넌트들"],
+            "integration_points": "기존 시스템과의 연결 방법"
         },
         "step2": {
-            "title": "Step 2 제목",
-            "objective": "목표", 
-            "requirements": ["요구사항들"],
-            "deliverables": ["제출물들"],
-            "technologies": ["필요 기술들"],
-            "difficulty": "난이도 (1-5)",
-            "estimated_time": "예상 소요 시간"
+            "chart_requirements": ["구체적으로 어떤 차트들을 만들어야 하는지"],
+            "llm_chart_logic": "LLM이 차트를 생성하는 구체적인 로직",
+            "user_interaction": "사용자 인터랙션 구현 방법",
+            "data_flow": "inOutboundData에서 차트까지의 데이터 흐름",
+            "kpi_calculations": "KPI/LOI 계산 공식들",
+            "frontend_requirements": "프론트엔드에서 구현해야 할 기능들"
         },
-        "step3": {
-            "title": "Step 3 제목 (DWG/CAD 관련)",
-            "objective": "목표",
-            "requirements": ["요구사항들"], 
-            "deliverables": ["제출물들"],
-            "technologies": ["필요 기술들"],
-            "difficulty": "난이도 (1-5)",
-            "estimated_time": "예상 소요 시간",
-            "feasibility": "현재 데이터 상황에서의 실현 가능성"
+        "step3_alternatives": {
+            "dwg_problem": "DWG 파일이 없는 문제 해결 방안",
+            "virtual_approach": "가상 도면 시스템 구현 방법",
+            "canvas_implementation": "Canvas/WebGL 구현 전략",
+            "data_structure": "도면 데이터를 어떻게 구조화할 것인가",
+            "realistic_scope": "실제로 구현 가능한 범위"
         },
         "step4": {
-            "title": "Step 4 제목",
-            "objective": "목표",
-            "requirements": ["요구사항들"],
-            "deliverables": ["제출물들"],
-            "dependencies": ["Step 2 완료 후 진행 가능한 부분들"],
-            "difficulty": "난이도 (1-5)",
-            "estimated_time": "예상 소요 시간"
+            "multimodal_scope": "멀티모달 구현 범위와 방법",
+            "integration_strategy": "Step 1-3와의 통합 방법",
+            "demo_scenarios": "데모에서 보여줄 시나리오들"
         }
     },
-    "technical_stack": {
-        "programming_languages": ["Python", "기타"],
-        "ml_frameworks": ["scikit-learn", "TensorFlow", "PyTorch", "기타"],
-        "data_processing": ["pandas", "numpy", "기타"],
-        "visualization": ["matplotlib", "plotly", "기타"],
-        "web_frameworks": ["FastAPI", "Flask", "기타"],
-        "databases": ["필요한 DB들"],
-        "cad_tools": ["CAD 관련 도구들 (Step 3)"]
+    "technical_roadmap": {
+        "week1_priorities": ["첫 주에 집중할 핵심 작업들"],
+        "week2_priorities": ["둘째 주 작업들"],
+        "minimum_viable_demo": "최소한의 데모를 위해 필요한 것들",
+        "technology_choices": {
+            "frontend": "React vs 기존 HTML/JS 중 어느 것이 현실적인가",
+            "charts": "Chart.js vs D3.js vs 기타 추천",
+            "3d_rendering": "Three.js vs Canvas vs WebGL 중 선택",
+            "file_upload": "파일 업로드 구현 방법"
+        }
     },
-    "current_project_alignment": {
-        "data_available": ["현재 가지고 있는 데이터들 (입고/출고 데이터)"],
-        "completed_components": ["이미 완료된 부분들 (데이터 분석)"],
-        "missing_components": ["부족한 부분들 (DWG 파일 등)"],
-        "adaptable_steps": ["현재 상황에 맞게 수정 가능한 단계들"]
+    "risk_mitigation": {
+        "step3_backup_plan": "DWG 구현이 안 될 경우 B플랜",
+        "frontend_challenges": "프론트엔드 개발 시간 부족 해결책",
+        "integration_risks": "시스템 통합 시 발생할 수 있는 문제들",
+        "demo_fallbacks": "데모 시연 시 문제 발생 대비책"
     },
-    "implementation_strategy": {
-        "immediate_next_steps": ["바로 시작할 수 있는 작업들"],
-        "step_by_step_plan": ["단계별 실행 계획"],
-        "risk_factors": ["위험 요소들 (데이터 부족 등)"],
-        "mitigation_strategies": ["위험 완화 방안들"]
+    "evaluation_strategy": {
+        "showcase_priorities": "평가자에게 어떤 부분을 강조할 것인가",
+        "technical_depth": "기술적 깊이를 보여줄 수 있는 부분들",
+        "business_value": "비즈니스 가치를 어필할 수 있는 요소들",
+        "innovation_points": "혁신적이라고 어필할 수 있는 부분들"
     },
-    "evaluation_criteria": {
-        "technical_competency": ["기술적 역량 평가 기준"],
-        "code_quality": ["코드 품질 기준"],
-        "documentation": ["문서화 요구사항"],
-        "presentation": ["발표/데모 요구사항"]
+    "immediate_action_items": {
+        "today": ["오늘 당장 시작할 수 있는 작업들"],
+        "this_week": ["이번 주에 완료해야 할 작업들"],
+        "next_week": ["다음 주 목표들"],
+        "dependencies": "작업 간 의존성 관계"
     }
 }
 ```
 
-분석 시 특히 다음 사항들을 주의깊게 살펴보세요:
-- 각 Step별 구체적인 요구사항
-- 현재 가지고 있는 창고 데이터 (입고/출고 데이터)와의 연관성
-- Step 3의 DWG/CAD 파일 요구사항과 대안책
-- RAG (Retrieval-Augmented Generation) 구축 요구사항
-- ML/AI 모델 개발 요구사항
+**분석 시 특별히 고려해야 할 현재 상황:**
+- 이미 구축됨: FastAPI 백엔드, Gemini AI, 창고 입고/출고 데이터 분석
+- 있음: 기본 HTML/CSS/JS 프론트엔드, Chart.js
+- 없음: React 환경, DWG 파일, 고급 3D 시각화
+- 제약: 프론트엔드 개발자 없음, 높은 UX/UI 요구사항
+
+**핵심 질문들에 대한 구체적 답변 요청:**
+1. Step 2에서 "LLM 활용 차트 드로잉"의 정확한 의미는?
+2. Step 3 DWG 없이 어떻게 우회할 것인가?
+3. 각 Step별 최소 구현 vs 최대 구현 범위는?
+4. 현재 창고 데이터로 어떤 인상적인 데모를 만들 수 있는가?
+5. 평가자가 가장 주목할 기술적 포인트는?
 """
     
     service = PDFAnalysisService()

@@ -50,6 +50,7 @@ class ChartManager {
       options: {
         responsive: true,
         maintainAspectRatio: false,
+        aspectRatio: 2, // 명시적 비율 설정
         plugins: {
           title: {
             display: false,
@@ -70,12 +71,25 @@ class ChartManager {
         scales: {
           y: {
             beginAtZero: true,
+            max: function (context) {
+              // Y축 최대값을 데이터 최대값의 1.2배로 제한
+              const max = Math.max(
+                ...context.chart.data.datasets.flatMap(
+                  (dataset) => dataset.data
+                )
+              );
+              return Math.ceil(max * 1.2);
+            },
             ticks: {
               callback: function (value) {
                 return NumberUtils.formatNumber(value);
               },
+              maxTicksLimit: 8, // 최대 틱 개수 제한
             },
           },
+        },
+        layout: {
+          padding: 10,
         },
       },
     });
@@ -125,6 +139,7 @@ class ChartManager {
       options: {
         responsive: true,
         maintainAspectRatio: false,
+        aspectRatio: 2, // 명시적 비율 설정
         plugins: {
           legend: {
             position: "top",
@@ -142,16 +157,29 @@ class ChartManager {
         scales: {
           y: {
             beginAtZero: true,
+            max: function (context) {
+              // Y축 최대값을 데이터 최대값의 1.2배로 제한
+              const max = Math.max(
+                ...context.chart.data.datasets.flatMap(
+                  (dataset) => dataset.data
+                )
+              );
+              return Math.ceil(max * 1.2);
+            },
             ticks: {
               callback: function (value) {
                 return NumberUtils.formatNumber(value);
               },
+              maxTicksLimit: 8, // 최대 틱 개수 제한
             },
           },
         },
         interaction: {
           intersect: false,
           mode: "index",
+        },
+        layout: {
+          padding: 10,
         },
       },
     });
@@ -476,6 +504,200 @@ class ChartManager {
       }
     });
     this.charts = {};
+  }
+
+  // LLM을 활용한 차트 생성
+  async generateAIChart(userRequest, containerId = "aiGeneratedChart") {
+    try {
+      // 로딩 상태 표시
+      this.showChartLoading(containerId);
+
+      console.log(`🤖 AI 차트 생성 요청: ${userRequest}`);
+
+      // API 호출
+      const response = await fetch("/api/ai/generate-chart", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          user_request: userRequest,
+          context: "",
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      const result = await response.json();
+
+      // 로딩 상태 제거
+      this.hideChartLoading(containerId);
+
+      if (result.success || result.chart_config) {
+        const chartConfig = result.chart_config;
+        console.log("✅ AI 차트 설정 수신:", chartConfig);
+
+        // 차트 생성
+        const chart = this.createDynamicChart(containerId, chartConfig);
+
+        if (chart) {
+          // 성공 메시지 표시
+          if (!result.success) {
+            NotificationManager.warning(
+              `차트를 생성했지만 일부 문제가 있었습니다: ${result.message}`
+            );
+          } else {
+            NotificationManager.success("AI가 차트를 성공적으로 생성했습니다!");
+          }
+
+          return {
+            success: true,
+            chart: chart,
+            config: chartConfig,
+            message: result.message,
+          };
+        } else {
+          throw new Error("차트 생성에 실패했습니다");
+        }
+      } else {
+        throw new Error(result.error || result.message || "알 수 없는 오류");
+      }
+    } catch (error) {
+      console.error("❌ AI 차트 생성 오류:", error);
+      this.hideChartLoading(containerId);
+      this.showChartError(containerId, error.message);
+      NotificationManager.error(`AI 차트 생성 실패: ${error.message}`);
+
+      return {
+        success: false,
+        error: error.message,
+      };
+    }
+  }
+
+  // 동적 차트 생성 (AI가 생성한 설정 사용)
+  createDynamicChart(containerId, chartConfig) {
+    try {
+      const canvas = document.getElementById(containerId);
+      if (!canvas) {
+        console.error(`차트 컨테이너를 찾을 수 없습니다: ${containerId}`);
+        return null;
+      }
+
+      // 기존 차트가 있다면 제거
+      if (this.charts[containerId]) {
+        this.charts[containerId].destroy();
+      }
+
+      // Chart.js 설정 생성 (안전한 기본값 적용)
+      const safeOptions = {
+        responsive: true,
+        maintainAspectRatio: false,
+        aspectRatio: 2, // 명시적 비율 설정
+        layout: {
+          padding: 10,
+        },
+        ...chartConfig.options,
+      };
+
+      // Y축 스케일에 안전한 제한 추가
+      if (safeOptions.scales && safeOptions.scales.y) {
+        safeOptions.scales.y = {
+          beginAtZero: true,
+          maxTicksLimit: 8,
+          ...safeOptions.scales.y,
+        };
+      } else if (
+        chartConfig.chart_type !== "pie" &&
+        chartConfig.chart_type !== "doughnut"
+      ) {
+        safeOptions.scales = {
+          y: {
+            beginAtZero: true,
+            maxTicksLimit: 8,
+            ticks: {
+              callback: function (value) {
+                return typeof value === "number"
+                  ? value.toLocaleString()
+                  : value;
+              },
+            },
+          },
+          ...safeOptions.scales,
+        };
+      }
+
+      const config = {
+        type: chartConfig.chart_type,
+        data: chartConfig.data,
+        options: safeOptions,
+      };
+
+      // 차트 생성
+      const chart = new Chart(canvas, config);
+      this.setChart(containerId, chart);
+
+      console.log(
+        `✅ 동적 차트 생성 완료: ${chartConfig.chart_type} - ${chartConfig.title}`
+      );
+      return chart;
+    } catch (error) {
+      console.error("동적 차트 생성 오류:", error);
+      return null;
+    }
+  }
+
+  // 차트 로딩 상태 표시
+  showChartLoading(containerId) {
+    const container = document.getElementById(containerId);
+    if (container) {
+      container.style.position = "relative";
+      container.innerHTML = `
+        <div class="chart-loading" style="
+          position: absolute;
+          top: 50%;
+          left: 50%;
+          transform: translate(-50%, -50%);
+          text-align: center;
+          z-index: 1000;
+        ">
+          <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;">
+            <span class="visually-hidden">로딩중...</span>
+          </div>
+          <div class="mt-2 text-muted">AI가 차트를 생성하고 있습니다...</div>
+        </div>
+      `;
+    }
+  }
+
+  // 차트 로딩 상태 제거
+  hideChartLoading(containerId) {
+    const container = document.getElementById(containerId);
+    if (container) {
+      const loading = container.querySelector(".chart-loading");
+      if (loading) {
+        loading.remove();
+      }
+    }
+  }
+
+  // 차트 오류 표시
+  showChartError(containerId, errorMessage) {
+    const container = document.getElementById(containerId);
+    if (container) {
+      container.innerHTML = `
+        <div class="chart-error text-center p-4" style="color: #dc3545;">
+          <i class="fas fa-exclamation-triangle fa-2x mb-2"></i>
+          <div class="fw-bold">차트 생성 실패</div>
+          <div class="small text-muted mt-1">${errorMessage}</div>
+          <button class="btn btn-outline-primary btn-sm mt-2" onclick="location.reload()">
+            다시 시도
+          </button>
+        </div>
+      `;
+    }
   }
 }
 

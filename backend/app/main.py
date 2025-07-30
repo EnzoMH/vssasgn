@@ -7,6 +7,8 @@ from .utils.ai_chat import WarehouseChatbot
 from .services.data_service import DataService
 from .models.ml_models import DemandPredictor, ProductClusterer, AnomalyDetector # AnomalyDetector 추가
 from .services.data_analysis_service import DataAnalysisService
+from .services.ai_service import WarehouseAI
+from .services.vector_db_service import VectorDBService
 import logging
 import io
 import pandas as pd
@@ -41,13 +43,15 @@ async def main_page():
         content = f.read()
     return HTMLResponse(content=content)
 
-# DataService, Chatbot, ML Models, DataAnalysisService 인스턴스 초기화
+# DataService, Chatbot, ML Models, DataAnalysisService, AI Service, VectorDB 인스턴스 초기화
 data_service = DataService()
-chatbot = WarehouseChatbot()
 demand_predictor = DemandPredictor()
 product_clusterer = ProductClusterer()
 anomaly_detector = AnomalyDetector() # AnomalyDetector 인스턴스 추가
 data_analysis_service = DataAnalysisService(data_service, anomaly_detector) # anomaly_detector 전달
+ai_service = WarehouseAI() # AI 서비스 인스턴스 추가
+vector_db_service = VectorDBService(data_service=data_service) # 벡터 DB 서비스 추가
+chatbot = WarehouseChatbot(data_service=data_service, vector_db_service=vector_db_service) # 서비스 주입
 
 # ML 모델 학습 상태
 model_trained = {"demand_predictor": False, "product_clusterer": False, "anomaly_detector": False} # anomaly_detector 상태 추가
@@ -73,6 +77,21 @@ async def startup_event():
 
     except Exception as e:
         logger.warning(f"ML 모델 사전 학습 중 오류 발생: {e}")
+    
+    # 벡터 데이터베이스 인덱싱
+    try:
+        if data_service.data_loaded:
+            logger.info("벡터 데이터베이스 인덱싱 시작...")
+            indexing_success = await vector_db_service.index_warehouse_data()
+            if indexing_success:
+                logger.info("✅ 벡터 데이터베이스 인덱싱 완료")
+            else:
+                logger.warning("⚠️ 벡터 데이터베이스 인덱싱 실패")
+        else:
+            logger.warning("⚠️ 데이터가 로드되지 않아 벡터 DB 인덱싱을 건너뜁니다.")
+    except Exception as e:
+        logger.error(f"❌ 벡터 DB 인덱싱 중 오류 발생: {e}")
+
 
 async def train_demand_predictor():
     if model_trained["demand_predictor"] or not data_service.data_loaded:
@@ -142,8 +161,8 @@ async def get_kpi_data():
     product_df = data_service.product_master
 
     # 예시 KPI 계산 (실제 데이터 기반으로 더 정교하게 구현 필요)
-    total_inventory = product_df['현재고'].sum() if '현재고' in product_df.columns else 0
-    daily_throughput = len(inbound_df) + len(outbound_df) # 간단하게 총 입출고 건수
+    total_inventory = int(product_df['현재고'].sum()) if '현재고' in product_df.columns else 0
+    daily_throughput = int(len(inbound_df) + len(outbound_df)) # 간단하게 총 입출고 건수
     rack_utilization = 0.87 # 플레이스홀더
     inventory_turnover = 2.3 # 플레이스홀더
 
@@ -192,13 +211,46 @@ async def get_product_category_distribution():
         category_counts.columns = ['name', 'value'] # 파이차트 데이터 키에 맞춤
         return category_counts.to_dict(orient='records')
     else:
-        # '카테고리' 컬럼이 없을 경우, 임시로 '제품명'을 활용하거나 빈 리스트 반환
-        if '제품명' in product_df.columns:
-            product_df['name'] = product_df['제품명']
-            product_df['value'] = 1 # 각 제품을 1로 가정하여 카테고리처럼 사용
-            return product_df[['name', 'value']].to_dict(orient='records')
+        # '카테고리' 컬럼이 없을 경우, 제품명에서 카테고리 추출 또는 상위 10개 제품
+        if '제품명' in product_df.columns and 'ProductName' in product_df.columns:
+            # 제품명에서 간단한 카테고리 분류 시도
+            try:
+                # 현재고 기준으로 상위 10개 제품만 표시
+                if '현재고' in product_df.columns:
+                    top_products = product_df.nlargest(10, '현재고')
+                    category_data = []
+                    for _, row in top_products.iterrows():
+                        category_data.append({
+                            'name': str(row.get('ProductName', row.get('제품명', '알 수 없음')))[:20] + ('...' if len(str(row.get('ProductName', row.get('제품명', '')))) > 20 else ''),
+                            'value': int(row.get('현재고', 0))
+                        })
+                    return category_data
+                else:
+                    # 현재고 컬럼이 없으면 제품별로 1개씩 할당하여 상위 8개
+                    product_counts = product_df['ProductName'].value_counts().head(8).reset_index()
+                    product_counts.columns = ['name', 'value']
+                    return product_counts.to_dict(orient='records')
+            except Exception as e:
+                logger.error(f"카테고리 데이터 생성 오류: {e}")
+                # 기본 더미 데이터 반환
+                return [
+                    {'name': '전자제품', 'value': 45},
+                    {'name': '가전제품', 'value': 32},
+                    {'name': '의류', 'value': 28},
+                    {'name': '식품', 'value': 22},
+                    {'name': '도서', 'value': 18},
+                    {'name': '기타', 'value': 15}
+                ]
         else:
-            return []
+            # 기본 더미 데이터 반환
+            return [
+                {'name': '전자제품', 'value': 45},
+                {'name': '가전제품', 'value': 32},
+                {'name': '의류', 'value': 28},
+                {'name': '식품', 'value': 22},
+                {'name': '도서', 'value': 18},
+                {'name': '기타', 'value': 15}
+            ]
 
 @app.get("/api/analysis/stats/{df_name}")
 async def get_analysis_stats(df_name: str):
@@ -333,4 +385,261 @@ async def cluster_products_api():
         return {"clusters": clusters.tolist()}
     except Exception as e:
         logger.error(f"제품 클러스터링 중 오류 발생: {e}")
-        raise HTTPException(status_code=500, detail=f"제품 클러스터링 처리 중 오류 발생: {e}") 
+        raise HTTPException(status_code=500, detail=f"제품 클러스터링 처리 중 오류 발생: {e}")
+
+# 차트 생성 요청 모델
+class ChartGenerationRequest(BaseModel):
+    user_request: str  # 사용자의 자연어 차트 요청
+    context: str = ""  # 추가 컨텍스트 (선택사항)
+
+@app.post("/api/ai/generate-chart")
+async def generate_chart(request: ChartGenerationRequest):
+    """LLM을 활용한 차트 설정 생성 API"""
+    if not data_service.data_loaded:
+        raise HTTPException(status_code=404, detail="데이터가 로드되지 않았습니다.")
+    
+    logger.info(f"차트 생성 요청: {request.user_request}")
+    
+    try:
+        # 벡터 데이터베이스에서 관련 데이터 검색
+        vector_search_result = await vector_db_service.search_relevant_data(
+            query=request.user_request,
+            n_results=20
+        )
+        
+        # 검색된 실제 데이터가 있으면 사용, 없으면 기본 메타데이터 사용
+        if vector_search_result.get("success") and vector_search_result.get("chart_data"):
+            # 실제 데이터로 차트 설정 생성
+            chart_result = await _generate_chart_from_real_data(
+                user_request=request.user_request,
+                search_result=vector_search_result
+            )
+        else:
+            # 기존 방식: 메타데이터로 AI 생성
+            available_data = await _prepare_available_data_info()
+            chart_result = await ai_service.generate_chart_config(
+                user_request=request.user_request,
+                available_data=available_data
+            )
+        
+        if chart_result["success"]:
+            logger.info(f"차트 설정 생성 성공: {chart_result['chart_config']['chart_type']}")
+            return {
+                "success": True,
+                "chart_config": chart_result["chart_config"],
+                "message": chart_result["message"]
+            }
+        else:
+            logger.warning(f"차트 설정 생성 실패, 대체 설정 사용: {chart_result['error']}")
+            return {
+                "success": False,
+                "chart_config": chart_result["fallback_config"],
+                "message": chart_result["message"],
+                "error": chart_result["error"]
+            }
+            
+    except Exception as e:
+        logger.error(f"차트 생성 API 처리 중 오류 발생: {e}")
+        raise HTTPException(status_code=500, detail=f"차트 생성 처리 중 오류 발생: {e}")
+
+async def _prepare_available_data_info() -> dict:
+    """사용 가능한 데이터 정보를 정리하여 반환합니다."""
+    try:
+        available_data = {}
+        
+        # 입고 데이터 정보
+        if data_service.inbound_data is not None and not data_service.inbound_data.empty:
+            available_data["inbound_data"] = {
+                "description": "입고 데이터 (공급업체별 상품 입고 정보)",
+                "columns": list(data_service.inbound_data.columns),
+                "row_count": len(data_service.inbound_data),
+                "date_range": _get_date_range(data_service.inbound_data, 'Date')
+            }
+        
+        # 출고 데이터 정보
+        if data_service.outbound_data is not None and not data_service.outbound_data.empty:
+            available_data["outbound_data"] = {
+                "description": "출고 데이터 (고객사별 상품 출고 정보)",
+                "columns": list(data_service.outbound_data.columns),
+                "row_count": len(data_service.outbound_data),
+                "date_range": _get_date_range(data_service.outbound_data, 'Date')
+            }
+        
+        # 상품 마스터 데이터 정보
+        if data_service.product_master is not None and not data_service.product_master.empty:
+            available_data["product_master"] = {
+                "description": "상품 마스터 데이터 (상품별 기본 정보 및 재고)",
+                "columns": list(data_service.product_master.columns),
+                "row_count": len(data_service.product_master)
+            }
+        
+        # 기본 KPI 정보 추가
+        available_data["kpi_metrics"] = {
+            "description": "계산 가능한 KPI 지표들",
+            "metrics": [
+                "일별 입고량/출고량",
+                "랙별 재고 현황",
+                "상품별 회전율",
+                "공급업체별 입고 현황",
+                "고객사별 출고 현황",
+                "재고 수준 분석"
+            ]
+        }
+        
+        return available_data
+        
+    except Exception as e:
+        logger.error(f"데이터 정보 수집 중 오류: {e}")
+        return {"error": f"데이터 정보 수집 실패: {str(e)}"}
+
+def _get_date_range(df, date_column):
+    """데이터프레임에서 날짜 범위를 반환합니다."""
+    try:
+        if date_column in df.columns:
+            dates = pd.to_datetime(df[date_column], errors='coerce')
+            min_date = dates.min()
+            max_date = dates.max()
+            if pd.notna(min_date) and pd.notna(max_date):
+                return f"{min_date.strftime('%Y-%m-%d')} ~ {max_date.strftime('%Y-%m-%d')}"
+        return "날짜 정보 없음"
+    except Exception:
+        return "날짜 정보 파싱 실패"
+
+async def _generate_chart_from_real_data(user_request: str, search_result: Dict[str, Any]) -> Dict[str, Any]:
+    """벡터 데이터베이스 검색 결과로 실제 차트 설정 생성"""
+    try:
+        chart_data = search_result.get("chart_data", {})
+        
+        if not chart_data.get("labels") or not chart_data.get("data"):
+            raise ValueError("검색된 데이터에 차트 생성에 필요한 정보가 없습니다.")
+        
+        # 사용자 요청에서 차트 타입 추정
+        chart_type = _infer_chart_type_from_request(user_request)
+        
+        # 색상 팔레트
+        colors = [
+            "#3b82f6", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6",
+            "#06b6d4", "#84cc16", "#f97316", "#ec4899", "#6b7280"
+        ]
+        
+        # Chart.js 호환 설정 생성
+        chart_config = {
+            "chart_type": chart_type,
+            "title": chart_data.get("title", "데이터 차트"),
+            "data": {
+                "labels": chart_data["labels"][:10],  # 최대 10개까지만 표시
+                "datasets": [{
+                    "label": chart_data.get("title", "데이터"),
+                    "data": chart_data["data"][:10],
+                    "backgroundColor": colors[:len(chart_data["data"][:10])],
+                    "borderColor": colors[0],
+                    "borderWidth": 2 if chart_type == "line" else 1,
+                    "tension": 0.3 if chart_type == "line" else 0
+                }]
+            },
+            "options": {
+                "responsive": True,
+                "plugins": {
+                    "title": {
+                        "display": True,
+                        "text": chart_data.get("title", "데이터 차트"),
+                        "font": {"size": 16, "weight": "bold"}
+                    },
+                    "legend": {
+                        "display": True,
+                        "position": "top"
+                    }
+                },
+                "scales": {} if chart_type in ["pie", "doughnut"] else {
+                    "y": {
+                        "beginAtZero": True,
+                        "title": {
+                            "display": True,
+                            "text": "수량"
+                        }
+                    },
+                    "x": {
+                        "title": {
+                            "display": True,
+                            "text": "항목"
+                        }
+                    }
+                }
+            },
+            "query_info": {
+                "data_source": f"실제 데이터 검색 ({search_result.get('found_documents', 0)}개 문서)",
+                "search_query": user_request,
+                "data_type": chart_data.get("type", "unknown")
+            }
+        }
+        
+        logger.info(f"✅ 실제 데이터로 차트 설정 생성: {chart_type} - {chart_data.get('title')}")
+        
+        return {
+            "success": True,
+            "chart_config": chart_config,
+            "message": f"실제 데이터 {search_result.get('found_documents', 0)}개 문서를 기반으로 차트를 생성했습니다.",
+            "data_source": "vector_database"
+        }
+        
+    except Exception as e:
+        logger.error(f"❌ 실제 데이터 차트 생성 실패: {str(e)}")
+        return {
+            "success": False,
+            "error": str(e),
+            "message": "실제 데이터로 차트 생성에 실패했습니다. AI 생성으로 대체합니다.",
+            "fallback_config": None
+        }
+
+def _infer_chart_type_from_request(user_request: str) -> str:
+    """사용자 요청에서 차트 타입 추정"""
+    request_lower = user_request.lower()
+    
+    if any(word in request_lower for word in ['파이차트', 'pie', '원그래프', '도넛']):
+        return "doughnut" if '도넛' in request_lower else "pie"
+    elif any(word in request_lower for word in ['선그래프', 'line', '추이', '트렌드', '변화']):
+        return "line"
+    elif any(word in request_lower for word in ['막대차트', 'bar', '막대그래프', '비교']):
+        return "bar"
+    elif any(word in request_lower for word in ['산점도', 'scatter', '분포']):
+        return "scatter"
+    else:
+        # 기본값: 막대차트
+        return "bar"
+
+@app.get("/api/vector-db/status")
+async def get_vector_db_status():
+    """벡터 데이터베이스 상태 확인"""
+    try:
+        status = vector_db_service.get_status()
+        return status
+    except Exception as e:
+        logger.error(f"벡터 DB 상태 확인 중 오류: {e}")
+        return {
+            "status": "error",
+            "error": str(e),
+            "message": "벡터 데이터베이스 상태를 확인할 수 없습니다."
+        }
+
+@app.post("/api/vector-db/reindex")
+async def reindex_vector_db():
+    """벡터 데이터베이스 재인덱싱"""
+    if not data_service.data_loaded:
+        raise HTTPException(status_code=404, detail="데이터가 로드되지 않았습니다.")
+    
+    try:
+        logger.info("🔄 벡터 데이터베이스 재인덱싱 시작...")
+        success = await vector_db_service.index_warehouse_data(force_rebuild=True)
+        
+        if success:
+            return {
+                "success": True,
+                "message": "벡터 데이터베이스 재인덱싱이 완료되었습니다.",
+                "status": vector_db_service.get_status()
+            }
+        else:
+            raise HTTPException(status_code=500, detail="벡터 데이터베이스 재인덱싱에 실패했습니다.")
+            
+    except Exception as e:
+        logger.error(f"벡터 DB 재인덱싱 중 오류: {e}")
+        raise HTTPException(status_code=500, detail=f"재인덱싱 중 오류 발생: {str(e)}") 

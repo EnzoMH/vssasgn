@@ -181,6 +181,14 @@ body {
   box-shadow: var(--shadow);
   border: 1px solid var(--gray-200);
   min-height: 400px;
+  max-height: 600px; /* 최대 높이 제한 */
+  overflow: hidden; /* 넘치는 내용 숨김 */
+}
+
+/* 차트 canvas 자체의 높이도 제한 */
+.chart-container canvas {
+  max-height: 500px !important;
+  width: 100% !important;
 }
 
 .chart-header {
@@ -544,5 +552,426 @@ body {
   .chart-header {
     flex-direction: column;
     gap: 1rem;
+  }
+}
+
+/* AI 차트 생성 스타일 */
+.ai-chart-container {
+  position: relative;
+  overflow: hidden;
+}
+
+.ai-chart-container::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(
+    90deg,
+    var(--primary),
+    var(--secondary),
+    var(--warning)
+  );
+  border-radius: var(--border-radius) var(--border-radius) 0 0;
+  z-index: 1;
+}
+
+.ai-chart-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.ai-chart-controls .input-group {
+  display: flex;
+  gap: 0.5rem;
+  align-items: stretch;
+}
+
+.ai-chart-controls .form-control {
+  flex: 1;
+  padding: 1rem;
+  border: 2px solid var(--gray-200);
+  border-radius: var(--border-radius-sm);
+  font-size: 1rem;
+  transition: all 0.3s ease;
+  background-color: white;
+}
+
+.ai-chart-controls .form-control:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  transform: translateY(-1px);
+}
+
+.ai-chart-controls .form-control::placeholder {
+  color: var(--gray-500);
+  font-style: italic;
+}
+
+.quick-chart-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.quick-chart-btn {
+  padding: 0.5rem 1rem;
+  border-radius: var(--border-radius-sm);
+  border: 1px solid transparent;
+  font-size: 0.875rem;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.quick-chart-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow);
+}
+
+.quick-chart-btn:disabled {
+  opacity: 0.6;
+  transform: none;
+  cursor: not-allowed;
+}
+
+.quick-chart-btn.btn-outline-primary {
+  color: var(--primary);
+  border-color: var(--primary);
+}
+
+.quick-chart-btn.btn-outline-primary:hover {
+  background-color: var(--primary);
+  color: white;
+}
+
+.quick-chart-btn.btn-outline-secondary {
+  color: var(--secondary);
+  border-color: var(--secondary);
+}
+
+.quick-chart-btn.btn-outline-secondary:hover {
+  background-color: var(--secondary);
+  color: white;
+}
+
+.quick-chart-btn.btn-outline-success {
+  color: #28a745;
+  border-color: #28a745;
+}
+
+.quick-chart-btn.btn-outline-success:hover {
+  background-color: #28a745;
+  color: white;
+}
+
+.quick-chart-btn.btn-outline-warning {
+  color: var(--warning);
+  border-color: var(--warning);
+}
+
+.quick-chart-btn.btn-outline-warning:hover {
+  background-color: var(--warning);
+  color: white;
+}
+
+.ai-chart-content {
+  position: relative;
+  min-height: 400px;
+  max-height: 600px; /* AI 차트도 최대 높이 제한 */
+  background: white;
+  border-radius: var(--border-radius-sm);
+  padding: 1rem;
+  margin-top: 1rem;
+  overflow: hidden; /* 넘치는 내용 숨김 */
+}
+
+#aiGeneratedChart {
+  border-radius: var(--border-radius-sm);
+  max-height: 500px !important; /* AI 차트 canvas 높이 제한 */
+  width: 100% !important;
+}
+
+/* 차트 로딩 애니메이션 */
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+.chart-loading .spinner-border {
+  animation: spin 1s linear infinite;
+}
+
+/* 차트 오류 스타일 */
+.chart-error {
+  background: linear-gradient(135deg, #fee2e2, #fef3c7);
+  border: 1px solid #fca5a5;
+  border-radius: var(--border-radius-sm);
+  padding: 2rem;
+  margin: 1rem 0;
+}
+
+.chart-error i {
+  color: var(--danger);
+}
+
+/* AI 차트 헤더 특별 스타일 */
+.ai-chart-container .chart-header h3 {
+  background: linear-gradient(135deg, var(--primary), var(--secondary));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  font-weight: 700;
+}
+
+.ai-chart-container .chart-header h3 i {
+  background: linear-gradient(135deg, var(--primary), var(--secondary));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* 모바일 반응형 */
+@media (max-width: 768px) {
+  .ai-chart-controls .input-group {
+    flex-direction: column;
+  }
+
+  .quick-chart-buttons {
+    justify-content: center;
+  }
+
+  .quick-chart-btn {
+    flex: 1;
+    min-width: 120px;
+  }
+
+  .ai-chart-content {
+    min-height: 300px;
+    max-height: 450px; /* 모바일에서도 높이 제한 */
+    padding: 0.5rem;
+  }
+
+  /* 모바일에서 차트 컨테이너 높이도 제한 */
+  .chart-container {
+    max-height: 500px;
+  }
+
+  .chart-container canvas,
+  #aiGeneratedChart {
+    max-height: 350px !important;
+  }
+}
+
+/* AI 분석 결과 스타일 */
+.analysis-result {
+  background: linear-gradient(135deg, #f8fafc, #e2e8f0);
+  border: 1px solid var(--gray-200);
+  border-radius: var(--border-radius-sm);
+  padding: 1.5rem;
+  margin: 1rem 0;
+}
+
+.analysis-result h4 {
+  margin-bottom: 1rem;
+  color: var(--gray-800);
+  font-weight: 600;
+}
+
+.result-content {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.prediction-value,
+.cluster-summary,
+.anomaly-summary {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem;
+  background: white;
+  border-radius: var(--border-radius-sm);
+  border: 1px solid var(--gray-200);
+}
+
+.prediction-value .label,
+.cluster-summary .label,
+.anomaly-summary .label {
+  font-weight: 500;
+  color: var(--gray-700);
+}
+
+.prediction-value .value,
+.cluster-summary .value,
+.anomaly-summary .value {
+  font-weight: 700;
+  font-size: 1.2rem;
+  color: var(--primary);
+}
+
+.cluster-distribution {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.cluster-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem;
+  background: white;
+  border-radius: var(--border-radius-sm);
+  border: 1px solid var(--gray-200);
+}
+
+.cluster-badge {
+  padding: 0.25rem 0.5rem;
+  border-radius: var(--border-radius-sm);
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: white;
+}
+
+.cluster-badge.cluster-0 {
+  background-color: var(--primary);
+}
+.cluster-badge.cluster-1 {
+  background-color: var(--secondary);
+}
+.cluster-badge.cluster-2 {
+  background-color: var(--warning);
+}
+.cluster-badge.cluster-3 {
+  background-color: var(--danger);
+}
+.cluster-badge.cluster-4 {
+  background-color: #8b5cf6;
+}
+
+.cluster-count {
+  font-size: 0.875rem;
+  color: var(--gray-600);
+}
+
+.anomaly-list {
+  background: white;
+  border-radius: var(--border-radius-sm);
+  border: 1px solid var(--gray-200);
+  padding: 1rem;
+}
+
+.anomaly-list h5 {
+  margin-bottom: 0.5rem;
+  color: var(--gray-800);
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.anomaly-list ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.anomaly-item {
+  padding: 0.5rem 0;
+  border-bottom: 1px solid var(--gray-100);
+  font-size: 0.875rem;
+}
+
+.anomaly-item:last-child {
+  border-bottom: none;
+}
+
+.no-anomalies {
+  text-align: center;
+  padding: 2rem;
+  background: white;
+  border-radius: var(--border-radius-sm);
+  border: 1px solid var(--gray-200);
+}
+
+.no-anomalies p {
+  margin-bottom: 0.5rem;
+  font-size: 1.1rem;
+  font-weight: 500;
+}
+
+.result-description {
+  background: white;
+  border-radius: var(--border-radius-sm);
+  border: 1px solid var(--gray-200);
+  padding: 1rem;
+}
+
+.result-description p {
+  margin-bottom: 0.5rem;
+  color: var(--gray-700);
+}
+
+.result-description small {
+  color: var(--gray-500);
+}
+
+.analysis-error {
+  background: linear-gradient(135deg, #fef2f2, #fee2e2);
+  border: 1px solid #fca5a5;
+  border-radius: var(--border-radius-sm);
+  padding: 1.5rem;
+  margin: 1rem 0;
+}
+
+.analysis-error h4 {
+  color: var(--danger);
+  margin-bottom: 1rem;
+}
+
+.analysis-error p {
+  color: var(--gray-700);
+  margin-bottom: 0.5rem;
+}
+
+.analysis-error small {
+  color: var(--gray-500);
+}
+
+/* ML 컨트롤 버튼 활성화 상태 */
+.ml-controls .btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.ml-controls .btn .fa-spinner {
+  margin-right: 0.5rem;
+}
+
+/* 반응형 */
+@media (max-width: 768px) {
+  .prediction-value,
+  .cluster-summary,
+  .anomaly-summary {
+    flex-direction: column;
+    text-align: center;
+    gap: 0.5rem;
+  }
+
+  .cluster-distribution {
+    justify-content: center;
+  }
+
+  .analysis-result {
+    padding: 1rem;
   }
 }
