@@ -76,8 +76,12 @@ vss_asgnM/
 │   │       ├── charts.js             # 차트 생성
 │   │       └── utils.js              # 유틸리티
 │   ├── analyze_data.py               # 독립 실행 분석
-│   ├── analyze_assignment.py         # VSS 과제 분석
 │   └── requirements.txt              # Python 패키지
+├── .gitignore                        # Git 제외 파일 설정
+├── .env.example                      # 환경 변수 예시
+└── README.md                         # 프로젝트 문서
+
+# 📂 .gitignore로 제외된 파일들 (로컬에만 존재)
 ├── rawdata/                          # 원본 데이터 (Excel/CSV)
 │   ├── 입고데이터_YYYYMMDD.xlsx
 │   ├── 출고데이터_YYYYMMDD.xlsx
@@ -87,8 +91,8 @@ vss_asgnM/
 │   └── product_data.csv
 ├── chromadb_storage/                 # 벡터 DB 저장소 (자동 생성)
 ├── VSS_입사테스트과제_AI.pdf        # 과제 명세서
-├── .env.example                      # 환경 변수 예시
-└── README.md                         # 프로젝트 문서
+├── .env                              # 환경 변수 (API 키 포함)
+└── *.json                            # 분석 결과 파일들
 ```
 
 ## 🚀 빠른 시작
@@ -133,11 +137,11 @@ python -m uvicorn app.main:app --reload --port 8000
 http://localhost:8000
 ```
 
-### 🎯 **VSS 과제 분석 (선택사항)**
+### 🎯 **데이터 분석 스크립트 (선택사항)**
 
 ```bash
-# PDF 과제 명세서 AI 분석
-python analyze_assignment.py
+# 독립적인 데이터 분석 및 AI 인사이트 실행
+python analyze_data.py
 ```
 
 ## 🔥 실제 사용 예시
@@ -193,7 +197,7 @@ python analyze_assignment.py
 - **실시간 스트리밍 데이터 처리**
 - **예측 모델 앙상블**
 
-## 💡 특장점
+## 💡 특장점()
 
 ### **🎯 실제 데이터 기반**
 
@@ -241,14 +245,21 @@ GEMINI_API_KEY_4=your_quaternary_api_key
 OPENAI_API_KEY=your_openai_key
 ```
 
-### **데이터 파일 형식**
+### **데이터 파일 준비**
 
 ```bash
-# rawdata/ 디렉토리에 다음 형식으로 파일 배치
+# rawdata/ 디렉토리를 생성하고 다음 형식으로 파일 배치
+# (주의: .gitignore로 제외되어 있어 수동으로 준비해야 함)
+mkdir rawdata
+
+# 필요한 데이터 파일들:
 rawdata/
 ├── 입고데이터_20250101.xlsx  # 또는 InboundData_20250101.csv
 ├── 출고데이터_20250101.xlsx  # 또는 OutboundData_20250101.csv
 └── 상품데이터.xlsx          # 또는 product_data.csv
+
+# VSS 과제 명세서 (선택사항)
+VSS_입사테스트과제_AI.pdf
 ```
 
 ## 🐛 문제 해결
