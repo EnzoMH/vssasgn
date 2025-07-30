@@ -41,3 +41,6 @@
 *.pdf
 *.log
 *.json
+*.dockerignore
+*.yml
+Dockerfile

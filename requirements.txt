@@ -1,15 +1,48 @@
+# ================================
+# VSS 스마트 물류 창고 관리 시스템
+# Docker 배포용 Requirements
+# ================================
+
+# FastAPI 웹 프레임워크
 fastapi
-uvicorn
+uvicorn[standard]
+
+# 데이터 처리 및 분석
 pandas
+numpy
+
+# 머신러닝
 scikit-learn
 xgboost
+
+# AI 서비스
+google-generativeai>
 openai
+
+# 파일 처리
 python-multipart
-python-dotenv
 PyMuPDF
-google-generativeai
-chromadb
-sentence-transformers
-ezdxf
+
+# 이미지 처리 (CAD 기능)
 Pillow
 opencv-python
+ezdxf
+
+
+chromadb
+sentence-transformers
+
+
+python-dotenv
+
+# 로깅 및 유틸리티
+logging-config
+
+# 보안
+cryptography
+
+# 개발 및 테스트 (선택사항)
+# pytest
+# pytest-asyncio
+# black
+# flake8
