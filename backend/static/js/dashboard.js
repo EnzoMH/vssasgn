@@ -25,22 +25,30 @@ class DashboardManager {
 
   bindEvents() {
     // 새로고침 버튼
-    this.refreshBtn.addEventListener("click", () => {
-      this.refreshData();
-    });
+    if (this.refreshBtn) {
+      this.refreshBtn.addEventListener("click", () => {
+        this.refreshData();
+      });
+    }
 
-    // ML 분석 버튼들
-    this.demandPredictBtn.addEventListener("click", () => {
-      this.runDemandPrediction();
-    });
+    // ML 분석 버튼들 (안전한 바인딩)
+    if (this.demandPredictBtn) {
+      this.demandPredictBtn.addEventListener("click", () => {
+        this.runDemandPrediction();
+      });
+    }
 
-    this.clusterAnalysisBtn.addEventListener("click", () => {
-      this.runClusterAnalysis();
-    });
+    if (this.clusterAnalysisBtn) {
+      this.clusterAnalysisBtn.addEventListener("click", () => {
+        this.runClusterAnalysis();
+      });
+    }
 
-    this.anomalyDetectionBtn.addEventListener("click", () => {
-      this.runAnomalyDetection();
-    });
+    if (this.anomalyDetectionBtn) {
+      this.anomalyDetectionBtn.addEventListener("click", () => {
+        this.runAnomalyDetection();
+      });
+    }
 
     // 페이지 가시성 변경 시 자동 새로고침 제어
     document.addEventListener("visibilitychange", () => {
@@ -205,13 +213,40 @@ class DashboardManager {
     }
   }
 
-  // 클러스터 분석 실행
+  // 클러스터 분석 실행 (새로운 ML API 사용)
   async runClusterAnalysis() {
     try {
       this.setMLButtonLoading(this.clusterAnalysisBtn, true);
 
-      const response = await APIClient.post("/api/product/cluster");
-      chartManager.createMLResultChart(response, "cluster");
+      // 새로운 ML 클러스터링 API 사용
+      const response = await APIClient.get(
+        "/api/ml/product-clustering/clusters"
+      );
+
+      // 클러스터 차트 생성 (간단한 파이 차트)
+      if (response && response.clusters) {
+        const chartData = {
+          labels: response.clusters.map((c) => c.cluster_name),
+          datasets: [
+            {
+              data: response.clusters.map((c) => c.size),
+              backgroundColor: response.clusters.map(
+                (c) => c.color || "#3b82f6"
+              ),
+              borderWidth: 2,
+            },
+          ],
+        };
+
+        chartManager.createMLResultChart(
+          {
+            chart_type: "pie",
+            title: `제품 클러스터 분포 (총 ${response.total_products}개 상품)`,
+            data: chartData,
+          },
+          "cluster"
+        );
+      }
 
       NotificationManager.success("제품 클러스터링이 완료되었습니다.");
     } catch (error) {
@@ -239,9 +274,19 @@ class DashboardManager {
     }
   }
 
-  // ML 버튼 로딩 상태
+  // ML 버튼 로딩 상태 (안전한 처리)
   setMLButtonLoading(button, loading) {
+    if (!button) {
+      console.warn("ML 버튼이 존재하지 않습니다.");
+      return;
+    }
+
     const icon = button.querySelector("i");
+    if (!icon) {
+      console.warn("버튼에 아이콘이 없습니다.");
+      return;
+    }
+
     if (loading) {
       icon.className = "fas fa-spinner fa-spin";
       button.disabled = true;

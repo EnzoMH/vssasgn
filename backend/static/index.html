@@ -256,6 +256,93 @@
             style="display: none"
           ></div>
         </div>
+
+        <!-- ML 제품 클러스터링 섹션 -->
+        <div class="chart-container ml-clustering-container">
+          <div class="chart-header">
+            <h3><i class="fas fa-project-diagram"></i> ML 제품 클러스터링</h3>
+            <div class="ml-controls">
+              <button id="refreshClustersBtn" class="btn btn-primary">
+                <i class="fas fa-sync-alt"></i> 새로고침
+              </button>
+              <button id="retrainModelBtn" class="btn btn-warning">
+                <i class="fas fa-brain"></i> 모델 재훈련
+              </button>
+              <button id="exportClustersBtn" class="btn btn-success">
+                <i class="fas fa-download"></i> 결과 내보내기
+              </button>
+            </div>
+          </div>
+
+          <!-- 모델 상태 표시 -->
+          <div id="mlModelStatus" class="model-status-panel">
+            <div class="status-item">
+              <span class="status-label">모델 상태:</span>
+              <span id="modelStatusText" class="status-value">로딩 중...</span>
+            </div>
+            <div class="status-item">
+              <span class="status-label">훈련 시간:</span>
+              <span id="modelTrainedAt" class="status-value">-</span>
+            </div>
+            <div class="status-item">
+              <span class="status-label">클러스터 수:</span>
+              <span id="modelClusters" class="status-value">-</span>
+            </div>
+            <div class="status-item">
+              <span class="status-label">분석 상품:</span>
+              <span id="modelProducts" class="status-value">-</span>
+            </div>
+          </div>
+
+          <!-- 클러스터 개요 카드들 -->
+          <div id="clustersOverview" class="clusters-overview">
+            <div class="overview-loading">
+              <i class="fas fa-spinner fa-spin"></i> 클러스터 데이터 로딩 중...
+            </div>
+          </div>
+
+          <!-- 고회전 상품 하이라이트 -->
+          <div class="highlight-section">
+            <h4><i class="fas fa-star"></i> 고회전 상품 (최우선 관리)</h4>
+            <div id="highTurnoverProducts" class="high-turnover-grid">
+              <div class="loading-placeholder">
+                <i class="fas fa-spinner fa-spin"></i> 고회전 상품 분석 중...
+              </div>
+            </div>
+          </div>
+
+          <!-- 상품 검색 및 분석 -->
+          <div class="product-search-section">
+            <h4><i class="fas fa-search"></i> 상품별 클러스터 분석</h4>
+            <div class="search-input-group">
+              <input
+                type="text"
+                id="productCodeInput"
+                placeholder="상품 코드를 입력하세요 (예: 1000661578)"
+                class="form-control"
+              />
+              <button id="searchProductBtn" class="btn btn-primary">
+                <i class="fas fa-search"></i> 분석
+              </button>
+            </div>
+            <div
+              id="productAnalysisResult"
+              class="product-analysis-result"
+              style="display: none"
+            >
+              <!-- 상품별 분석 결과가 여기에 표시됩니다 -->
+            </div>
+          </div>
+
+          <!-- 클러스터 상세 차트 -->
+          <div class="cluster-charts-section">
+            <h4><i class="fas fa-chart-pie"></i> 클러스터 분포 차트</h4>
+            <canvas
+              id="clusterDistributionChart"
+              style="max-height: 400px"
+            ></canvas>
+          </div>
+        </div>
       </section>
     </main>
 
@@ -354,6 +441,7 @@
     <script src="/static/js/aiChat.js"></script>
     <script src="/static/js/fileUpload.js"></script>
     <script src="/static/js/cadViewer.js"></script>
+    <script src="/static/js/mlClustering.js"></script>
     <script src="/static/js/dashboard.js"></script>
   </body>
 </html>
