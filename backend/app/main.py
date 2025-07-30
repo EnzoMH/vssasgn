@@ -15,20 +15,19 @@ import pandas as pd
 import os
 from datetime import datetime
 from typing import Dict, Any
-from dotenv import load_dotenv
+from dotenv import load_dotenv, find_dotenv
+
+# 로거 설정 (환경변수 로딩보다 먼저)
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logger = logging.getLogger(__name__)
 
 # .env 파일을 자동으로 찾아서 로드 (.env 파일 위치에 상관없이)
-from dotenv import find_dotenv
 dotenv_path = find_dotenv()
 if dotenv_path:
     load_dotenv(dotenv_path)
     logger.info(f"✅ .env 파일 로드됨: {dotenv_path}")
 else:
     logger.warning("⚠️ .env 파일을 찾을 수 없습니다. 시스템 환경변수를 사용합니다.")
-
-# 로거 설정
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
-logger = logging.getLogger(__name__)
 
 app = FastAPI(title="Warehouse Management API")
 
