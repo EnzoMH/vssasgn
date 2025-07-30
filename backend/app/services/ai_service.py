@@ -468,6 +468,12 @@ class WarehouseAI:
 
         return "오류: 모든 모델 시도 실패"
     
+    async def process_query(self, prompt: str) -> str:
+        """차트 생성을 위한 단순한 프롬프트 처리 메서드"""
+        # 차트 생성에서는 박하한 데이터 컨텍스트로 호출
+        context_data = {"chart_generation": True, "prompt_only": True}
+        return await self.answer_query(prompt, context_data)
+    
     async def generate_chart_config(self, user_request: str, available_data: dict) -> dict:
         """사용자 요청을 분석하여 차트 설정을 생성합니다."""
         
