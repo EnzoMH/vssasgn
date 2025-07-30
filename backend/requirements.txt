@@ -5,4 +5,6 @@ scikit-learn
 xgboost
 openai
 python-multipart
-python-dotenv 
+python-dotenv
+PyMuPDF
+google-generativeai 
