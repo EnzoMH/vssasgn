@@ -6,6 +6,7 @@
 .idea/
 .vscode/
 *.iml
+*.pyc
 
 # Node.js and Frontend
 /frontend/node_modules/
