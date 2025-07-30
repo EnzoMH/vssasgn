@@ -9,4 +9,7 @@ python-dotenv
 PyMuPDF
 google-generativeai
 chromadb
-sentence-transformers 
+sentence-transformers
+ezdxf
+Pillow
+opencv-python

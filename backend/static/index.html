@@ -175,6 +175,87 @@
             <canvas id="aiGeneratedChart" style="min-height: 400px"></canvas>
           </div>
         </div>
+
+        <!-- DWG CAD 시각화 섹션 -->
+        <div class="chart-container cad-container">
+          <div class="chart-header">
+            <h3><i class="fas fa-drafting-compass"></i> DWG CAD 시각화</h3>
+            <div class="cad-controls">
+              <button id="uploadCADBtn" class="btn btn-primary">
+                <i class="fas fa-upload"></i> DWG 업로드
+              </button>
+              <button id="toggleLayersBtn" class="btn btn-secondary" disabled>
+                <i class="fas fa-layer-group"></i> 레이어
+              </button>
+              <button id="zoomFitBtn" class="btn btn-secondary" disabled>
+                <i class="fas fa-expand"></i> 전체보기
+              </button>
+            </div>
+          </div>
+
+          <!-- CAD 파일 업로드 영역 -->
+          <div id="cadUploadArea" class="cad-upload-area">
+            <div class="upload-dropzone" id="cadDropzone">
+              <div class="upload-icon">
+                <i class="fas fa-file-code"></i>
+              </div>
+              <h4>DWG/DXF 파일 업로드</h4>
+              <p>창고 도면 파일을 드래그하거나 클릭하여 업로드하세요</p>
+              <p class="upload-hint">지원 형식: .dwg, .dxf, .dwf (최대 50MB)</p>
+              <input
+                type="file"
+                id="cadFileInput"
+                accept=".dwg,.dxf,.dwf"
+                style="display: none"
+              />
+              <button id="selectCADFileBtn" class="btn btn-primary">
+                <i class="fas fa-folder-open"></i> 파일 선택
+              </button>
+            </div>
+          </div>
+
+          <!-- CAD 뷰어 영역 -->
+          <div id="cadViewer" class="cad-viewer" style="display: none">
+            <div class="cad-canvas-container">
+              <canvas id="warehouseCanvas" width="1000" height="600"></canvas>
+              <div class="cad-loading" id="cadLoading" style="display: none">
+                <div class="loading-spinner">
+                  <i class="fas fa-spinner fa-spin"></i>
+                  <p>도면을 분석하고 있습니다...</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- CAD 정보 패널 -->
+            <div class="cad-info-panel" id="cadInfoPanel">
+              <h5><i class="fas fa-info-circle"></i> 선택된 영역 정보</h5>
+              <div id="selectedRackInfo">
+                <p>랙을 클릭하면 상세 정보가 표시됩니다.</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- CAD 업로드 진행률 -->
+          <div
+            id="cadUploadProgress"
+            class="upload-progress"
+            style="display: none"
+          >
+            <div class="progress-bar">
+              <div class="progress-fill" id="cadProgressFill"></div>
+            </div>
+            <div class="progress-text" id="cadProgressText">
+              파일 업로드 중...
+            </div>
+          </div>
+
+          <!-- CAD 분석 결과 -->
+          <div
+            id="cadAnalysisResult"
+            class="upload-result"
+            style="display: none"
+          ></div>
+        </div>
       </section>
     </main>
 
@@ -272,6 +353,7 @@
     <script src="/static/js/charts.js"></script>
     <script src="/static/js/aiChat.js"></script>
     <script src="/static/js/fileUpload.js"></script>
+    <script src="/static/js/cadViewer.js"></script>
     <script src="/static/js/dashboard.js"></script>
   </body>
 </html>

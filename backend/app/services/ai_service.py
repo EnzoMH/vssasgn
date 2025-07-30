@@ -641,4 +641,69 @@ class WarehouseAI:
                 "filters_applied": "없음",
                 "aggregation": "기본"
             }
-        } 
+        }
+    
+    async def analyze_image_with_prompt(self, image_data: str, prompt: str) -> Dict[str, Any]:
+        """
+        Gemini Vision API를 사용하여 이미지 분석
+        
+        Args:
+            image_data: base64 인코딩된 이미지 데이터
+            prompt: 분석 요청 프롬프트
+        
+        Returns:
+            분석 결과 딕셔너리
+        """
+        try:
+            # API 키 선택
+            api_key = self._get_best_api_key()
+            if not api_key:
+                raise Exception("사용 가능한 API 키가 없습니다.")
+            
+            # Gemini 모델 설정
+            genai.configure(api_key=api_key)
+            model = genai.GenerativeModel('gemini-1.5-flash')
+            
+            # 이미지 데이터 준비
+            import base64
+            from io import BytesIO
+            
+            # base64 디코딩
+            image_bytes = base64.b64decode(image_data)
+            
+            # PIL Image 객체 생성
+            try:
+                from PIL import Image
+                image = Image.open(BytesIO(image_bytes))
+            except ImportError:
+                raise Exception("PIL(Pillow) 라이브러리가 설치되지 않았습니다.")
+            
+            # Gemini Vision API 호출
+            response = model.generate_content([prompt, image])
+            
+            if response and response.text:
+                # API 호출 성공 기록
+                self._record_api_success(api_key)
+                
+                return {
+                    "success": True,
+                    "response": response.text.strip(),
+                    "model": "gemini-1.5-flash",
+                    "api_key_used": api_key[-10:] if api_key else "unknown"
+                }
+            else:
+                raise Exception("Gemini API 응답이 비어있습니다.")
+        
+        except Exception as e:
+            error_msg = str(e)
+            self.logger.error(f"이미지 분석 오류: {error_msg}")
+            
+            # API 키 오류 기록
+            if api_key:
+                self._record_api_error(api_key, error_msg)
+            
+            return {
+                "success": False,
+                "error": error_msg,
+                "response": None
+            } 

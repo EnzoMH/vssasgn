@@ -9,6 +9,7 @@ from .models.ml_models import DemandPredictor, ProductClusterer, AnomalyDetector
 from .services.data_analysis_service import DataAnalysisService
 from .services.ai_service import WarehouseAI
 from .services.vector_db_service import VectorDBService
+from .services.cad_service import CADService
 import logging
 import io
 import pandas as pd
@@ -56,6 +57,7 @@ anomaly_detector = AnomalyDetector() # AnomalyDetector 인스턴스 추가
 data_analysis_service = DataAnalysisService(data_service, anomaly_detector) # anomaly_detector 전달
 ai_service = WarehouseAI() # AI 서비스 인스턴스 추가
 vector_db_service = VectorDBService(data_service=data_service) # 벡터 DB 서비스 추가
+cad_service = CADService(ai_service=ai_service) # CAD 서비스 추가
 chatbot = WarehouseChatbot(data_service=data_service, vector_db_service=vector_db_service) # 서비스 주입
 
 # ML 모델 학습 상태
@@ -647,4 +649,184 @@ async def reindex_vector_db():
             
     except Exception as e:
         logger.error(f"벡터 DB 재인덱싱 중 오류: {e}")
-        raise HTTPException(status_code=500, detail=f"재인덱싱 중 오류 발생: {str(e)}") 
+        raise HTTPException(status_code=500, detail=f"재인덱싱 중 오류 발생: {str(e)}")
+
+@app.post("/api/cad/upload")
+async def upload_cad_file(file: UploadFile = File(...)):
+    """DWG/DXF CAD 파일 업로드 및 분석"""
+    logger.info(f"CAD 파일 업로드 요청: {file.filename}")
+    
+    try:
+        # 파일 검증
+        if not file.filename:
+            raise HTTPException(status_code=400, detail="파일명이 없습니다.")
+        
+        # 지원하는 파일 확장자 확인
+        allowed_extensions = {'.dwg', '.dxf', '.dwf'}
+        file_extension = os.path.splitext(file.filename)[1].lower()
+        
+        if file_extension not in allowed_extensions:
+            raise HTTPException(
+                status_code=400, 
+                detail=f"지원하지 않는 파일 형식입니다. 지원 형식: {', '.join(allowed_extensions)}"
+            )
+        
+        # 파일 크기 확인 (50MB 제한)
+        max_size = 50 * 1024 * 1024  # 50MB
+        file_content = await file.read()
+        if len(file_content) > max_size:
+            raise HTTPException(
+                status_code=400, 
+                detail=f"파일 크기가 너무 큽니다. 최대 크기: 50MB, 현재 크기: {len(file_content) / (1024*1024):.1f}MB"
+            )
+        
+        # 임시 파일 저장
+        temp_dir = "cad_uploads"
+        os.makedirs(temp_dir, exist_ok=True)
+        
+        file_id = datetime.now().strftime("%Y%m%d_%H%M%S")
+        temp_filename = f"{file_id}_{file.filename}"
+        temp_filepath = os.path.join(temp_dir, temp_filename)
+        
+        with open(temp_filepath, "wb") as temp_file:
+            temp_file.write(file_content)
+        
+        logger.info(f"임시 파일 저장 완료: {temp_filepath}")
+        
+        # CAD 파일 처리
+        result = await cad_service.process_cad_file(temp_filepath, file.filename)
+        
+        # 임시 파일 정리
+        try:
+            os.remove(temp_filepath)
+        except Exception as cleanup_error:
+            logger.warning(f"임시 파일 정리 오류: {cleanup_error}")
+        
+        if result["success"]:
+            logger.info(f"CAD 파일 처리 성공: {file.filename}")
+            return {
+                "success": True,
+                "message": f"파일 '{file.filename}'이 성공적으로 분석되었습니다.",
+                "data": result["data"],
+                "processing_method": result.get("processing_method"),
+                "file_info": {
+                    "filename": result["filename"],
+                    "size": result["file_size"],
+                    "type": result["file_type"]
+                }
+            }
+        else:
+            logger.error(f"CAD 파일 처리 실패: {result['error']}")
+            raise HTTPException(status_code=500, detail=result["error"])
+    
+    except HTTPException:
+        # HTTP 예외는 그대로 재발생
+        raise
+    except Exception as e:
+        logger.error(f"CAD 파일 업로드 처리 중 예상치 못한 오류: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"파일 처리 중 오류가 발생했습니다: {str(e)}")
+
+@app.get("/api/cad/status")
+async def get_cad_status():
+    """CAD 서비스 상태 확인"""
+    try:
+        # 필요한 라이브러리 확인
+        libraries_status = {
+            "ezdxf": False,
+            "pillow": False,
+            "opencv": False
+        }
+        
+        try:
+            import ezdxf
+            libraries_status["ezdxf"] = True
+        except ImportError:
+            pass
+        
+        try:
+            from PIL import Image
+            libraries_status["pillow"] = True
+        except ImportError:
+            pass
+        
+        try:
+            import cv2
+            libraries_status["opencv"] = True
+        except ImportError:
+            pass
+        
+        # 업로드 디렉토리 상태
+        upload_dir = "cad_uploads"
+        upload_dir_exists = os.path.exists(upload_dir)
+        upload_dir_writable = os.access(upload_dir, os.W_OK) if upload_dir_exists else False
+        
+        return {
+            "service_available": True,
+            "libraries": libraries_status,
+            "upload_directory": {
+                "exists": upload_dir_exists,
+                "writable": upload_dir_writable,
+                "path": upload_dir
+            },
+            "supported_formats": [".dwg", ".dxf", ".dwf"],
+            "max_file_size_mb": 50,
+            "ai_service_available": ai_service is not None
+        }
+        
+    except Exception as e:
+        logger.error(f"CAD 상태 확인 오류: {str(e)}")
+        return {
+            "service_available": False,
+            "error": str(e)
+        }
+
+@app.get("/api/warehouse/racks/{rack_id}/stock")
+async def get_rack_stock(rack_id: str):
+    """특정 랙의 재고 정보 조회"""
+    try:
+        # 실제 구현에서는 데이터베이스에서 조회
+        # 현재는 모의 데이터 반환
+        import random
+        
+        mock_data = {
+            "rack_id": rack_id,
+            "currentStock": random.randint(10, 150),
+            "capacity": random.randint(100, 200),
+            "last_updated": "2025-01-20T10:30:00Z",
+            "status": "active"
+        }
+        
+        logger.info(f"랙 {rack_id} 재고 정보 조회")
+        return mock_data
+        
+    except Exception as e:
+        logger.error(f"랙 재고 조회 중 오류: {e}")
+        raise HTTPException(status_code=500, detail=f"재고 조회 실패: {str(e)}")
+
+@app.get("/api/warehouse/data/current")
+async def get_current_warehouse_data():
+    """현재 창고 전체 데이터 조회"""
+    try:
+        # 실제 구현에서는 data_service와 vector_db_service에서 데이터 조회
+        current_data = data_service.get_current_summary()
+        
+        # 재고 데이터 포함
+        warehouse_data = {
+            "timestamp": "2025-01-20T10:30:00Z",
+            "total_racks": 5,
+            "inventory": [
+                {"location": "A", "product_name": "제품A", "quantity": 75},
+                {"location": "B", "product_name": "제품B", "quantity": 90},
+                {"location": "C", "product_name": "제품C", "quantity": 60},
+                {"location": "D", "product_name": "제품D", "quantity": 120},
+                {"location": "E", "product_name": "제품E", "quantity": 85},
+            ],
+            "summary": current_data
+        }
+        
+        logger.info("현재 창고 데이터 조회 완료")
+        return warehouse_data
+        
+    except Exception as e:
+        logger.error(f"창고 데이터 조회 중 오류: {e}")
+        raise HTTPException(status_code=500, detail=f"데이터 조회 실패: {str(e)}") 
