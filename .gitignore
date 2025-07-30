@@ -42,5 +42,3 @@
 *.pdf
 *.log
 *.json
-! analyze_assignment.py
-!
