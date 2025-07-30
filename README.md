@@ -90,7 +90,6 @@ vss_asgnM/
 │   ├── OutboundData_YYYYMMDD.csv
 │   └── product_data.csv
 ├── chromadb_storage/                 # 벡터 DB 저장소 (자동 생성)
-├── VSS_입사테스트과제_AI.pdf        # 과제 명세서
 ├── .env                              # 환경 변수 (API 키 포함)
 └── *.json                            # 분석 결과 파일들
 ```
@@ -258,8 +257,6 @@ rawdata/
 ├── 출고데이터_20250101.xlsx  # 또는 OutboundData_20250101.csv
 └── 상품데이터.xlsx          # 또는 product_data.csv
 
-# VSS 과제 명세서 (선택사항)
-VSS_입사테스트과제_AI.pdf
 ```
 
 ## 🐛 문제 해결
