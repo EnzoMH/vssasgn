@@ -10,12 +10,36 @@ from threading import Lock
 
 import google.generativeai as genai
 
-from dotenv import load_dotenv
-load_dotenv()
-os.environ['GEMINI_API_KEY_1'] = os.getenv('GEMINI_API_KEY_1')
-os.environ['GEMINI_API_KEY_2'] = os.getenv('GEMINI_API_KEY_2')
-os.environ['GEMINI_API_KEY_3'] = os.getenv('GEMINI_API_KEY_3')
-os.environ['GEMINI_API_KEY_4'] = os.getenv('GEMINI_API_KEY_4')
+from dotenv import load_dotenv, find_dotenv
+
+# .env 파일을 프로젝트 루트부터 상위 디렉토리까지 자동으로 찾아서 로드
+dotenv_path = find_dotenv()
+if dotenv_path:
+    load_dotenv(dotenv_path)
+    print(f"✅ .env 파일 로드됨: {dotenv_path}")
+else:
+    print("⚠️ .env 파일을 찾을 수 없습니다. 시스템 환경변수를 사용합니다.")
+
+# 안전한 환경변수 설정 - None 값 체크
+def safe_set_env_var(key_name: str):
+    """환경변수를 안전하게 설정 (None 값 체크)"""
+    value = os.getenv(key_name)
+    if value is not None:
+        os.environ[key_name] = value
+        return True
+    return False
+
+# GEMINI API 키들 안전하게 설정
+api_keys_loaded = []
+for i in range(1, 5):
+    key_name = f'GEMINI_API_KEY_{i}'
+    if safe_set_env_var(key_name):
+        api_keys_loaded.append(key_name)
+
+if api_keys_loaded:
+    print(f"✅ 로드된 API 키: {', '.join(api_keys_loaded)}")
+else:
+    print("⚠️ GEMINI API 키가 설정되지 않았습니다. AI 기능이 제한될 수 있습니다.")
 
 # AI 모델 설정 (legacy/crad_lcrag/utils/ai_model_manager.py 참조)
 AI_MODEL_CONFIG = {
