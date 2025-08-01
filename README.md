@@ -65,11 +65,13 @@ KPI 모니터링:
 "총 재고량은?" → 직접 계산 → 실시간 데이터 → 정확한 수치
 ```
 
-### 3. 🏗️ CAD 파일 분석
+### 3. 🏗️ CAD 파일 분석 (로직 구현 완료)
 
 ```
-CAD 처리 파이프라인:
+CAD 처리 파이프라인 (구현됨):
 DWG/DXF 업로드 → ezdxf 파싱 → 이미지 변환 → AI 분석 → 웹 시각화
+
+⚠️ 주의: 실제 .dwg 파일 테스트 미완료 (테스트 데이터 부재)
 ```
 
 ### 4. 🧠 ML 기반 분석
@@ -267,9 +269,15 @@ GET  /api/ml/product-clustering/high-turnover  # 높은 회전율 상품
 ### CAD & File APIs
 
 ```
-POST /api/cad/upload                 # CAD 파일 업로드
-POST /api/cad/analyze               # CAD 파일 분석
+POST /api/cad/upload                 # CAD 파일 업로드 (로직 구현됨)
+POST /api/cad/analyze               # CAD 파일 분석 (로직 구현됨)
 ```
+
+> **⚠️ CAD 기능 상태**:
+>
+> - ✅ 업로드/분석 로직 완전 구현
+> - ❌ 실제 .dwg 파일 테스트 미완료 (테스트 데이터 부재)
+> - 🔍 ezdxf 라이브러리 기반 파싱 로직 준비 완료
 
 ## 📈 성능 특성
 
@@ -336,13 +344,14 @@ API 키별 제한:
 
 - [x] 실시간 대시보드 및 KPI 모니터링
 - [x] RAG 기반 AI 챗봇 (CoT 적용)
-- [x] CAD 파일 분석 및 시각화
+- [x] CAD 파일 분석 로직 구현 (⚠️ 실제 파일 테스트 미완료)
 - [x] ML 기반 상품 클러스터링
 - [x] 벡터 데이터베이스 통합
 - [x] 다중 모달 UI (Tab/Browser Mode)
 
 ### 🔄 개선 중인 기능
 
+- [ ] CAD 파일 실제 테스트 및 검증 (테스트 데이터 필요)
 - [ ] 실시간 데이터 동기화
 - [ ] 고급 이상 감지 알고리즘
 - [ ] 모바일 반응형 UI
@@ -402,7 +411,17 @@ rawdata/
 ├── 입고데이터_20250101.xlsx  # 또는 InboundData_20250101.csv
 ├── 출고데이터_20250101.xlsx  # 또는 OutboundData_20250101.csv
 └── 상품데이터.xlsx          # 또는 product_data.csv
+```
 
+### **CAD 파일 테스트 (선택사항)**
+
+```bash
+# CAD 기능 테스트를 위한 파일 준비
+cad_uploads/
+└── test.dwg                 # 또는 test.dxf
+
+⚠️ 주의: 실제 CAD 파일이 없어도 시스템은 정상 작동합니다.
+CAD 관련 기능은 로직만 구현되어 있으며, 실제 파일 테스트는 미완료 상태입니다.
 ```
 
 ## 🐛 문제 해결
@@ -422,7 +441,14 @@ pip install chromadb sentence-transformers --upgrade
 # 여러 API 키 설정으로 rate limit 회피
 ```
 
-**3. 차트 높이 무한 증가**
+**3. CAD 파일 업로드 시 오류**
+
+```bash
+# 정상 동작: CAD 로직은 구현되어 있으나 실제 파일 테스트 미완료
+# 업로드 시도 시 파싱 결과는 시뮬레이션 데이터로 응답
+```
+
+**4. 차트 높이 무한 증가**
 
 ```bash
 # 이미 수정됨: Chart.js aspectRatio 및 CSS max-height 적용
