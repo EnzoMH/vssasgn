@@ -129,17 +129,33 @@ class MLClusteringManager {
 
   async loadClusters() {
     try {
+      console.log("🔄 클러스터 데이터 로딩 시작...");
       const response = await fetch("/api/ml/product-clustering/clusters");
 
       if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        const errorData = await response.text();
+        console.error("❌ API 응답 오류:", response.status, errorData);
+
+        // 404 오류인 경우 (모델이 훈련되지 않은 경우) 자동 훈련 시도
+        if (response.status === 404) {
+          this.showClustersError(
+            "모델이 훈련되지 않았습니다. 자동 훈련을 시도합니다..."
+          );
+          await this.autoTrainModel();
+          return; // 재귀 호출을 위해 리턴
+        }
+
+        throw new Error(`HTTP ${response.status}: ${errorData}`);
       }
 
-      this.clustersData = await response.json();
+      const data = await response.json();
+      console.log("✅ 클러스터 데이터 로드 성공:", data);
+
+      this.clustersData = data;
       this.renderClustersOverview();
       this.renderClusterChart();
     } catch (error) {
-      console.error("클러스터 데이터 로딩 실패:", error);
+      console.error("❌ 클러스터 데이터 로딩 실패:", error);
       this.showClustersError(error.message);
     }
   }
@@ -582,13 +598,56 @@ class MLClusteringManager {
     }
   }
 
+  async autoTrainModel() {
+    try {
+      console.log("🤖 자동 모델 훈련 시작...");
+      this.showClustersError("모델 훈련 중입니다. 잠시만 기다려주세요...");
+
+      const response = await fetch("/api/ml/product-clustering/retrain", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`훈련 실패: HTTP ${response.status}`);
+      }
+
+      const result = await response.json();
+      console.log("✅ 모델 훈련 완료:", result);
+
+      // 훈련 완료 후 다시 클러스터 데이터 로드
+      this.showClustersError(
+        "모델 훈련 완료! 클러스터 데이터를 다시 로드합니다..."
+      );
+      setTimeout(() => {
+        this.loadClusters();
+      }, 2000);
+    } catch (error) {
+      console.error("❌ 자동 훈련 실패:", error);
+      this.showClustersError(
+        `자동 훈련 실패: ${error.message}. 수동으로 '모델 재훈련' 버튼을 클릭해주세요.`
+      );
+    }
+  }
+
   showClustersError(message) {
     if (!this.clustersOverview) return;
 
+    const alertClass =
+      message.includes("훈련 중") || message.includes("로드")
+        ? "alert-info"
+        : "alert-danger";
+    const icon =
+      message.includes("훈련 중") || message.includes("로드")
+        ? "fa-spinner fa-spin"
+        : "fa-exclamation-triangle";
+
     this.clustersOverview.innerHTML = `
-      <div class="alert alert-danger text-center">
-        <i class="fas fa-exclamation-triangle"></i> 
-        클러스터 데이터 로딩 실패: ${message}
+      <div class="alert ${alertClass} text-center">
+        <i class="fas ${icon}"></i> 
+        ${message}
       </div>
     `;
   }

@@ -182,13 +182,121 @@ body {
   border: 1px solid var(--gray-200);
   min-height: 400px;
   max-height: 600px; /* 최대 높이 제한 */
-  overflow: hidden; /* 넘치는 내용 숨김 */
+  overflow-y: auto; /* 세로 스크롤 활성화 */
+  overflow-x: hidden; /* 가로 스크롤 숨김 */
 }
 
 /* 차트 canvas 자체의 높이도 제한 */
 .chart-container canvas {
   max-height: 500px !important;
   width: 100% !important;
+}
+
+/* ML 클러스터링 컨테이너 특별 스타일 */
+.ml-clustering-container {
+  max-height: 80vh; /* 화면 높이의 80%로 제한 */
+  overflow-y: auto; /* 세로 스크롤 강제 활성화 */
+  padding-right: 1rem; /* 스크롤바를 위한 여백 */
+}
+
+/* 클러스터 개요 섹션 스크롤 최적화 */
+.clusters-overview {
+  max-height: none; /* 높이 제한 해제 */
+  padding-bottom: 1rem;
+}
+
+/* 브라우저 모드 클러스터 개요 카드 스타일 */
+.clusters-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.cluster-overview-card {
+  background: var(--white);
+  border-radius: var(--border-radius);
+  padding: 1rem;
+  box-shadow: var(--shadow);
+  border: 1px solid var(--gray-200);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.cluster-overview-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg);
+}
+
+.cluster-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.cluster-header h5 {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--gray-800);
+  margin: 0;
+}
+
+.cluster-size {
+  background: var(--primary);
+  color: white;
+  padding: 0.25rem 0.5rem;
+  border-radius: var(--border-radius-sm);
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.cluster-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.cluster-percentage {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--primary);
+  margin: 0;
+}
+
+.cluster-strategy {
+  font-size: 0.875rem;
+  color: var(--gray-600);
+  margin: 0;
+}
+
+.cluster-summary {
+  text-align: center;
+  padding-top: 1rem;
+  border-top: 1px solid var(--gray-200);
+}
+
+/* 스크롤바 스타일링 (Webkit 기반 브라우저) */
+.chart-container::-webkit-scrollbar,
+.ml-clustering-container::-webkit-scrollbar {
+  width: 8px;
+}
+
+.chart-container::-webkit-scrollbar-track,
+.ml-clustering-container::-webkit-scrollbar-track {
+  background: var(--gray-100);
+  border-radius: 4px;
+}
+
+.chart-container::-webkit-scrollbar-thumb,
+.ml-clustering-container::-webkit-scrollbar-thumb {
+  background: var(--gray-400);
+  border-radius: 4px;
+  transition: background-color 0.2s ease;
+}
+
+.chart-container::-webkit-scrollbar-thumb:hover,
+.ml-clustering-container::-webkit-scrollbar-thumb:hover {
+  background: var(--gray-500);
 }
 
 .chart-header {
@@ -688,7 +796,8 @@ body {
   border-radius: var(--border-radius-sm);
   padding: 1rem;
   margin-top: 1rem;
-  overflow: hidden; /* 넘치는 내용 숨김 */
+  overflow-y: auto; /* 세로 스크롤 활성화 */
+  overflow-x: hidden; /* 가로 스크롤 숨김 */
 }
 
 #aiGeneratedChart {

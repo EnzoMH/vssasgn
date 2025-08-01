@@ -219,8 +219,10 @@ class ChartManager {
     this.charts[id] = chart;
   }
 
-  // 랙별 재고 현황 바 차트
+  // 랙별 재고 현황 바 차트 (실제 rawdata 기반)
   createInventoryChart(data, canvasId = "inventoryChart") {
+    console.log("📦 재고 차트 데이터:", data);
+
     const ctx = document.getElementById(canvasId);
     if (!ctx) return;
 
@@ -301,6 +303,8 @@ class ChartManager {
 
   // 일별 입출고 트렌드 라인 차트
   createTrendChart(data, canvasId = "trendChart") {
+    console.log("📈 트렌드 차트 데이터:", data);
+
     const ctx = document.getElementById(canvasId);
     if (!ctx) return;
 
@@ -389,8 +393,10 @@ class ChartManager {
     return chart;
   }
 
-  // 제품 카테고리 분포 파이 차트
+  // 제품 카테고리 분포 파이 차트 (실제 rawdata 기반)
   createCategoryChart(data, canvasId = "categoryChart") {
+    console.log("📊 카테고리 차트 데이터:", data);
+
     const ctx = document.getElementById(canvasId);
     if (!ctx) return;
 

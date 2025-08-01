@@ -14,7 +14,8 @@ from sklearn.metrics import silhouette_score, calinski_harabasz_score
 from sklearn.decomposition import PCA
 import json
 import joblib
-from ml_feature_engineering import ProductFeatureExtractor
+import os
+from backend.app.models.ml_feature_engineering import ProductFeatureExtractor
 import warnings
 warnings.filterwarnings('ignore')
 
@@ -177,8 +178,13 @@ class ProductClustererTrainer:
         """모델과 결과 저장"""
         print("\n💾 모델 및 결과 저장 중...")
         
+        # 저장 디렉토리 생성
+        os.makedirs('backend/app/models', exist_ok=True)
+        
         # 모델 저장
-        joblib.dump(model, 'trained_product_clusterer.pkl')
+        model_path = 'backend/app/models/trained_product_clusterer.pkl'
+        joblib.dump(model, model_path)
+        print(f"✅ 모델 저장 완료: {model_path}")
         
         # 결과 저장
         final_results = {
@@ -196,12 +202,14 @@ class ProductClustererTrainer:
             }
         }
         
-        with open('product_cluster_results.json', 'w', encoding='utf-8') as f:
+        results_path = 'backend/app/models/product_cluster_results.json'
+        with open(results_path, 'w', encoding='utf-8') as f:
             json.dump(final_results, f, ensure_ascii=False, indent=2, default=str)
+        print(f"✅ 결과 저장 완료: {results_path}")
         
         print("✅ 저장 완료:")
-        print("   - trained_product_clusterer.pkl")
-        print("   - product_cluster_results.json")
+        print("   - backend/app/models/trained_product_clusterer.pkl")
+        print("   - backend/app/models/product_cluster_results.json")
     
     def train_complete_pipeline(self):
         """전체 훈련 파이프라인 실행"""

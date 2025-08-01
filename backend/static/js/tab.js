@@ -85,10 +85,10 @@ class ViewModeManager {
         fetch("/api/product/category-distribution").then((r) => r.json()),
       ]);
 
-      // Browser 모드용 차트 생성
-      chartManager.createInventoryChart(inventoryData, "browserInventoryChart");
-      chartManager.createTrendChart(trendData, "browserTrendChart");
-      chartManager.createCategoryChart(categoryData, "browserCategoryChart");
+      // Browser 모드용 차트 생성 (표준 ID 사용)
+      chartManager.createInventoryChart(inventoryData, "inventoryChart");
+      chartManager.createTrendChart(trendData, "trendChart");
+      chartManager.createCategoryChart(categoryData, "categoryChart");
 
       // Browser 모드 추가 기능 초기화
       this.initializeBrowserModeFeatures();
@@ -163,52 +163,183 @@ class ViewModeManager {
 
   async loadClusterChart(prefix = "") {
     try {
+      console.log("🔄 브라우저 모드 클러스터 차트 로딩...");
       const response = await fetch("/api/ml/product-clustering/clusters");
-      const data = await response.json();
 
-      if (data.clusters && window.chartManager) {
+      if (!response.ok) {
+        console.warn("❌ 클러스터 API 오류:", response.status);
+        this.showBrowserClusterError(
+          prefix,
+          "클러스터 데이터를 불러올 수 없습니다."
+        );
+        return;
+      }
+
+      const data = await response.json();
+      console.log("✅ 브라우저 모드 클러스터 데이터:", data);
+
+      if (data.clusters && data.clusters.length > 0) {
         const chartData = {
-          labels: data.clusters.map((c) => `클러스터 ${c.cluster_id}`),
+          labels: data.clusters.map(
+            (c) => c.cluster_name || `클러스터 ${c.cluster_id}`
+          ),
           datasets: [
             {
-              data: data.clusters.map((c) => c.product_count),
-              backgroundColor: [
-                "rgba(59, 130, 246, 0.8)",
-                "rgba(16, 185, 129, 0.8)",
-                "rgba(245, 158, 11, 0.8)",
-                "rgba(239, 68, 68, 0.8)",
-                "rgba(139, 92, 246, 0.8)",
-                "rgba(236, 72, 153, 0.8)",
-              ],
+              data: data.clusters.map((c) => c.size),
+              backgroundColor: data.clusters.map((c, index) => {
+                // API에서 color 제공하면 사용, 아니면 기본 색상 배열
+                return (
+                  c.color ||
+                  [
+                    "rgba(59, 130, 246, 0.8)",
+                    "rgba(16, 185, 129, 0.8)",
+                    "rgba(245, 158, 11, 0.8)",
+                    "rgba(239, 68, 68, 0.8)",
+                    "rgba(139, 92, 246, 0.8)",
+                    "rgba(236, 72, 153, 0.8)",
+                  ][index % 6]
+                );
+              }),
+              borderColor: "#ffffff",
+              borderWidth: 2,
             },
           ],
         };
 
         const ctx = document.getElementById(
-          `${prefix}ClusterDistributionChart`
+          prefix ? `${prefix}ClusterDistributionChart` : "clusterDistributionChart"
         );
         if (ctx) {
-          new Chart(ctx, {
+          // 기존 차트가 있으면 제거
+          if (ctx.chart) {
+            ctx.chart.destroy();
+          }
+
+          ctx.chart = new Chart(ctx, {
             type: "doughnut",
             data: chartData,
             options: {
               responsive: true,
               maintainAspectRatio: false,
               plugins: {
-                legend: { position: "bottom" },
+                legend: {
+                  position: "bottom",
+                  labels: {
+                    padding: 20,
+                    usePointStyle: true,
+                  },
+                },
+                tooltip: {
+                  callbacks: {
+                    label: function (context) {
+                      const cluster = data.clusters[context.dataIndex];
+                      return `${context.label}: ${context.parsed}개 (${cluster.percentage}%)`;
+                    },
+                  },
+                },
               },
             },
           });
         }
+
+        // 클러스터 개요 정보도 업데이트
+        this.updateBrowserClusterOverview(prefix, data);
+      } else {
+        this.showBrowserClusterError(
+          prefix,
+          "표시할 클러스터 데이터가 없습니다."
+        );
       }
     } catch (error) {
-      console.warn("클러스터 차트 로드 실패:", error);
+      console.error("❌ 클러스터 차트 로드 실패:", error);
+      this.showBrowserClusterError(prefix, `차트 로드 실패: ${error.message}`);
     }
   }
 
+  showBrowserClusterError(prefix, message) {
+    const overviewElement = document.getElementById(
+      `${prefix}ClustersOverview`
+    );
+    if (overviewElement) {
+      overviewElement.innerHTML = `
+        <div class="alert alert-warning text-center">
+          <i class="fas fa-exclamation-triangle"></i> 
+          ${message}
+        </div>
+      `;
+    }
+  }
+
+  updateBrowserClusterOverview(prefix, data) {
+    const overviewElement = document.getElementById(
+      `${prefix}ClustersOverview`
+    );
+    if (!overviewElement || !data.clusters) return;
+
+    const clusterCards = data.clusters
+      .map(
+        (cluster) => `
+      <div class="cluster-overview-card">
+        <div class="cluster-header">
+          <h5>${cluster.cluster_name}</h5>
+          <span class="cluster-size">${cluster.size}개</span>
+        </div>
+        <div class="cluster-info">
+          <p class="cluster-percentage">${cluster.percentage}%</p>
+          <p class="cluster-strategy">${cluster.strategy}</p>
+        </div>
+      </div>
+    `
+      )
+      .join("");
+
+    overviewElement.innerHTML = `
+      <div class="clusters-grid">
+        ${clusterCards}
+      </div>
+      <div class="cluster-summary">
+        <p class="text-muted">총 ${data.total_products}개 상품이 ${data.clusters.length}개 클러스터로 분류되었습니다.</p>
+      </div>
+    `;
+  }
+
   async retrainMLModel(prefix = "") {
-    // 모델 재훈련 로직 (구현 예정)
-    console.log(`${prefix} 모드 ML 모델 재훈련`);
+    try {
+      console.log(`🔄 ${prefix} 모드 ML 모델 재훈련 시작...`);
+
+      const retrainBtn = document.getElementById(`${prefix}RetrainModelBtn`);
+      if (retrainBtn) {
+        retrainBtn.disabled = true;
+        retrainBtn.innerHTML =
+          '<i class="fas fa-spinner fa-spin"></i> 훈련 중...';
+      }
+
+      const response = await fetch("/api/ml/product-clustering/retrain", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+      });
+
+      if (!response.ok) {
+        throw new Error(`훈련 실패: HTTP ${response.status}`);
+      }
+
+      const result = await response.json();
+      console.log("✅ 모델 재훈련 완료:", result);
+
+      // 재훈련 완료 후 상태와 차트 다시 로드
+      await this.loadMLClusteringStatus(prefix);
+
+      NotificationManager.success("모델 재훈련이 완료되었습니다.");
+    } catch (error) {
+      console.error("❌ 모델 재훈련 실패:", error);
+      NotificationManager.error(`모델 재훈련 실패: ${error.message}`);
+    } finally {
+      const retrainBtn = document.getElementById(`${prefix}RetrainModelBtn`);
+      if (retrainBtn) {
+        retrainBtn.disabled = false;
+        retrainBtn.innerHTML = '<i class="fas fa-brain"></i> 모델 재훈련';
+      }
+    }
   }
 
   exportMLResults(prefix = "") {
@@ -931,30 +1062,39 @@ class LOIChartManager {
     this.showLoading(true);
 
     try {
-      // API 호출 (dashboard.js의 기존 데이터 활용)
-      let inventoryData;
+      console.log("📦 실제 rawdata 기반 LOI 데이터 로딩 시작...");
 
-      try {
-        const response = await fetch("/api/inventory/by-rack");
-        inventoryData = await response.json();
+      // 실제 rawdata 기반 API 호출
+      const response = await fetch("/api/inventory/by-rack");
 
-        // 데이터가 배열이 아닌 경우 더미 데이터 사용
-        if (!Array.isArray(inventoryData)) {
-          throw new Error("잘못된 데이터 형식");
-        }
-      } catch (apiError) {
-        console.warn("API 호출 실패, 더미 데이터 사용:", apiError);
-        // 더미 데이터로 대체
-        inventoryData = this.generateDummyData();
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
 
+      const inventoryData = await response.json();
+
+      // 데이터 유효성 검증
+      if (!Array.isArray(inventoryData)) {
+        throw new Error("서버에서 잘못된 데이터 형식을 반환했습니다.");
+      }
+
+      if (inventoryData.length === 0) {
+        console.warn("⚠️ 랙 데이터가 비어있습니다. 데이터 로딩을 확인하세요.");
+        this.showError("랙 데이터가 없습니다. 데이터 로딩 상태를 확인하세요.");
+        return;
+      }
+
+      console.log(`✅ LOI 데이터 로드 성공: ${inventoryData.length}개 랙`);
+      console.log("샘플 데이터:", inventoryData.slice(0, 3));
+
+      // 실제 데이터로 차트 및 테이블 렌더링
       this.renderChart(inventoryData);
       this.renderTable(inventoryData);
       this.renderCards(inventoryData);
       this.updateDisplayMode();
     } catch (error) {
-      console.error("LOI 데이터 로드 오류:", error);
-      this.showError("데이터를 불러오는데 실패했습니다.");
+      console.error("❌ LOI 데이터 로드 실패:", error);
+      this.showError(`데이터 로딩 실패: ${error.message}`);
     } finally {
       this.isLoading = false;
       this.showLoading(false);
@@ -1069,9 +1209,8 @@ class LOIChartManager {
 
     this.loiTableBody.innerHTML = data
       .map((item) => {
-        const utilizationPercent = Math.round(
-          (item.currentStock / item.capacity) * 100
-        );
+        // 실제 데이터에서 활용률 사용 (이미 계산되어 제공됨)
+        const utilizationPercent = Math.round(item.utilizationRate || 0);
         const status = this.getStatus(utilizationPercent);
 
         return `

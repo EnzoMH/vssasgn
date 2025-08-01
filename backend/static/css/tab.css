@@ -248,6 +248,9 @@
   border-radius: 0 0 var(--border-radius) var(--border-radius);
   padding: 2rem;
   min-height: 500px;
+  max-height: 85vh; /* 화면 높이의 85%로 제한 */
+  overflow-y: auto; /* 세로 스크롤 활성화 */
+  overflow-x: hidden; /* 가로 스크롤 숨김 */
 }
 
 .tab-content {
@@ -257,6 +260,30 @@
 
 .tab-content.active {
   display: block;
+}
+
+/* 탭 컨테이너 스크롤바 스타일링 (Webkit 기반 브라우저) */
+.tab-content-container::-webkit-scrollbar,
+.loi-chart-container::-webkit-scrollbar {
+  width: 8px;
+}
+
+.tab-content-container::-webkit-scrollbar-track,
+.loi-chart-container::-webkit-scrollbar-track {
+  background: var(--tab-bg-secondary);
+  border-radius: 4px;
+}
+
+.tab-content-container::-webkit-scrollbar-thumb,
+.loi-chart-container::-webkit-scrollbar-thumb {
+  background: var(--tab-text-secondary);
+  border-radius: 4px;
+  transition: background-color 0.2s ease;
+}
+
+.tab-content-container::-webkit-scrollbar-thumb:hover,
+.loi-chart-container::-webkit-scrollbar-thumb:hover {
+  background: var(--tab-text-primary);
 }
 
 @keyframes fadeIn {
@@ -312,6 +339,9 @@
 
 .loi-chart-container {
   padding: 1.5rem 2rem;
+  max-height: 70vh; /* 화면 높이의 70%로 제한 */
+  overflow-y: auto; /* 세로 스크롤 활성화 */
+  overflow-x: hidden; /* 가로 스크롤 숨김 */
 }
 
 .loi-chart-view {

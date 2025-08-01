@@ -116,6 +116,75 @@ class DataService:
         self.data_loaded = True
         print("모든 데이터 로딩 완료.")
 
+    def get_current_summary(self):
+        """현재 창고 상태 요약 정보 반환"""
+        if not self.data_loaded:
+            return {
+                "error": "데이터가 로드되지 않았습니다",
+                "total_products": 0,
+                "total_inventory": 0,
+                "daily_inbound": 0,
+                "daily_outbound": 0
+            }
+        
+        try:
+            summary = {
+                "total_products": len(self.product_master) if self.product_master is not None else 0,
+                "total_inventory": int(self.product_master['현재고'].sum()) if '현재고' in self.product_master.columns else 0,
+                "daily_inbound": len(self.inbound_data) if self.inbound_data is not None else 0,
+                "daily_outbound": len(self.outbound_data) if self.outbound_data is not None else 0,
+                "available_racks": list(self.product_master['랙위치'].unique()) if '랙위치' in self.product_master.columns else []
+            }
+            return summary
+        except Exception as e:
+            print(f"요약 정보 생성 중 오류: {e}")
+            return {"error": str(e)}
+    
+    def calculate_daily_turnover_rate(self):
+        """일별 재고회전율 계산 (7일 평균)"""
+        if not self.data_loaded:
+            return 0.0
+            
+        try:
+            # 총 출고량 (7일간)
+            total_outbound = len(self.outbound_data) if self.outbound_data is not None else 0
+            # 평균 재고량
+            avg_inventory = float(self.product_master['현재고'].sum()) if '현재고' in self.product_master.columns else 1
+            
+            # 일평균 출고량 / 평균 재고량 = 일별 회전율
+            daily_turnover = (total_outbound / 7) / avg_inventory if avg_inventory > 0 else 0
+            return round(daily_turnover, 3)
+        except Exception as e:
+            print(f"회전율 계산 중 오류: {e}")
+            return 0.0
+    
+    def calculate_rack_utilization(self):
+        """랙별 활용률 계산 (현실적인 최대용량 기준)"""
+        if not self.data_loaded or '랙위치' not in self.product_master.columns:
+            return {}
+            
+        try:
+            # 랙별 현재 재고량 집계
+            rack_inventory = self.product_master.groupby('랙위치')['현재고'].sum()
+            
+            # 현실적인 최대용량 설정 (A-Z 각각 60개 용량)
+            rack_utilization = {}
+            for rack in rack_inventory.index:
+                current_stock = int(rack_inventory[rack])
+                max_capacity = 60  # 알파벳 랙당 최대 60개 (50개 + 10개 여유분)
+                utilization_rate = (current_stock / max_capacity) * 100
+                
+                rack_utilization[rack] = {
+                    "current_stock": current_stock,
+                    "max_capacity": max_capacity,
+                    "utilization_rate": round(utilization_rate, 1)
+                }
+            
+            return rack_utilization
+        except Exception as e:
+            print(f"랙 활용률 계산 중 오류: {e}")
+            return {}
+
     def get_relevant_data(self, intent: str):
         if not self.data_loaded:
             print("경고: 데이터가 아직 로드되지 않았습니다. load_all_data()를 먼저 호출하세요.")
@@ -140,4 +209,92 @@ class DataService:
             return {"inbound": self.inbound_data.to_dict(orient='records'),
                     "outbound": self.outbound_data.to_dict(orient='records'),
                     "product_master": self.product_master.to_dict(orient='records'),
-                    "description": "일반적인 질문에 답하기 위한 모든 기본 창고 데이터입니다."} 
+                    "description": "일반적인 질문에 답하기 위한 모든 기본 창고 데이터입니다."}
+    
+    def get_product_category_distribution(self):
+        """실제 rawdata 기반 제품 카테고리 분포 계산"""
+        if not self.data_loaded or self.product_master.empty:
+            return None
+            
+        try:
+            # 제품명 기반 카테고리 분류
+            categories = {
+                '면류/라면': 0,
+                '음료/음료수': 0, 
+                '조미료/양념': 0,
+                '곡물/쌀': 0,
+                '스낵/과자': 0,
+                '기타': 0
+            }
+            
+            for _, product in self.product_master.iterrows():
+                product_name = str(product.get('ProductName', '')).lower()
+                
+                # 카테고리 분류 로직
+                if any(keyword in product_name for keyword in ['라면', '면', '우동', '국수', '탕면', '사발면', '컵라면']):
+                    categories['면류/라면'] += 1
+                elif any(keyword in product_name for keyword in ['콜라', '사이다', '주스', '생수', '음료', '커피', '차', '탄산', '드링크']):
+                    categories['음료/음료수'] += 1
+                elif any(keyword in product_name for keyword in ['간장', '된장', '쌈장', '고추장', '설탕', '엿', '가루', '소스', '양념', '조미료', '케찹']):
+                    categories['조미료/양념'] += 1
+                elif any(keyword in product_name for keyword in ['쌀', '밀가루', '전분', '시리얼']):
+                    categories['곡물/쌀'] += 1
+                elif any(keyword in product_name for keyword in ['깡', '스낵', '과자', '바', '크런치']):
+                    categories['스낵/과자'] += 1
+                else:
+                    categories['기타'] += 1
+            
+            # 차트용 데이터 형식으로 변환
+            result = []
+            for category, count in categories.items():
+                if count > 0:  # 0개인 카테고리는 제외
+                    result.append({
+                        'name': category,
+                        'value': count
+                    })
+            
+            # 개수 기준 내림차순 정렬
+            result.sort(key=lambda x: x['value'], reverse=True)
+            
+            return result
+            
+        except Exception as e:
+            logger.error(f"카테고리 분포 계산 오류: {e}")
+            return None
+    
+    def get_daily_trends_summary(self):
+        """실제 rawdata 기반 일별 입출고 트렌드 계산"""
+        if not self.data_loaded:
+            return None
+            
+        try:
+            import pandas as pd
+            from datetime import datetime
+            
+            # 날짜별 입고/출고량 집계
+            daily_trends = []
+            
+            # 2025.01.01 ~ 2025.01.07 데이터 처리
+            for day in range(1, 8):
+                date_str = f"2025.01.{day:02d}"
+                
+                # 입고 데이터 집계
+                inbound_day = self.inbound_data[self.inbound_data['Date'].str.contains(f"2025.01.{day:02d}", na=False)]
+                total_inbound = inbound_day['PalleteQty'].sum() if not inbound_day.empty else 0
+                
+                # 출고 데이터 집계
+                outbound_day = self.outbound_data[self.outbound_data['Date'].str.contains(f"2025.01.{day:02d}", na=False)]
+                total_outbound = outbound_day['PalleteQty'].sum() if not outbound_day.empty else 0
+                
+                daily_trends.append({
+                    'date': date_str,
+                    'inbound': int(total_inbound),
+                    'outbound': int(total_outbound),
+                    'net_change': int(total_inbound - total_outbound)
+                })
+            
+            return daily_trends
+            
+        except Exception as e:
+            logger.error(f"일별 트렌드 계산 오류: {e}")
+            return None 

@@ -103,29 +103,87 @@ class DashboardManager {
     }
   }
 
-  // KPI 업데이트
+  // KPI 업데이트 (실제 rawdata 기반)
   updateKPIs(data) {
+    console.log("📊 KPI 데이터 업데이트:", data);
+
+    // 데이터 소스 표시 (개발 모드에서만)
+    if (data.data_source === "rawdata") {
+      console.log("✅ 실제 rawdata 기반 KPI 로드됨");
+    }
+
     if (this.kpiElements.totalInventory) {
       this.kpiElements.totalInventory.textContent = NumberUtils.formatNumber(
         data.total_inventory
       );
+      // 총재고량 상태 색상 업데이트
+      this.updateKPIStatus(
+        "totalInventoryCard",
+        data.total_inventory,
+        800,
+        1200
+      );
     }
+
     if (this.kpiElements.dailyThroughput) {
       this.kpiElements.dailyThroughput.textContent = NumberUtils.formatNumber(
         data.daily_throughput
       );
+      // 일일처리량 상태 색상 업데이트
+      this.updateKPIStatus(
+        "dailyThroughputCard",
+        data.daily_throughput,
+        300,
+        500
+      );
     }
+
     if (this.kpiElements.rackUtilization) {
       this.kpiElements.rackUtilization.textContent =
         NumberUtils.formatPercentage(data.rack_utilization);
+      // 랙활용률 상태 색상 업데이트
+      this.updateKPIStatus(
+        "rackUtilizationCard",
+        data.rack_utilization,
+        60,
+        85
+      );
     }
+
     if (this.kpiElements.inventoryTurnover) {
       this.kpiElements.inventoryTurnover.textContent =
         NumberUtils.formatDecimal(data.inventory_turnover);
+      // 재고회전율 상태 색상 업데이트
+      this.updateKPIStatus(
+        "inventoryTurnoverCard",
+        data.inventory_turnover,
+        0.5,
+        2.0
+      );
     }
 
     // KPI 카드 애니메이션 효과
     this.animateKPICards();
+  }
+
+  // KPI 상태별 색상 업데이트
+  updateKPIStatus(cardId, value, lowThreshold, highThreshold) {
+    const card = document.getElementById(cardId);
+    if (!card) return;
+
+    // 기존 상태 클래스 제거
+    card.classList.remove("kpi-low", "kpi-normal", "kpi-high", "kpi-critical");
+
+    // 새로운 상태 클래스 추가
+    if (value < lowThreshold) {
+      card.classList.add("kpi-low");
+    } else if (value >= lowThreshold && value <= highThreshold) {
+      card.classList.add("kpi-normal");
+    } else if (value > highThreshold && value <= highThreshold * 1.2) {
+      card.classList.add("kpi-high");
+    } else {
+      card.classList.add("kpi-critical");
+    }
   }
 
   // KPI 카드 애니메이션
