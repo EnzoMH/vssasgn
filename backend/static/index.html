@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Smart Warehouse Management System</title>
     <link rel="stylesheet" href="/static/css/style.css" />
+    <link rel="stylesheet" href="/static/css/tab.css" />
     <!-- Chart.js CDN -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <!-- Font Awesome for icons -->
@@ -21,6 +22,18 @@
           <i class="fas fa-warehouse"></i> Smart Warehouse Management System
         </h1>
         <div class="header-actions">
+          <div class="view-mode-toggle">
+            <button id="browserModeBtn" class="btn btn-sm btn-outline-primary">
+              <i class="fas fa-th"></i> Browser
+            </button>
+            <button id="tabModeBtn" class="btn btn-sm btn-primary active">
+              <i class="fas fa-window-restore"></i> Tab
+            </button>
+          </div>
+          <button id="themeToggle" class="theme-toggle">
+            <i class="fas fa-moon"></i>
+            <span>다크모드</span>
+          </button>
           <button id="refreshBtn" class="btn btn-primary">
             <i class="fas fa-sync-alt"></i> 새로고침
           </button>
@@ -80,270 +93,595 @@
         </div>
       </section>
 
-      <!-- 차트 섹션 -->
-      <section class="charts-section">
-        <!-- 랙별 재고 현황 -->
-        <div class="chart-container">
-          <div class="chart-header">
-            <h3><i class="fas fa-chart-bar"></i> 랙별 재고 현황</h3>
-          </div>
-          <canvas id="inventoryChart"></canvas>
-        </div>
-
-        <!-- 일별 입출고 트렌드 -->
-        <div class="chart-container">
-          <div class="chart-header">
-            <h3><i class="fas fa-chart-line"></i> 일별 입출고 트렌드</h3>
-          </div>
-          <canvas id="trendChart"></canvas>
-        </div>
-
-        <!-- 제품 카테고리 분포 -->
-        <div class="chart-container">
-          <div class="chart-header">
-            <h3><i class="fas fa-chart-pie"></i> 제품 카테고리 분포</h3>
-          </div>
-          <canvas id="categoryChart"></canvas>
-        </div>
-
-        <!-- ML 모델 결과 -->
-        <div class="chart-container">
-          <div class="chart-header">
-            <h3><i class="fas fa-brain"></i> AI 분석 결과</h3>
-            <div class="ml-controls">
-              <button id="demandPredictBtn" class="btn btn-sm btn-primary">
-                수요 예측
-              </button>
-              <button id="clusterAnalysisBtn" class="btn btn-sm btn-secondary">
-                제품 클러스터링
-              </button>
-              <button id="anomalyDetectionBtn" class="btn btn-sm btn-warning">
-                이상 탐지
-              </button>
-            </div>
-          </div>
-          <div id="mlResults" class="ml-results">
-            <p>AI 분석 버튼을 클릭하여 결과를 확인하세요.</p>
-          </div>
-        </div>
-
-        <!-- AI 차트 생성 -->
-        <div class="chart-container ai-chart-container">
-          <div class="chart-header">
-            <h3><i class="fas fa-magic"></i> AI 차트 생성</h3>
-            <div class="ai-chart-controls">
-              <div class="input-group">
-                <input
-                  type="text"
-                  id="chartRequestInput"
-                  class="form-control"
-                  placeholder="원하는 차트를 자연어로 요청하세요. 예: '최근 일주일 입고량을 막대차트로', '랙별 재고를 파이차트로'"
-                />
-                <button id="generateChartBtn" class="btn btn-primary">
-                  <i class="fas fa-chart-bar"></i> 차트 생성
-                </button>
-              </div>
-              <div class="quick-chart-buttons mt-2">
-                <button
-                  class="btn btn-sm btn-outline-primary quick-chart-btn"
-                  data-request="최근 7일간 입고량을 막대차트로 보여줘"
-                >
-                  입고 트렌드
-                </button>
-                <button
-                  class="btn btn-sm btn-outline-secondary quick-chart-btn"
-                  data-request="랙별 재고 현황을 막대차트로 보여줘"
-                >
-                  랙별 재고
-                </button>
-                <button
-                  class="btn btn-sm btn-outline-success quick-chart-btn"
-                  data-request="공급업체별 입고량을 파이차트로 보여줘"
-                >
-                  공급업체 분석
-                </button>
-                <button
-                  class="btn btn-sm btn-outline-warning quick-chart-btn"
-                  data-request="상품별 출고량을 막대차트로 보여줘"
-                >
-                  상품별 출고
-                </button>
-              </div>
-            </div>
-          </div>
-          <div class="ai-chart-content">
-            <canvas id="aiGeneratedChart" style="min-height: 400px"></canvas>
-          </div>
-        </div>
-
-        <!-- DWG CAD 시각화 섹션 -->
-        <div class="chart-container cad-container">
-          <div class="chart-header">
-            <h3><i class="fas fa-drafting-compass"></i> DWG CAD 시각화</h3>
-            <div class="cad-controls">
-              <button id="uploadCADBtn" class="btn btn-primary">
-                <i class="fas fa-upload"></i> DWG 업로드
-              </button>
-              <button id="toggleLayersBtn" class="btn btn-secondary" disabled>
-                <i class="fas fa-layer-group"></i> 레이어
-              </button>
-              <button id="zoomFitBtn" class="btn btn-secondary" disabled>
-                <i class="fas fa-expand"></i> 전체보기
-              </button>
-            </div>
-          </div>
-
-          <!-- CAD 파일 업로드 영역 -->
-          <div id="cadUploadArea" class="cad-upload-area">
-            <div class="upload-dropzone" id="cadDropzone">
-              <div class="upload-icon">
-                <i class="fas fa-file-code"></i>
-              </div>
-              <h4>DWG/DXF 파일 업로드</h4>
-              <p>창고 도면 파일을 드래그하거나 클릭하여 업로드하세요</p>
-              <p class="upload-hint">지원 형식: .dwg, .dxf, .dwf (최대 50MB)</p>
-              <input
-                type="file"
-                id="cadFileInput"
-                accept=".dwg,.dxf,.dwf"
-                style="display: none"
-              />
-              <button id="selectCADFileBtn" class="btn btn-primary">
-                <i class="fas fa-folder-open"></i> 파일 선택
-              </button>
-            </div>
-          </div>
-
-          <!-- CAD 뷰어 영역 -->
-          <div id="cadViewer" class="cad-viewer" style="display: none">
-            <div class="cad-canvas-container">
-              <canvas id="warehouseCanvas" width="1000" height="600"></canvas>
-              <div class="cad-loading" id="cadLoading" style="display: none">
-                <div class="loading-spinner">
-                  <i class="fas fa-spinner fa-spin"></i>
-                  <p>도면을 분석하고 있습니다...</p>
-                </div>
-              </div>
-            </div>
-
-            <!-- CAD 정보 패널 -->
-            <div class="cad-info-panel" id="cadInfoPanel">
-              <h5><i class="fas fa-info-circle"></i> 선택된 영역 정보</h5>
-              <div id="selectedRackInfo">
-                <p>랙을 클릭하면 상세 정보가 표시됩니다.</p>
-              </div>
-            </div>
-          </div>
-
-          <!-- CAD 업로드 진행률 -->
-          <div
-            id="cadUploadProgress"
-            class="upload-progress"
-            style="display: none"
-          >
-            <div class="progress-bar">
-              <div class="progress-fill" id="cadProgressFill"></div>
-            </div>
-            <div class="progress-text" id="cadProgressText">
-              파일 업로드 중...
-            </div>
-          </div>
-
-          <!-- CAD 분석 결과 -->
-          <div
-            id="cadAnalysisResult"
-            class="upload-result"
-            style="display: none"
-          ></div>
-        </div>
-
-        <!-- ML 제품 클러스터링 섹션 -->
-        <div class="chart-container ml-clustering-container">
-          <div class="chart-header">
-            <h3><i class="fas fa-project-diagram"></i> ML 제품 클러스터링</h3>
-            <div class="ml-controls">
-              <button id="refreshClustersBtn" class="btn btn-primary">
-                <i class="fas fa-sync-alt"></i> 새로고침
-              </button>
-              <button id="retrainModelBtn" class="btn btn-warning">
-                <i class="fas fa-brain"></i> 모델 재훈련
-              </button>
-              <button id="exportClustersBtn" class="btn btn-success">
-                <i class="fas fa-download"></i> 결과 내보내기
-              </button>
-            </div>
-          </div>
-
-          <!-- 모델 상태 표시 -->
-          <div id="mlModelStatus" class="model-status-panel">
-            <div class="status-item">
-              <span class="status-label">모델 상태:</span>
-              <span id="modelStatusText" class="status-value">로딩 중...</span>
-            </div>
-            <div class="status-item">
-              <span class="status-label">훈련 시간:</span>
-              <span id="modelTrainedAt" class="status-value">-</span>
-            </div>
-            <div class="status-item">
-              <span class="status-label">클러스터 수:</span>
-              <span id="modelClusters" class="status-value">-</span>
-            </div>
-            <div class="status-item">
-              <span class="status-label">분석 상품:</span>
-              <span id="modelProducts" class="status-value">-</span>
-            </div>
-          </div>
-
-          <!-- 클러스터 개요 카드들 -->
-          <div id="clustersOverview" class="clusters-overview">
-            <div class="overview-loading">
-              <i class="fas fa-spinner fa-spin"></i> 클러스터 데이터 로딩 중...
-            </div>
-          </div>
-
-          <!-- 고회전 상품 하이라이트 -->
-          <div class="highlight-section">
-            <h4><i class="fas fa-star"></i> 고회전 상품 (최우선 관리)</h4>
-            <div id="highTurnoverProducts" class="high-turnover-grid">
-              <div class="loading-placeholder">
-                <i class="fas fa-spinner fa-spin"></i> 고회전 상품 분석 중...
-              </div>
-            </div>
-          </div>
-
-          <!-- 상품 검색 및 분석 -->
-          <div class="product-search-section">
-            <h4><i class="fas fa-search"></i> 상품별 클러스터 분석</h4>
-            <div class="search-input-group">
-              <input
-                type="text"
-                id="productCodeInput"
-                placeholder="상품 코드를 입력하세요 (예: 1000661578)"
-                class="form-control"
-              />
-              <button id="searchProductBtn" class="btn btn-primary">
-                <i class="fas fa-search"></i> 분석
-              </button>
-            </div>
-            <div
-              id="productAnalysisResult"
-              class="product-analysis-result"
-              style="display: none"
+      <!-- LOI 차트 섹션 -->
+      <section class="loi-section">
+        <div class="loi-header">
+          <h3><i class="fas fa-chart-bar"></i> 랙별 재고 현황 (LOI)</h3>
+          <div class="loi-controls">
+            <button id="refreshLOIBtn" class="btn btn-sm btn-primary">
+              <i class="fas fa-sync-alt"></i> 새로고침
+            </button>
+            <button id="exportLOIBtn" class="btn btn-sm btn-secondary">
+              <i class="fas fa-download"></i> 내보내기
+            </button>
+            <button
+              id="switchLOIViewBtn"
+              class="btn btn-sm btn-outline-secondary"
             >
-              <!-- 상품별 분석 결과가 여기에 표시됩니다 -->
-            </div>
+              <i class="fas fa-table"></i> 테이블 보기
+            </button>
+          </div>
+        </div>
+        <div class="loi-chart-container">
+          <div id="loiLoading" class="loi-loading">
+            <i class="fas fa-spinner fa-spin"></i> 데이터 로딩 중...
+          </div>
+          <!-- LOI 차트 -->
+          <div id="loiChartView" class="loi-chart-view">
+            <canvas id="loiChart" style="max-height: 400px"></canvas>
           </div>
 
-          <!-- 클러스터 상세 차트 -->
-          <div class="cluster-charts-section">
-            <h4><i class="fas fa-chart-pie"></i> 클러스터 분포 차트</h4>
-            <canvas
-              id="clusterDistributionChart"
-              style="max-height: 400px"
-            ></canvas>
+          <!-- LOI 테이블 (숨김) -->
+          <div id="loiTableView" class="loi-table-view" style="display: none">
+            <table id="loiTable" class="loi-table">
+              <thead>
+                <tr>
+                  <th>랙명</th>
+                  <th>현재재고</th>
+                  <th>최대용량</th>
+                  <th>활용률</th>
+                  <th>상태</th>
+                  <th>액션</th>
+                </tr>
+              </thead>
+              <tbody id="loiTableBody">
+                <!-- 데이터가 JavaScript로 동적 생성됩니다 -->
+              </tbody>
+            </table>
+
+            <!-- 모바일용 카드 레이아웃 -->
+            <div id="loiCards" class="loi-cards" style="display: none">
+              <!-- 모바일 카드들이 JavaScript로 동적 생성됩니다 -->
+            </div>
           </div>
         </div>
       </section>
+
+      <!-- Browser 모드 (기존 2x2 그리드) -->
+      <section
+        class="browser-mode-section"
+        id="browserModeSection"
+        style="display: none"
+      >
+        <div class="charts-section">
+          <!-- 랙별 재고 현황 -->
+          <div class="chart-container">
+            <div class="chart-header">
+              <h3><i class="fas fa-chart-bar"></i> 랙별 재고 현황</h3>
+            </div>
+            <canvas id="browserInventoryChart"></canvas>
+          </div>
+
+          <!-- 일별 입출고 트렌드 -->
+          <div class="chart-container">
+            <div class="chart-header">
+              <h3><i class="fas fa-chart-line"></i> 일별 입출고 트렌드</h3>
+            </div>
+            <canvas id="browserTrendChart"></canvas>
+          </div>
+
+          <!-- 제품 카테고리 분포 -->
+          <div class="chart-container">
+            <div class="chart-header">
+              <h3><i class="fas fa-chart-pie"></i> 제품 카테고리 분포</h3>
+            </div>
+            <canvas id="browserCategoryChart"></canvas>
+          </div>
+
+          <!-- AI 분석 결과 -->
+          <div class="chart-container">
+            <div class="chart-header">
+              <h3><i class="fas fa-brain"></i> AI 분석 결과</h3>
+              <div class="ml-controls">
+                <button
+                  id="browserDemandPredictBtn"
+                  class="btn btn-sm btn-primary"
+                >
+                  수요 예측
+                </button>
+                <button
+                  id="browserClusterAnalysisBtn"
+                  class="btn btn-sm btn-secondary"
+                >
+                  제품 클러스터링
+                </button>
+                <button
+                  id="browserAnomalyDetectionBtn"
+                  class="btn btn-sm btn-warning"
+                >
+                  이상 탐지
+                </button>
+              </div>
+            </div>
+            <div id="browserMlResults" class="ml-results">
+              <p>AI 분석 버튼을 클릭하여 결과를 확인하세요.</p>
+            </div>
+          </div>
+
+          <!-- CAD 뷰어 -->
+          <div class="chart-container cad-container">
+            <div class="chart-header">
+              <h3><i class="fas fa-drafting-compass"></i> DWG CAD 시각화</h3>
+              <div class="cad-controls">
+                <button id="browserUploadCADBtn" class="btn btn-primary">
+                  <i class="fas fa-upload"></i> DWG 업로드
+                </button>
+                <button
+                  id="browserToggleLayersBtn"
+                  class="btn btn-secondary"
+                  disabled
+                >
+                  <i class="fas fa-layer-group"></i> 레이어
+                </button>
+                <button
+                  id="browserZoomFitBtn"
+                  class="btn btn-secondary"
+                  disabled
+                >
+                  <i class="fas fa-expand"></i> 전체보기
+                </button>
+              </div>
+            </div>
+
+            <!-- CAD 파일 업로드 영역 -->
+            <div id="browserCadUploadArea" class="cad-upload-area">
+              <div class="upload-dropzone" id="browserCadDropzone">
+                <div class="upload-icon">
+                  <i class="fas fa-file-code"></i>
+                </div>
+                <h4>DWG/DXF 파일 업로드</h4>
+                <p>창고 도면 파일을 드래그하거나 클릭하여 업로드하세요</p>
+                <p class="upload-hint">
+                  지원 형식: .dwg, .dxf, .dwf (최대 50MB)
+                </p>
+                <input
+                  type="file"
+                  id="browserCadFileInput"
+                  accept=".dwg,.dxf,.dwf"
+                  style="display: none"
+                />
+                <button id="browserSelectCADFileBtn" class="btn btn-primary">
+                  <i class="fas fa-folder-open"></i> 파일 선택
+                </button>
+              </div>
+            </div>
+
+            <!-- CAD 뷰어 영역 -->
+            <div id="browserCadViewer" class="cad-viewer" style="display: none">
+              <div class="cad-canvas-container">
+                <canvas
+                  id="browserWarehouseCanvas"
+                  width="800"
+                  height="400"
+                ></canvas>
+                <div
+                  class="cad-loading"
+                  id="browserCadLoading"
+                  style="display: none"
+                >
+                  <div class="loading-spinner">
+                    <i class="fas fa-spinner fa-spin"></i>
+                    <p>도면을 분석하고 있습니다...</p>
+                  </div>
+                </div>
+              </div>
+
+              <!-- CAD 정보 패널 -->
+              <div class="cad-info-panel" id="browserCadInfoPanel">
+                <h5><i class="fas fa-info-circle"></i> 선택된 영역 정보</h5>
+                <div id="browserSelectedRackInfo">
+                  <p>랙을 클릭하면 상세 정보가 표시됩니다.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- ML 제품 클러스터링 -->
+          <div class="chart-container ml-clustering-container">
+            <div class="chart-header">
+              <h3><i class="fas fa-project-diagram"></i> ML 제품 클러스터링</h3>
+              <div class="ml-controls">
+                <button id="browserRefreshClustersBtn" class="btn btn-primary">
+                  <i class="fas fa-sync-alt"></i> 새로고침
+                </button>
+                <button id="browserRetrainModelBtn" class="btn btn-warning">
+                  <i class="fas fa-brain"></i> 모델 재훈련
+                </button>
+                <button id="browserExportClustersBtn" class="btn btn-success">
+                  <i class="fas fa-download"></i> 결과 내보내기
+                </button>
+              </div>
+            </div>
+
+            <!-- 모델 상태 표시 -->
+            <div id="browserMlModelStatus" class="model-status-panel">
+              <div class="status-item">
+                <span class="status-label">모델 상태:</span>
+                <span id="browserModelStatusText" class="status-value"
+                  >로딩 중...</span
+                >
+              </div>
+              <div class="status-item">
+                <span class="status-label">훈련 시간:</span>
+                <span id="browserModelTrainedAt" class="status-value">-</span>
+              </div>
+              <div class="status-item">
+                <span class="status-label">클러스터 수:</span>
+                <span id="browserModelClusters" class="status-value">-</span>
+              </div>
+              <div class="status-item">
+                <span class="status-label">분석 상품:</span>
+                <span id="browserModelProducts" class="status-value">-</span>
+              </div>
+            </div>
+
+            <!-- 클러스터 개요 카드들 -->
+            <div id="browserClustersOverview" class="clusters-overview">
+              <div class="overview-loading">
+                <i class="fas fa-spinner fa-spin"></i> 클러스터 데이터 로딩
+                중...
+              </div>
+            </div>
+
+            <!-- 클러스터 상세 차트 -->
+            <div class="cluster-charts-section">
+              <h4><i class="fas fa-chart-pie"></i> 클러스터 분포 차트</h4>
+              <canvas
+                id="browserClusterDistributionChart"
+                style="max-height: 300px"
+              ></canvas>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 탭 네비게이션 -->
+      <div class="tab-navigation-container" id="tabModeSection">
+        <nav class="tab-navigation" id="tabNavigation">
+          <button
+            class="tab-button active"
+            data-tab="inventory"
+            draggable="true"
+          >
+            <i class="fas fa-chart-bar"></i>
+            <span>재고현황</span>
+          </button>
+          <button class="tab-button" data-tab="trends" draggable="true">
+            <i class="fas fa-chart-line"></i>
+            <span>트렌드분석</span>
+          </button>
+          <button class="tab-button" data-tab="ai-analysis" draggable="true">
+            <i class="fas fa-brain"></i>
+            <span>AI분석</span>
+          </button>
+          <button class="tab-button" data-tab="ai-charts" draggable="true">
+            <i class="fas fa-magic"></i>
+            <span>AI차트생성</span>
+          </button>
+          <button class="tab-button" data-tab="cad-viewer" draggable="true">
+            <i class="fas fa-drafting-compass"></i>
+            <span>CAD뷰어</span>
+          </button>
+          <button class="tab-button" data-tab="ml-clustering" draggable="true">
+            <i class="fas fa-project-diagram"></i>
+            <span>ML클러스터링</span>
+          </button>
+        </nav>
+
+        <div class="tab-content-container" id="tabContentContainer">
+          <!-- 재고현황 탭 -->
+          <div class="tab-content active" id="inventory-tab">
+            <div class="chart-container">
+              <div class="chart-header">
+                <h3><i class="fas fa-chart-bar"></i> 랙별 재고 현황</h3>
+              </div>
+              <canvas id="inventoryChart"></canvas>
+            </div>
+
+            <div class="chart-container">
+              <div class="chart-header">
+                <h3><i class="fas fa-chart-pie"></i> 제품 카테고리 분포</h3>
+              </div>
+              <canvas id="categoryChart"></canvas>
+            </div>
+          </div>
+
+          <!-- 트렌드분석 탭 -->
+          <div class="tab-content" id="trends-tab">
+            <div class="chart-container">
+              <div class="chart-header">
+                <h3><i class="fas fa-chart-line"></i> 일별 입출고 트렌드</h3>
+              </div>
+              <canvas id="trendChart"></canvas>
+            </div>
+          </div>
+
+          <!-- AI분석 탭 -->
+          <div class="tab-content" id="ai-analysis-tab">
+            <div class="chart-container">
+              <div class="chart-header">
+                <h3><i class="fas fa-brain"></i> AI 분석 결과</h3>
+                <div class="ml-controls">
+                  <button id="demandPredictBtn" class="btn btn-sm btn-primary">
+                    수요 예측
+                  </button>
+                  <button
+                    id="clusterAnalysisBtn"
+                    class="btn btn-sm btn-secondary"
+                  >
+                    제품 클러스터링
+                  </button>
+                  <button
+                    id="anomalyDetectionBtn"
+                    class="btn btn-sm btn-warning"
+                  >
+                    이상 탐지
+                  </button>
+                </div>
+              </div>
+              <div id="mlResults" class="ml-results">
+                <p>AI 분석 버튼을 클릭하여 결과를 확인하세요.</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- AI차트생성 탭 -->
+          <div class="tab-content" id="ai-charts-tab">
+            <div class="chart-container ai-chart-container">
+              <div class="chart-header">
+                <h3><i class="fas fa-magic"></i> AI 차트 생성</h3>
+                <div class="ai-chart-controls">
+                  <div class="input-group">
+                    <input
+                      type="text"
+                      id="chartRequestInput"
+                      class="form-control"
+                      placeholder="원하는 차트를 자연어로 요청하세요. 예: '최근 일주일 입고량을 막대차트로', '랙별 재고를 파이차트로'"
+                    />
+                    <button id="generateChartBtn" class="btn btn-primary">
+                      <i class="fas fa-chart-bar"></i> 차트 생성
+                    </button>
+                  </div>
+                  <div class="quick-chart-buttons mt-2">
+                    <button
+                      class="btn btn-sm btn-outline-primary quick-chart-btn"
+                      data-request="최근 7일간 입고량을 막대차트로 보여줘"
+                    >
+                      입고 트렌드
+                    </button>
+                    <button
+                      class="btn btn-sm btn-outline-secondary quick-chart-btn"
+                      data-request="랙별 재고 현황을 막대차트로 보여줘"
+                    >
+                      랙별 재고
+                    </button>
+                    <button
+                      class="btn btn-sm btn-outline-success quick-chart-btn"
+                      data-request="공급업체별 입고량을 파이차트로 보여줘"
+                    >
+                      공급업체 분석
+                    </button>
+                    <button
+                      class="btn btn-sm btn-outline-warning quick-chart-btn"
+                      data-request="상품별 출고량을 막대차트로 보여줘"
+                    >
+                      상품별 출고
+                    </button>
+                  </div>
+                </div>
+              </div>
+              <div class="ai-chart-content">
+                <canvas
+                  id="aiGeneratedChart"
+                  style="min-height: 400px"
+                ></canvas>
+              </div>
+            </div>
+          </div>
+
+          <!-- CAD뷰어 탭 -->
+          <div class="tab-content" id="cad-viewer-tab">
+            <div class="chart-container cad-container">
+              <div class="chart-header">
+                <h3><i class="fas fa-drafting-compass"></i> DWG CAD 시각화</h3>
+                <div class="cad-controls">
+                  <button id="uploadCADBtn" class="btn btn-primary">
+                    <i class="fas fa-upload"></i> DWG 업로드
+                  </button>
+                  <button
+                    id="toggleLayersBtn"
+                    class="btn btn-secondary"
+                    disabled
+                  >
+                    <i class="fas fa-layer-group"></i> 레이어
+                  </button>
+                  <button id="zoomFitBtn" class="btn btn-secondary" disabled>
+                    <i class="fas fa-expand"></i> 전체보기
+                  </button>
+                </div>
+              </div>
+
+              <!-- CAD 파일 업로드 영역 -->
+              <div id="cadUploadArea" class="cad-upload-area">
+                <div class="upload-dropzone" id="cadDropzone">
+                  <div class="upload-icon">
+                    <i class="fas fa-file-code"></i>
+                  </div>
+                  <h4>DWG/DXF 파일 업로드</h4>
+                  <p>창고 도면 파일을 드래그하거나 클릭하여 업로드하세요</p>
+                  <p class="upload-hint">
+                    지원 형식: .dwg, .dxf, .dwf (최대 50MB)
+                  </p>
+                  <input
+                    type="file"
+                    id="cadFileInput"
+                    accept=".dwg,.dxf,.dwf"
+                    style="display: none"
+                  />
+                  <button id="selectCADFileBtn" class="btn btn-primary">
+                    <i class="fas fa-folder-open"></i> 파일 선택
+                  </button>
+                </div>
+              </div>
+
+              <!-- CAD 뷰어 영역 -->
+              <div id="cadViewer" class="cad-viewer" style="display: none">
+                <div class="cad-canvas-container">
+                  <canvas
+                    id="warehouseCanvas"
+                    width="1000"
+                    height="600"
+                  ></canvas>
+                  <div
+                    class="cad-loading"
+                    id="cadLoading"
+                    style="display: none"
+                  >
+                    <div class="loading-spinner">
+                      <i class="fas fa-spinner fa-spin"></i>
+                      <p>도면을 분석하고 있습니다...</p>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- CAD 정보 패널 -->
+                <div class="cad-info-panel" id="cadInfoPanel">
+                  <h5><i class="fas fa-info-circle"></i> 선택된 영역 정보</h5>
+                  <div id="selectedRackInfo">
+                    <p>랙을 클릭하면 상세 정보가 표시됩니다.</p>
+                  </div>
+                </div>
+              </div>
+
+              <!-- CAD 업로드 진행률 -->
+              <div
+                id="cadUploadProgress"
+                class="upload-progress"
+                style="display: none"
+              >
+                <div class="progress-bar">
+                  <div class="progress-fill" id="cadProgressFill"></div>
+                </div>
+                <div class="progress-text" id="cadProgressText">
+                  파일 업로드 중...
+                </div>
+              </div>
+
+              <!-- CAD 분석 결과 -->
+              <div
+                id="cadAnalysisResult"
+                class="upload-result"
+                style="display: none"
+              ></div>
+            </div>
+          </div>
+
+          <!-- ML클러스터링 탭 -->
+          <div class="tab-content" id="ml-clustering-tab">
+            <div class="chart-container ml-clustering-container">
+              <div class="chart-header">
+                <h3>
+                  <i class="fas fa-project-diagram"></i> ML 제품 클러스터링
+                </h3>
+                <div class="ml-controls">
+                  <button id="refreshClustersBtn" class="btn btn-primary">
+                    <i class="fas fa-sync-alt"></i> 새로고침
+                  </button>
+                  <button id="retrainModelBtn" class="btn btn-warning">
+                    <i class="fas fa-brain"></i> 모델 재훈련
+                  </button>
+                  <button id="exportClustersBtn" class="btn btn-success">
+                    <i class="fas fa-download"></i> 결과 내보내기
+                  </button>
+                </div>
+              </div>
+
+              <!-- 모델 상태 표시 -->
+              <div id="mlModelStatus" class="model-status-panel">
+                <div class="status-item">
+                  <span class="status-label">모델 상태:</span>
+                  <span id="modelStatusText" class="status-value"
+                    >로딩 중...</span
+                  >
+                </div>
+                <div class="status-item">
+                  <span class="status-label">훈련 시간:</span>
+                  <span id="modelTrainedAt" class="status-value">-</span>
+                </div>
+                <div class="status-item">
+                  <span class="status-label">클러스터 수:</span>
+                  <span id="modelClusters" class="status-value">-</span>
+                </div>
+                <div class="status-item">
+                  <span class="status-label">분석 상품:</span>
+                  <span id="modelProducts" class="status-value">-</span>
+                </div>
+              </div>
+
+              <!-- 클러스터 개요 카드들 -->
+              <div id="clustersOverview" class="clusters-overview">
+                <div class="overview-loading">
+                  <i class="fas fa-spinner fa-spin"></i> 클러스터 데이터 로딩
+                  중...
+                </div>
+              </div>
+
+              <!-- 고회전 상품 하이라이트 -->
+              <div class="highlight-section">
+                <h4><i class="fas fa-star"></i> 고회전 상품 (최우선 관리)</h4>
+                <div id="highTurnoverProducts" class="high-turnover-grid">
+                  <div class="loading-placeholder">
+                    <i class="fas fa-spinner fa-spin"></i> 고회전 상품 분석
+                    중...
+                  </div>
+                </div>
+              </div>
+
+              <!-- 상품 검색 및 분석 -->
+              <div class="product-search-section">
+                <h4><i class="fas fa-search"></i> 상품별 클러스터 분석</h4>
+                <div class="search-input-group">
+                  <input
+                    type="text"
+                    id="productCodeInput"
+                    placeholder="상품 코드를 입력하세요 (예: 1000661578)"
+                    class="form-control"
+                  />
+                  <button id="searchProductBtn" class="btn btn-primary">
+                    <i class="fas fa-search"></i> 분석
+                  </button>
+                </div>
+                <div
+                  id="productAnalysisResult"
+                  class="product-analysis-result"
+                  style="display: none"
+                >
+                  <!-- 상품별 분석 결과가 여기에 표시됩니다 -->
+                </div>
+              </div>
+
+              <!-- 클러스터 상세 차트 -->
+              <div class="cluster-charts-section">
+                <h4><i class="fas fa-chart-pie"></i> 클러스터 분포 차트</h4>
+                <canvas
+                  id="clusterDistributionChart"
+                  style="max-height: 400px"
+                ></canvas>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     </main>
 
     <!-- AI 챗봇 (우측 하단 고정) -->
@@ -442,6 +780,7 @@
     <script src="/static/js/fileUpload.js"></script>
     <script src="/static/js/cadViewer.js"></script>
     <script src="/static/js/mlClustering.js"></script>
+    <script src="/static/js/tab.js"></script>
     <script src="/static/js/dashboard.js"></script>
   </body>
 </html>

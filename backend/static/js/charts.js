@@ -2,6 +2,7 @@
 class ChartManager {
   constructor() {
     this.charts = {};
+    this.isDarkMode = false;
     this.colors = {
       primary: "#3b82f6",
       secondary: "#10b981",
@@ -9,6 +10,205 @@ class ChartManager {
       danger: "#ef4444",
       gray: "#6b7280",
     };
+
+    // 다크모드 테마 설정
+    this.lightTheme = {
+      textColor: "#1f2937",
+      gridColor: "#e5e7eb",
+      backgroundColor: "#ffffff",
+      backgroundColorSecondary: "#f9fafb",
+    };
+
+    this.darkTheme = {
+      textColor: "#f9fafb",
+      gridColor: "#374151",
+      backgroundColor: "#1f2937",
+      backgroundColorSecondary: "#111827",
+    };
+
+    this.bindThemeEvents();
+  }
+
+  // 테마 이벤트 바인딩
+  bindThemeEvents() {
+    // 테마 변경 이벤트 리스너
+    window.addEventListener("themechange", (e) => {
+      this.setTheme(e.detail.theme);
+    });
+
+    // 초기 테마 감지
+    this.detectInitialTheme();
+  }
+
+  // 초기 테마 감지
+  detectInitialTheme() {
+    const theme =
+      document.documentElement.getAttribute("data-theme") || "light";
+    this.setTheme(theme);
+  }
+
+  // 테마 설정
+  setTheme(theme) {
+    this.isDarkMode = theme === "dark";
+    this.updateChartDefaults();
+    this.updateExistingCharts();
+  }
+
+  // Chart.js 기본값 업데이트
+  updateChartDefaults() {
+    if (!window.Chart) return;
+
+    const currentTheme = this.getCurrentTheme();
+
+    // Chart.js 글로벌 기본값 설정 (v3+ 호환)
+    Chart.defaults.color = currentTheme.textColor;
+    Chart.defaults.borderColor = currentTheme.gridColor;
+    Chart.defaults.backgroundColor = currentTheme.backgroundColor;
+
+    // 플러그인 기본값 (안전한 설정)
+    if (!Chart.defaults.plugins) Chart.defaults.plugins = {};
+    if (!Chart.defaults.plugins.legend) Chart.defaults.plugins.legend = {};
+    if (!Chart.defaults.plugins.legend.labels)
+      Chart.defaults.plugins.legend.labels = {};
+    if (!Chart.defaults.plugins.tooltip) Chart.defaults.plugins.tooltip = {};
+
+    Chart.defaults.plugins.legend.labels.color = currentTheme.textColor;
+    Chart.defaults.plugins.tooltip.backgroundColor =
+      currentTheme.backgroundColor;
+    Chart.defaults.plugins.tooltip.titleColor = currentTheme.textColor;
+    Chart.defaults.plugins.tooltip.bodyColor = currentTheme.textColor;
+  }
+
+  // 기존 차트들의 테마만 업데이트
+  updateExistingCharts() {
+    Object.keys(this.charts).forEach((chartId) => {
+      const chart = this.charts[chartId];
+      if (chart && chart.update) {
+        this.updateChartTheme(chart);
+      }
+    });
+  }
+
+  // 모든 차트 업데이트 (데이터 포함)
+  updateAllCharts() {
+    this.updateExistingCharts();
+  }
+
+  // 개별 차트 테마 업데이트
+  updateChartTheme(chart) {
+    const currentTheme = this.getCurrentTheme();
+
+    // 스케일 색상 업데이트
+    if (chart.options.scales) {
+      Object.keys(chart.options.scales).forEach((scaleId) => {
+        const scale = chart.options.scales[scaleId];
+        if (scale.ticks) {
+          scale.ticks.color = currentTheme.textColor;
+        }
+        if (scale.grid) {
+          scale.grid.color = currentTheme.gridColor;
+        }
+      });
+    }
+
+    // 범례 색상 업데이트
+    if (chart.options.plugins && chart.options.plugins.legend) {
+      chart.options.plugins.legend.labels.color = currentTheme.textColor;
+    }
+
+    // 툴팁 색상 업데이트
+    if (chart.options.plugins && chart.options.plugins.tooltip) {
+      chart.options.plugins.tooltip.backgroundColor =
+        currentTheme.backgroundColor;
+      chart.options.plugins.tooltip.titleColor = currentTheme.textColor;
+      chart.options.plugins.tooltip.bodyColor = currentTheme.textColor;
+    }
+
+    // 데이터셋 색상 업데이트 (필요한 경우)
+    if (chart.data.datasets) {
+      chart.data.datasets.forEach((dataset) => {
+        // 보조 색상들만 테마에 따라 변경
+        if (
+          dataset.backgroundColor === "#e5e7eb" ||
+          dataset.backgroundColor === "#374151"
+        ) {
+          dataset.backgroundColor = this.isDarkMode ? "#374151" : "#e5e7eb";
+        }
+        if (
+          dataset.borderColor === "#d1d5db" ||
+          dataset.borderColor === "#4b5563"
+        ) {
+          dataset.borderColor = this.isDarkMode ? "#4b5563" : "#d1d5db";
+        }
+      });
+    }
+
+    chart.update("none");
+  }
+
+  // 현재 테마 가져오기
+  getCurrentTheme() {
+    return this.isDarkMode ? this.darkTheme : this.lightTheme;
+  }
+
+  // 테마별 옵션 생성
+  getThemedOptions(baseOptions = {}) {
+    const currentTheme = this.getCurrentTheme();
+
+    const themedOptions = {
+      ...baseOptions,
+      plugins: {
+        ...baseOptions.plugins,
+        legend: {
+          ...baseOptions.plugins?.legend,
+          labels: {
+            ...baseOptions.plugins?.legend?.labels,
+            color: currentTheme.textColor,
+          },
+        },
+        tooltip: {
+          ...baseOptions.plugins?.tooltip,
+          backgroundColor: currentTheme.backgroundColor,
+          titleColor: currentTheme.textColor,
+          bodyColor: currentTheme.textColor,
+          borderColor: currentTheme.gridColor,
+          borderWidth: 1,
+        },
+      },
+      scales: {
+        ...baseOptions.scales,
+      },
+    };
+
+    // 스케일 테마 적용
+    if (themedOptions.scales) {
+      Object.keys(themedOptions.scales).forEach((scaleId) => {
+        const scale = themedOptions.scales[scaleId];
+        themedOptions.scales[scaleId] = {
+          ...scale,
+          ticks: {
+            ...scale.ticks,
+            color: currentTheme.textColor,
+          },
+          grid: {
+            ...scale.grid,
+            color: currentTheme.gridColor,
+          },
+        };
+      });
+    }
+
+    return themedOptions;
+  }
+
+  // 모든 차트 리사이즈
+  resizeCharts() {
+    Object.keys(this.charts).forEach((chartId) => {
+      const chart = this.charts[chartId];
+      if (chart && chart.resize) {
+        chart.resize();
+      }
+    });
   }
 
   // 차트 인스턴스 저장
@@ -20,9 +220,54 @@ class ChartManager {
   }
 
   // 랙별 재고 현황 바 차트
-  createInventoryChart(data) {
-    const ctx = document.getElementById("inventoryChart");
+  createInventoryChart(data, canvasId = "inventoryChart") {
+    const ctx = document.getElementById(canvasId);
     if (!ctx) return;
+
+    const currentTheme = this.getCurrentTheme();
+
+    const baseOptions = {
+      responsive: true,
+      maintainAspectRatio: false,
+      aspectRatio: 2,
+      plugins: {
+        title: {
+          display: false,
+        },
+        legend: {
+          position: "top",
+        },
+        tooltip: {
+          callbacks: {
+            label: function (context) {
+              return `${context.dataset.label}: ${NumberUtils.formatNumber(
+                context.parsed.y
+              )}개`;
+            },
+          },
+        },
+      },
+      scales: {
+        y: {
+          beginAtZero: true,
+          max: function (context) {
+            const max = Math.max(
+              ...context.chart.data.datasets.flatMap((dataset) => dataset.data)
+            );
+            return Math.ceil(max * 1.2);
+          },
+          ticks: {
+            callback: function (value) {
+              return NumberUtils.formatNumber(value);
+            },
+            maxTicksLimit: 8,
+          },
+        },
+      },
+      layout: {
+        padding: 10,
+      },
+    };
 
     const chart = new Chart(ctx, {
       type: "bar",
@@ -40,67 +285,23 @@ class ChartManager {
           {
             label: "최대 용량",
             data: data.map((item) => item.capacity),
-            backgroundColor: "#e5e7eb",
-            borderColor: "#d1d5db",
+            backgroundColor: this.isDarkMode ? "#374151" : "#e5e7eb",
+            borderColor: this.isDarkMode ? "#4b5563" : "#d1d5db",
             borderWidth: 1,
             borderRadius: 4,
           },
         ],
       },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        aspectRatio: 2, // 명시적 비율 설정
-        plugins: {
-          title: {
-            display: false,
-          },
-          legend: {
-            position: "top",
-          },
-          tooltip: {
-            callbacks: {
-              label: function (context) {
-                return `${context.dataset.label}: ${NumberUtils.formatNumber(
-                  context.parsed.y
-                )}개`;
-              },
-            },
-          },
-        },
-        scales: {
-          y: {
-            beginAtZero: true,
-            max: function (context) {
-              // Y축 최대값을 데이터 최대값의 1.2배로 제한
-              const max = Math.max(
-                ...context.chart.data.datasets.flatMap(
-                  (dataset) => dataset.data
-                )
-              );
-              return Math.ceil(max * 1.2);
-            },
-            ticks: {
-              callback: function (value) {
-                return NumberUtils.formatNumber(value);
-              },
-              maxTicksLimit: 8, // 최대 틱 개수 제한
-            },
-          },
-        },
-        layout: {
-          padding: 10,
-        },
-      },
+      options: this.getThemedOptions(baseOptions),
     });
 
-    this.setChart("inventory", chart);
+    this.setChart(canvasId, chart);
     return chart;
   }
 
   // 일별 입출고 트렌드 라인 차트
-  createTrendChart(data) {
-    const ctx = document.getElementById("trendChart");
+  createTrendChart(data, canvasId = "trendChart") {
+    const ctx = document.getElementById(canvasId);
     if (!ctx) return;
 
     const chart = new Chart(ctx, {
@@ -184,13 +385,13 @@ class ChartManager {
       },
     });
 
-    this.setChart("trend", chart);
+    this.setChart(canvasId, chart);
     return chart;
   }
 
   // 제품 카테고리 분포 파이 차트
-  createCategoryChart(data) {
-    const ctx = document.getElementById("categoryChart");
+  createCategoryChart(data, canvasId = "categoryChart") {
+    const ctx = document.getElementById(canvasId);
     if (!ctx) return;
 
     // 색상 배열 생성
@@ -247,7 +448,7 @@ class ChartManager {
       },
     });
 
-    this.setChart("category", chart);
+    this.setChart(canvasId, chart);
     return chart;
   }
 
@@ -701,10 +902,4 @@ class ChartManager {
   }
 }
 
-// 전역 차트 매니저 인스턴스
-const chartManager = new ChartManager();
-
-// 윈도우 리사이즈 이벤트 리스너
-window.addEventListener("resize", () => {
-  chartManager.resizeCharts();
-});
+// 차트 매니저는 dashboard.js에서 초기화됨

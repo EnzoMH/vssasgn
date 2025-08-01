@@ -12,6 +12,7 @@ from backend.app.services.data_analysis_service import DataAnalysisService
 from backend.app.services.ai_service import WarehouseAI
 from backend.app.services.vector_db_service import VectorDBService
 from backend.app.services.cad_service import CADService
+from backend.app.services.loi_service import LOIService
 import logging
 import io
 import pandas as pd
@@ -60,6 +61,7 @@ data_analysis_service = DataAnalysisService(data_service, anomaly_detector) # an
 ai_service = WarehouseAI() # AI 서비스 인스턴스 추가
 vector_db_service = VectorDBService(data_service=data_service) # 벡터 DB 서비스 추가
 cad_service = CADService(ai_service=ai_service) # CAD 서비스 추가
+loi_service = LOIService(data_service=data_service) # LOI 서비스 추가
 chatbot = WarehouseChatbot(data_service=data_service, vector_db_service=vector_db_service) # 서비스 주입
 
 # ML 모델 학습 상태
@@ -182,6 +184,26 @@ async def train_product_clusterer():
         logger.error(f"제품 클러스터링 모델 로드 중 오류 발생: {e}")
         model_trained["product_clusterer"] = False
 
+
+@app.get("/api/loi/status")
+async def get_loi_status():
+    """LOI (Level of Inventory) 재고 수준 지표 조회"""
+    if not data_service.data_loaded:
+        raise HTTPException(status_code=404, detail="데이터가 로드되지 않았습니다.")
+    
+    try:
+        loi_metrics = loi_service.calculate_loi_metrics()
+        loi_alerts = loi_service.get_loi_alerts(loi_metrics)
+        
+        return {
+            "success": True,
+            "loi_metrics": loi_metrics,
+            "alerts": loi_alerts,
+            "status": "healthy" if loi_metrics["overall_loi_score"] >= 80 else "warning" if loi_metrics["overall_loi_score"] >= 60 else "critical"
+        }
+    except Exception as e:
+        logger.error(f"LOI 상태 조회 오류: {e}")
+        raise HTTPException(status_code=500, detail=f"LOI 상태 조회 중 오류 발생: {e}")
 
 @app.get("/api/dashboard/kpi")
 async def get_kpi_data():

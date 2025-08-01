@@ -90,11 +90,11 @@ class DashboardManager {
       this.updateKPIs(kpiData);
 
       // 차트 업데이트
-      chartManager.updateAllCharts({
-        inventoryData,
-        trendData,
-        categoryData,
-      });
+      if (chartManager) {
+        chartManager.createInventoryChart(inventoryData);
+        chartManager.createTrendChart(trendData);
+        chartManager.createCategoryChart(categoryData);
+      }
 
       return { kpiData, inventoryData, trendData, categoryData };
     } catch (error) {
@@ -396,11 +396,7 @@ class DashboardManager {
   }
 }
 
-// 전역 대시보드 매니저 인스턴스
-const dashboardManager = new DashboardManager();
-
-// 전역에서 접근 가능하도록 설정
-window.dashboardManager = dashboardManager;
+// 대시보드 매니저는 DOMContentLoaded에서 초기화됨
 
 // AI 차트 생성 기능 초기화
 function initializeAIChartGeneration() {
@@ -784,8 +780,20 @@ function initializeAIAnalysisButtons() {
   console.log("🧠 AI 분석 버튼 기능이 초기화되었습니다.");
 }
 
+// 전역 변수 선언 (중복 제거)
+let dashboardManager;
+let chartManager;
+
 // 페이지 로드 완료 후 초기화
 document.addEventListener("DOMContentLoaded", async () => {
+  // 매니저 인스턴스 생성
+  chartManager = new ChartManager();
+  dashboardManager = new DashboardManager();
+
+  // 전역 접근을 위해 window 객체에 할당
+  window.chartManager = chartManager;
+  window.dashboardManager = dashboardManager;
+
   // 대시보드 초기화
   await dashboardManager.initialize();
 
@@ -806,6 +814,13 @@ document.addEventListener("DOMContentLoaded", async () => {
   );
 });
 
+// 윈도우 리사이즈 이벤트 리스너
+window.addEventListener("resize", () => {
+  if (chartManager) {
+    chartManager.resizeCharts();
+  }
+});
+
 // 에러 핸들링
 window.addEventListener("error", (e) => {
   console.error("전역 오류:", e.error);
@@ -814,6 +829,13 @@ window.addEventListener("error", (e) => {
 
 // 언로드 시 정리
 window.addEventListener("beforeunload", () => {
-  dashboardManager.stopAutoRefresh();
-  chartManager.destroyAllCharts();
+  if (dashboardManager) dashboardManager.stopAutoRefresh();
+  if (chartManager) {
+    // 모든 차트 정리
+    Object.keys(chartManager.charts).forEach((chartId) => {
+      if (chartManager.charts[chartId]) {
+        chartManager.charts[chartId].destroy();
+      }
+    });
+  }
 });

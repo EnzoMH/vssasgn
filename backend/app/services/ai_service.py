@@ -381,46 +381,16 @@ class WarehouseAI:
                 self.logger.debug(f"📤 프롬프트 길이: {len(prompt)}")
                 
                 try:
-                    # Gemini API 안전 설정 추가
-                    safety_settings = [
-                        {
-                            "category": "HARM_CATEGORY_HARASSMENT",
-                            "threshold": "BLOCK_MEDIUM_AND_ABOVE"
-                        },
-                        {
-                            "category": "HARM_CATEGORY_HATE_SPEECH", 
-                            "threshold": "BLOCK_MEDIUM_AND_ABOVE"
-                        },
-                        {
-                            "category": "HARM_CATEGORY_SEXUALLY_EXPLICIT",
-                            "threshold": "BLOCK_MEDIUM_AND_ABOVE"
-                        },
-                        {
-                            "category": "HARM_CATEGORY_DANGEROUS_CONTENT",
-                            "threshold": "BLOCK_MEDIUM_AND_ABOVE"
-                        }
-                    ]
-                    
-                    # async 우선 시도
+                    # 간단한 API 호출
                     try:
-                        response = await model_instance.generate_content_async(
-                            prompt,
-                            safety_settings=safety_settings
-                        )
+                        response = await model_instance.generate_content_async(prompt)
                     except AttributeError:
                         # generate_content_async가 없는 경우 sync 호출
                         self.logger.info(f"🔄 Async 메서드 없음, sync 호출로 대체")
-                        response = model_instance.generate_content(
-                            prompt,
-                            safety_settings=safety_settings
-                        )
+                        response = model_instance.generate_content(prompt)
                 except Exception as api_error:
                     self.logger.warning(f"⚠️ API 호출 실패: {api_error}")
-                    # 안전 설정 없이 재시도
-                    try:
-                        response = model_instance.generate_content(prompt)
-                    except Exception as fallback_error:
-                        raise Exception(f"모든 API 호출 방식 실패: {fallback_error}")
+                    raise Exception(f"API 호출 실패: {api_error}")
                 
                 # 응답 상세 로깅
                 self.logger.debug(f"📥 응답 객체 타입: {type(response)}")
@@ -467,6 +437,88 @@ class WarehouseAI:
                     return f"오류: 모든 API 호출 실패 - 마지막 오류: {str(e)}"
 
         return "오류: 모든 모델 시도 실패"
+    
+    async def answer_with_vector_context(self, question: str, structured_context: str) -> str:
+        """VectorDB 컨텍스트가 포함된 질문에 대한 최적화된 답변"""
+        if not self.gemini_models:
+            return "오류: 사용 가능한 AI 모델이 없습니다."
+        
+        # VectorDB 전용 프롬프트 생성
+        prompt = f"""
+당신은 창고 관리 전문 AI입니다. 검색된 데이터를 바탕으로 정확하고 구체적인 답변을 제공하세요.
+
+{structured_context}
+
+**답변 규칙:**
+1. 검색된 정보를 기반으로 구체적인 수치와 함께 답변
+2. 3-5문장으로 간결하게 답변
+3. 불확실한 정보는 "데이터에 따르면" 등으로 명시
+4. 관련 차트나 데이터가 있으면 참조 언급
+
+답변:"""
+        
+        # 단순화된 API 호출 (한 번만 시도)
+        current_model_info = self._get_next_model()
+        if not current_model_info:
+            return "오류: 사용 가능한 모델이 없습니다."
+        
+        try:
+            model_instance = current_model_info['model']
+            response = await self._call_gemini_api(model_instance, prompt)
+            return response
+        except Exception as e:
+            self.logger.error(f"VectorDB 컨텍스트 처리 실패: {e}")
+            return f"죄송합니다. 검색된 정보를 처리하는 중 오류가 발생했습니다."
+    
+    async def answer_simple_query(self, question: str, context_data: dict) -> str:
+        """간단한 질문에 대한 기본 처리"""
+        if not self.gemini_models:
+            return "오류: 사용 가능한 AI 모델이 없습니다."
+        
+        # 간단한 프롬프트 생성
+        prompt = f"""
+당신은 창고 관리 AI 어시스턴트입니다. 간단하고 직접적으로 답변하세요.
+
+**질문:** {question}
+
+**데이터:** {context_data}
+
+**답변 규칙:**
+1. 간단명료하게 2-3문장으로 답변
+2. 구체적인 숫자가 있으면 포함
+3. 데이터가 부족하면 그 사실을 명시
+
+답변:"""
+        
+        # 빠른 API 호출
+        current_model_info = self._get_next_model()
+        if not current_model_info:
+            return "오류: 사용 가능한 모델이 없습니다."
+        
+        try:
+            model_instance = current_model_info['model']
+            response = await self._call_gemini_api(model_instance, prompt)
+            return response
+        except Exception as e:
+            self.logger.error(f"간단한 질의 처리 실패: {e}")
+            return f"죄송합니다. 질문을 처리하는 중 오류가 발생했습니다."
+    
+    async def _call_gemini_api(self, model_instance, prompt: str) -> str:
+        """간소화된 Gemini API 호출"""
+        try:
+            response = await model_instance.generate_content_async(prompt)
+        except AttributeError:
+            response = model_instance.generate_content(prompt)
+        
+        # 응답 텍스트 추출
+        if hasattr(response, 'text'):
+            return response.text
+        elif hasattr(response, 'candidates') and response.candidates:
+            candidate = response.candidates[0]
+            if hasattr(candidate, 'content') and hasattr(candidate.content, 'parts'):
+                return candidate.content.parts[0].text
+        
+        return str(response)
     
     async def process_query(self, prompt: str) -> str:
         """차트 생성을 위한 단순한 프롬프트 처리 메서드"""
