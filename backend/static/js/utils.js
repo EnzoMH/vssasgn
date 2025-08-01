@@ -154,6 +154,11 @@ class NumberUtils {
 
   static formatPercentage(num) {
     if (typeof num !== "number") return "--%";
+    // 백엔드에서 이미 백분율로 보내주는 경우 (77.7) 처리
+    if (num > 10) {
+      return `${num.toFixed(1)}%`;
+    }
+    // 소수로 보내주는 경우 (0.777) 처리
     return `${(num * 100).toFixed(1)}%`;
   }
 

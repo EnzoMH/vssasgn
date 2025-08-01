@@ -35,12 +35,8 @@
 
 # Legacy directory (excluding from repo)
 /legacy/
-
+/chromadb_storage/
 # Rawdata files (already listed, but ensure no new rawdata files are added)
 
 *.pdf
 *.log
-*.json
-*.dockerignore
-*.yml
-Dockerfile

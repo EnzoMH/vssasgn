@@ -81,6 +81,12 @@ class VectorDBService:
             return False
         
         try:
+            # 데이터 서비스 상태 확인
+            self.logger.info(f"📊 데이터 로드 상태: {self.data_service.data_loaded}")
+            self.logger.info(f"📊 입고 데이터: {len(self.data_service.inbound_data) if self.data_service.inbound_data is not None else 0}개")
+            self.logger.info(f"📊 출고 데이터: {len(self.data_service.outbound_data) if self.data_service.outbound_data is not None else 0}개")
+            self.logger.info(f"📊 제품 데이터: {len(self.data_service.product_master) if self.data_service.product_master is not None else 0}개")
+            
             # 기존 데이터 확인
             existing_count = self.collection.count()
             if existing_count > 0 and not force_rebuild:
@@ -97,25 +103,31 @@ class VectorDBService:
             ids = []
             
             # 입고 데이터 인덱싱
-            if self.data_service.inbound_data is not None:
+            if self.data_service.inbound_data is not None and len(self.data_service.inbound_data) > 0:
                 inbound_docs, inbound_metas, inbound_ids = self._process_inbound_data()
                 documents.extend(inbound_docs)
                 metadatas.extend(inbound_metas)
                 ids.extend(inbound_ids)
+            else:
+                self.logger.warning("⚠️ 입고 데이터가 없거나 비어있습니다.")
             
             # 출고 데이터 인덱싱
-            if self.data_service.outbound_data is not None:
+            if self.data_service.outbound_data is not None and len(self.data_service.outbound_data) > 0:
                 outbound_docs, outbound_metas, outbound_ids = self._process_outbound_data()
                 documents.extend(outbound_docs)
                 metadatas.extend(outbound_metas)
                 ids.extend(outbound_ids)
+            else:
+                self.logger.warning("⚠️ 출고 데이터가 없거나 비어있습니다.")
             
             # 상품 마스터 데이터 인덱싱
-            if self.data_service.product_master is not None:
+            if self.data_service.product_master is not None and len(self.data_service.product_master) > 0:
                 product_docs, product_metas, product_ids = self._process_product_data()
                 documents.extend(product_docs)
                 metadatas.extend(product_metas)
                 ids.extend(product_ids)
+            else:
+                self.logger.warning("⚠️ 제품 마스터 데이터가 없거나 비어있습니다.")
             
             if documents:
                 # 임베딩 생성
@@ -130,7 +142,17 @@ class VectorDBService:
                     ids=ids
                 )
                 
-                self.logger.info(f"✅ 벡터 데이터베이스 인덱싱 완료: {len(documents)}개 문서")
+                # 인덱싱 결과 상세 정보
+                type_counts = {}
+                for meta in metadatas:
+                    data_type = meta.get('type', 'unknown')
+                    type_counts[data_type] = type_counts.get(data_type, 0) + 1
+                
+                self.logger.info(f"✅ 벡터 데이터베이스 인덱싱 완료:")
+                self.logger.info(f"  📊 총 문서: {len(documents)}개")
+                for data_type, count in type_counts.items():
+                    self.logger.info(f"  📋 {data_type}: {count}개")
+                
                 return True
             else:
                 self.logger.warning("⚠️ 인덱싱할 데이터가 없습니다.")
@@ -147,32 +169,43 @@ class VectorDBService:
         ids = []
         
         df = self.data_service.inbound_data
-        for idx, row in df.iterrows():
-            # 자연어 문서 생성
-            doc = f"""
-            입고 정보: {row.get('Supplier', '알 수 없음')} 공급업체에서 {row.get('ProductName', '알 수 없음')} 상품을 
-            {row.get('PalleteQty', 0)}개 파레트 입고했습니다. 
-            날짜: {row.get('Date', '알 수 없음')}, 
-            상품코드: {row.get('ProductCode', '알 수 없음')}, 
-            입고위치: {row.get('InboundPosition', '알 수 없음')}
-            """
-            
-            # 메타데이터 (실제 차트에 사용될 수치 데이터)
-            metadata = {
-                "type": "inbound",
-                "supplier": str(row.get('Supplier', '')),
-                "product_code": str(row.get('ProductCode', '')),
-                "product_name": str(row.get('ProductName', '')),
-                "quantity": float(row.get('PalleteQty', 0)),
-                "date": str(row.get('Date', '')),
-                "position": str(row.get('InboundPosition', '')),
-                "row_index": int(idx)
-            }
-            
-            documents.append(doc.strip())
-            metadatas.append(metadata)
-            ids.append(f"inbound_{idx}")
+        self.logger.info(f"📦 입고 데이터 처리 시작: {len(df)}개 행")
+        self.logger.info(f"📦 입고 데이터 컬럼: {list(df.columns)}")
         
+        for idx, row in df.iterrows():
+            try:
+                # 자연어 문서 생성 (실제 컬럼명 사용)
+                doc = f"""
+                입고 정보: {row.get('Supplier', '알 수 없음')} 공급업체에서 {row.get('ProductName', '알 수 없음')} 상품을 
+                {row.get('PalleteQty', 0)}개 파레트 입고했습니다. 
+                날짜: {row.get('Date', '알 수 없음')}, 
+                상품코드: {row.get('ProductCode', '알 수 없음')}, 
+                입고위치: {row.get('InboundPosition', '알 수 없음')},
+                입고라인: {row.get('InboundLine', '알 수 없음')}
+                """
+                
+                # 메타데이터 (실제 차트에 사용될 수치 데이터)
+                metadata = {
+                    "type": "inbound",
+                    "supplier": str(row.get('Supplier', '')),
+                    "product_code": str(row.get('ProductCode', '')),
+                    "product_name": str(row.get('ProductName', '')),
+                    "quantity": float(row.get('PalleteQty', 0)),
+                    "date": str(row.get('Date', '')),
+                    "position": str(row.get('InboundPosition', '')),
+                    "inbound_line": str(row.get('InboundLine', '')),
+                    "row_index": int(idx)
+                }
+                
+                documents.append(doc.strip())
+                metadatas.append(metadata)
+                ids.append(f"inbound_{idx}")
+                
+            except Exception as e:
+                self.logger.warning(f"⚠️ 입고 데이터 행 {idx} 처리 실패: {e}")
+                continue
+        
+        self.logger.info(f"✅ 입고 데이터 처리 완료: {len(documents)}개 문서 생성")
         return documents, metadatas, ids
     
     def _process_outbound_data(self):
@@ -182,32 +215,43 @@ class VectorDBService:
         ids = []
         
         df = self.data_service.outbound_data
-        for idx, row in df.iterrows():
-            # 자연어 문서 생성
-            doc = f"""
-            출고 정보: {row.get('Business name', '알 수 없음')} 고객사로 {row.get('ProductName', '알 수 없음')} 상품을 
-            {row.get('PalleteQty', 0)}개 파레트 출고했습니다. 
-            날짜: {row.get('Date', '알 수 없음')}, 
-            상품코드: {row.get('ProductCode', '알 수 없음')}, 
-            출고위치: {row.get('ProductPosition', '알 수 없음')}
-            """
-            
-            # 메타데이터
-            metadata = {
-                "type": "outbound",
-                "business_name": str(row.get('Business name', '')),
-                "product_code": str(row.get('ProductCode', '')),
-                "product_name": str(row.get('ProductName', '')),
-                "quantity": float(row.get('PalleteQty', 0)),
-                "date": str(row.get('Date', '')),
-                "position": str(row.get('ProductPosition', '')),
-                "row_index": int(idx)
-            }
-            
-            documents.append(doc.strip())
-            metadatas.append(metadata)
-            ids.append(f"outbound_{idx}")
+        self.logger.info(f"📤 출고 데이터 처리 시작: {len(df)}개 행")
+        self.logger.info(f"📤 출고 데이터 컬럼: {list(df.columns)}")
         
+        for idx, row in df.iterrows():
+            try:
+                # 자연어 문서 생성 (실제 컬럼명 사용)
+                doc = f"""
+                출고 정보: {row.get('Business name', '알 수 없음')} 고객사로 {row.get('ProductName', '알 수 없음')} 상품을 
+                {row.get('PalleteQty', 0)}개 파레트 출고했습니다. 
+                날짜: {row.get('Date', '알 수 없음')}, 
+                상품코드: {row.get('ProductCode', '알 수 없음')}, 
+                출고위치: {row.get('ProductPosition', '알 수 없음')},
+                출고라인: {row.get('OutboundLine', '알 수 없음')}
+                """
+                
+                # 메타데이터
+                metadata = {
+                    "type": "outbound",
+                    "business_name": str(row.get('Business name', '')),
+                    "product_code": str(row.get('ProductCode', '')),
+                    "product_name": str(row.get('ProductName', '')),
+                    "quantity": float(row.get('PalleteQty', 0)),
+                    "date": str(row.get('Date', '')),
+                    "position": str(row.get('ProductPosition', '')),
+                    "outbound_line": str(row.get('OutboundLine', '')),
+                    "row_index": int(idx)
+                }
+                
+                documents.append(doc.strip())
+                metadatas.append(metadata)
+                ids.append(f"outbound_{idx}")
+                
+            except Exception as e:
+                self.logger.warning(f"⚠️ 출고 데이터 행 {idx} 처리 실패: {e}")
+                continue
+        
+        self.logger.info(f"✅ 출고 데이터 처리 완료: {len(documents)}개 문서 생성")
         return documents, metadatas, ids
     
     def _process_product_data(self):
@@ -217,31 +261,42 @@ class VectorDBService:
         ids = []
         
         df = self.data_service.product_master
-        for idx, row in df.iterrows():
-            # 자연어 문서 생성
-            doc = f"""
-            상품 정보: {row.get('ProductName', '알 수 없음')} (코드: {row.get('ProductCode', '알 수 없음')})
-            현재 재고량: {row.get('현재고', 0)} {row.get('Unit', '개')}, 
-            저장위치: {row.get('Rack Name', '알 수 없음')} 랙,
-            시작 재고량: {row.get('Start Pallete Qty', 0)}
-            """
-            
-            # 메타데이터
-            metadata = {
-                "type": "product",
-                "product_code": str(row.get('ProductCode', '')),
-                "product_name": str(row.get('ProductName', '')),
-                "current_stock": float(row.get('현재고', 0)),
-                "unit": str(row.get('Unit', '')),
-                "rack_name": str(row.get('Rack Name', '')),
-                "start_qty": float(row.get('Start Pallete Qty', 0)),
-                "row_index": int(idx)
-            }
-            
-            documents.append(doc.strip())
-            metadatas.append(metadata)
-            ids.append(f"product_{idx}")
+        self.logger.info(f"📋 제품 데이터 처리 시작: {len(df)}개 행")
+        self.logger.info(f"📋 제품 데이터 컬럼: {list(df.columns)}")
         
+        for idx, row in df.iterrows():
+            try:
+                # 자연어 문서 생성 (실제 컬럼명 사용)
+                doc = f"""
+                상품 정보: {row.get('ProductName', '알 수 없음')} (코드: {row.get('ProductCode', '알 수 없음')})
+                현재 재고량: {row.get('현재고', row.get('Start Pallete Qty', 0))} {row.get('Unit', '개')}, 
+                저장위치: {row.get('Rack Name', '알 수 없음')} 랙,
+                시작 재고량: {row.get('Start Pallete Qty', 0)}
+                """
+                
+                # 메타데이터 (현재고 컬럼이 없으면 시작 재고량 사용)
+                current_stock = row.get('현재고', row.get('Start Pallete Qty', 0))
+                
+                metadata = {
+                    "type": "product",
+                    "product_code": str(row.get('ProductCode', '')),
+                    "product_name": str(row.get('ProductName', '')),
+                    "current_stock": float(current_stock),
+                    "unit": str(row.get('Unit', '')),
+                    "rack_name": str(row.get('Rack Name', '')),
+                    "start_qty": float(row.get('Start Pallete Qty', 0)),
+                    "row_index": int(idx)
+                }
+                
+                documents.append(doc.strip())
+                metadatas.append(metadata)
+                ids.append(f"product_{idx}")
+                
+            except Exception as e:
+                self.logger.warning(f"⚠️ 제품 데이터 행 {idx} 처리 실패: {e}")
+                continue
+        
+        self.logger.info(f"✅ 제품 데이터 처리 완료: {len(documents)}개 문서 생성")
         return documents, metadatas, ids
     
     async def search_relevant_data(self, query: str, n_results: int = 20) -> Dict[str, Any]:
@@ -297,18 +352,25 @@ class VectorDBService:
             
             chart_data = {}
             
-            # 입고 관련 쿼리
-            if any(word in query_lower for word in ['입고', '공급업체', 'inbound', 'supplier']):
+            # 입고/공급업체 관련 쿼리 (확장된 키워드)
+            inbound_keywords = ['입고', '공급업체', 'inbound', 'supplier', '납품업체', '업체', '공급', 
+                              'inboundline', 'inboundposition', '입고라인', '입고위치', 'pallete']
+            if any(word in query_lower for word in inbound_keywords):
                 if inbound_data:
                     chart_data.update(self._process_inbound_chart_data(inbound_data, query_lower))
             
-            # 출고 관련 쿼리
-            if any(word in query_lower for word in ['출고', '고객', 'outbound', 'customer']):
+            # 출고/고객 관련 쿼리 (확장된 키워드)
+            outbound_keywords = ['출고', '고객', 'outbound', 'customer', 'business name', '고객사',
+                               'outboundline', 'productposition', '출고라인', '출고위치']
+            if any(word in query_lower for word in outbound_keywords):
                 if outbound_data:
                     chart_data.update(self._process_outbound_chart_data(outbound_data, query_lower))
             
-            # 재고/상품 관련 쿼리
-            if any(word in query_lower for word in ['재고', '상품', '랙', 'inventory', 'product', 'rack']):
+            # 재고/상품/랙 관련 쿼리 (확장된 키워드)
+            product_keywords = ['재고', '상품', '제품', '랙', 'inventory', 'product', 'rack', 'productcode', 
+                              'productname', 'rack name', 'unit', 'start pallete qty', '상품코드', '제품코드', 
+                              '랙명', '랙위치', '단위', '시작재고']
+            if any(word in query_lower for word in product_keywords):
                 if product_data:
                     chart_data.update(self._process_product_chart_data(product_data, query_lower))
             
@@ -324,7 +386,7 @@ class VectorDBService:
     
     def _process_inbound_chart_data(self, inbound_data: List[Dict], query: str) -> Dict[str, Any]:
         """입고 데이터로 차트 데이터 생성"""
-        if '공급업체' in query or 'supplier' in query:
+        if any(word in query for word in ['공급업체', 'supplier', '납품업체', '업체', '공급']):
             # 공급업체별 집계
             supplier_counts = {}
             for item in inbound_data:
@@ -332,11 +394,16 @@ class VectorDBService:
                 quantity = item.get('quantity', 0)
                 supplier_counts[supplier] = supplier_counts.get(supplier, 0) + quantity
             
+            # 상위 10개 공급업체로 정렬
+            sorted_suppliers = sorted(supplier_counts.items(), key=lambda x: x[1], reverse=True)[:10]
+            
             return {
-                "labels": list(supplier_counts.keys()),
-                "data": list(supplier_counts.values()),
-                "title": "공급업체별 입고량",
-                "type": "inbound_by_supplier"
+                "labels": [item[0] for item in sorted_suppliers],
+                "data": [item[1] for item in sorted_suppliers],
+                "title": "주요 공급업체별 입고량 (상위 10개)",
+                "type": "inbound_by_supplier",
+                "total_suppliers": len(supplier_counts),
+                "top_supplier": sorted_suppliers[0] if sorted_suppliers else None
             }
         
         elif '날짜' in query or '일별' in query or 'daily' in query:
@@ -358,7 +425,7 @@ class VectorDBService:
     
     def _process_outbound_chart_data(self, outbound_data: List[Dict], query: str) -> Dict[str, Any]:
         """출고 데이터로 차트 데이터 생성"""
-        if '고객' in query or 'customer' in query or 'business' in query:
+        if any(word in query for word in ['고객', 'customer', 'business', '고객사', 'business name']):
             # 고객사별 집계
             business_counts = {}
             for item in outbound_data:
@@ -366,14 +433,19 @@ class VectorDBService:
                 quantity = item.get('quantity', 0)
                 business_counts[business] = business_counts.get(business, 0) + quantity
             
+            # 상위 10개 고객사로 정렬
+            sorted_businesses = sorted(business_counts.items(), key=lambda x: x[1], reverse=True)[:10]
+            
             return {
-                "labels": list(business_counts.keys()),
-                "data": list(business_counts.values()),
-                "title": "고객사별 출고량",
-                "type": "outbound_by_business"
+                "labels": [item[0] for item in sorted_businesses],
+                "data": [item[1] for item in sorted_businesses],
+                "title": "주요 고객사별 출고량 (상위 10개)",
+                "type": "outbound_by_business",
+                "total_customers": len(business_counts),
+                "top_customer": sorted_businesses[0] if sorted_businesses else None
             }
         
-        elif '상품' in query or 'product' in query:
+        elif any(word in query for word in ['상품', 'product', 'productname', 'productcode', '제품']):
             # 상품별 집계
             product_counts = {}
             for item in outbound_data:
@@ -381,18 +453,38 @@ class VectorDBService:
                 quantity = item.get('quantity', 0)
                 product_counts[product] = product_counts.get(product, 0) + quantity
             
+            # 상위 10개 상품으로 정렬
+            sorted_products = sorted(product_counts.items(), key=lambda x: x[1], reverse=True)[:10]
+            
             return {
-                "labels": list(product_counts.keys()),
-                "data": list(product_counts.values()),
-                "title": "상품별 출고량",
-                "type": "outbound_by_product"
+                "labels": [item[0] for item in sorted_products],
+                "data": [item[1] for item in sorted_products],
+                "title": "주요 출고 상품 (상위 10개)",
+                "type": "outbound_by_product",
+                "total_products": len(product_counts),
+                "top_product": sorted_products[0] if sorted_products else None
+            }
+        
+        elif any(word in query for word in ['날짜', '일별', 'daily', 'date', '기간']):
+            # 날짜별 집계
+            date_counts = {}
+            for item in outbound_data:
+                date = item.get('date', '알 수 없음')
+                quantity = item.get('quantity', 0)
+                date_counts[date] = date_counts.get(date, 0) + quantity
+            
+            return {
+                "labels": list(date_counts.keys()),
+                "data": list(date_counts.values()),
+                "title": "일별 출고량",
+                "type": "outbound_by_date"
             }
         
         return {}
     
     def _process_product_chart_data(self, product_data: List[Dict], query: str) -> Dict[str, Any]:
         """상품 데이터로 차트 데이터 생성"""
-        if '랙' in query or 'rack' in query:
+        if any(word in query for word in ['랙', 'rack', 'rack name', '랙명', '랙위치', '위치']):
             # 랙별 집계
             rack_counts = {}
             for item in product_data:
@@ -400,11 +492,48 @@ class VectorDBService:
                 stock = item.get('current_stock', 0)
                 rack_counts[rack] = rack_counts.get(rack, 0) + stock
             
+            # 랙별 정렬 (알파벳 순)
+            sorted_racks = sorted(rack_counts.items())
+            
             return {
-                "labels": list(rack_counts.keys()),
-                "data": list(rack_counts.values()),
+                "labels": [item[0] for item in sorted_racks],
+                "data": [item[1] for item in sorted_racks],
                 "title": "랙별 재고량",
-                "type": "inventory_by_rack"
+                "type": "inventory_by_rack",
+                "total_racks": len(rack_counts)
+            }
+        
+        elif any(word in query for word in ['상품', 'product', 'productname', 'productcode', '제품', '품목']):
+            # 상품별 재고량 집계
+            product_counts = {}
+            for item in product_data:
+                product = item.get('product_name', '알 수 없음')
+                stock = item.get('current_stock', 0)
+                product_counts[product] = stock  # 재고는 합계가 아닌 개별 값
+            
+            # 상위 10개 상품으로 정렬
+            sorted_products = sorted(product_counts.items(), key=lambda x: x[1], reverse=True)[:10]
+            
+            return {
+                "labels": [item[0] for item in sorted_products],
+                "data": [item[1] for item in sorted_products],
+                "title": "상품별 재고량 (상위 10개)",
+                "type": "inventory_by_product",
+                "total_products": len(product_counts)
+            }
+        
+        elif any(word in query for word in ['unit', '단위', 'box', 'pac', 'kg', 'ea']):
+            # 단위별 집계
+            unit_counts = {}
+            for item in product_data:
+                unit = item.get('unit', '알 수 없음')
+                unit_counts[unit] = unit_counts.get(unit, 0) + 1
+            
+            return {
+                "labels": list(unit_counts.keys()),
+                "data": list(unit_counts.values()),
+                "title": "단위별 상품 개수",
+                "type": "products_by_unit"
             }
         
         return {}
@@ -484,11 +613,15 @@ class VectorDBService:
         
         try:
             count = self.collection.count()
+            encoder_name = "ko-sroberta-multitask" if hasattr(self.encoder, 'model_name') else "unknown"
+            
             return {
                 "status": "ready",
                 "document_count": count,
                 "collection_name": self.collection.name,
-                "encoder_model": "jhgan/ko-sroberta-multitask"
+                "encoder_model": encoder_name,
+                "is_initialized": self.is_initialized,
+                "collection_exists": self.collection is not None
             }
         except Exception as e:
             return {

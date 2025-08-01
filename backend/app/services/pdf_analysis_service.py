@@ -9,7 +9,7 @@ try:
 except ImportError:
     fitz = None
 
-from .ai_service import WarehouseAI
+from ai_service import WarehouseAI
 
 class PDFAnalysisService:
     """PDF 문서 분석 및 AI 처리 서비스"""
@@ -377,6 +377,14 @@ async def analyze_vss_assignment(pdf_path: str = None) -> Dict[str, Any]:
 # 실행 스크립트
 if __name__ == "__main__":
     import asyncio
+    import sys
+    from pathlib import Path
+    
+    # 프로젝트 루트 디렉토리로 작업 디렉토리 변경
+    current_file = Path(__file__).resolve()
+    project_root = current_file.parent.parent.parent.parent  # vss_asgnM 디렉토리
+    os.chdir(project_root)
+    print(f"🔄 작업 디렉토리 변경: {project_root}")
     
     async def main():
         try:

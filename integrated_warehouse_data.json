@@ -1,0 +1,6298 @@
+{
+  "metadata": {
+    "generated_at": "2025-07-30T23:41:33.661851",
+    "data_period": "2025-01-01 ~ 2025-01-07",
+    "total_files_processed": 15,
+    "data_quality_score": 93.7
+  },
+  "raw_data_summary": {
+    "inbound_records": 706,
+    "outbound_records": 707,
+    "product_master_records": 101
+  },
+  "data_validation": {
+    "product_code_matching": {
+      "master_products": 101,
+      "inbound_products": 128,
+      "outbound_products": 101,
+      "inbound_match_rate": 78.91,
+      "outbound_match_rate": 100.0,
+      "unmatched_inbound": [
+        "(?꾪궎?ㅻ쭏??NEW?묐뀗?뚮?李?DC,?곗쑁(?뚮?李?:援?궛?쒖슦,2KG/PACK",
+        "?,?ㅻ뒛?,DC,援?궛,誘몄븘??20KG/PAC",
+        "(?몃뱶李⑥?)NEW?뚮즺而?32?⑥뒪),?щ챸,DC,500EA/BOX",
+        "已꾧퉫?쒕찓諛援?닔,DC,諛:?몄＜??誘멸뎅???띻뎅硫?1KG/PAC",
+        "?띻뎅援?닔,?뚮㈃,DC,諛:?몄＜??誘멸뎅???띻뎅硫?3KG/PAC"
+      ],
+      "unmatched_outbound": []
+    },
+    "date_continuity": {
+      "inbound_date_range": "2025-01-01 ~ 2025-01-07",
+      "outbound_date_range": "2025-01-01 ~ 2025-01-07",
+      "inbound_unique_dates": 7,
+      "outbound_unique_dates": 7,
+      "date_gaps": []
+    },
+    "data_completeness": {
+      "inbound_missing_values": {
+        "RowName": 0,
+        "PalleteQty": 0,
+        "InboundLine": 0,
+        "Supplier": 0,
+        "ProductCode": 0,
+        "ProductName": 0,
+        "InboundPosition": 0,
+        "Date": 28,
+        "source_file": 0
+      },
+      "outbound_missing_values": {
+        "RowName": 0,
+        "PalleteQty": 0,
+        "OutboundLine": 0,
+        "Business name": 0,
+        "ProductCode": 0,
+        "ProductName": 0,
+        "ProductPosition": 0,
+        "Date": 0,
+        "source_file": 0
+      },
+      "product_missing_values": {
+        "RowName": 0,
+        "ProductCode": 0,
+        "ProductName": 0,
+        "Unit": 0,
+        "Rack Name": 0,
+        "Start Pallete Qty": 0
+      }
+    },
+    "anomaly_detection": {}
+  },
+  "inventory_analysis": {
+    "products": [
+      {
+        "product_code": "1000687102",
+        "product_name": "새우탕,큰사발면,DC,농심,1.84KG(115G*16EA)/BOX",
+        "unit": "BOX",
+        "rack_name": "A",
+        "initial_stock": 10,
+        "total_inbound": 12,
+        "total_outbound": 12,
+        "current_stock": 10,
+        "stock_status": "충분",
+        "turnover_ratio": 1.2,
+        "daily_movements": [
+          {
+            "date": "2025-01-01",
+            "inbound": 1,
+            "outbound": 2,
+            "net_change": -1
+          },
+          {
+            "date": "2025-01-02",
+            "inbound": 1,
+            "outbound": 1,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-03",
+            "inbound": 2,
+            "outbound": 1,
+            "net_change": 1
+          },
+          {
+            "date": "2025-01-04",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-05",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-06",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-07",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          }
+        ]
+      },
+      {
+        "product_code": "1000730150",
+        "product_name": "구수한된장(VB),DC,대두:외국산,참고을,14KG/EA",
+        "unit": "EA",
+        "rack_name": "A",
+        "initial_stock": 10,
+        "total_inbound": 14,
+        "total_outbound": 14,
+        "current_stock": 10,
+        "stock_status": "충분",
+        "turnover_ratio": 1.4,
+        "daily_movements": [
+          {
+            "date": "2025-01-01",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-02",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-03",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-04",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-05",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-06",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-07",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          }
+        ]
+      },
+      {
+        "product_code": "1000625273",
+        "product_name": "펩시콜라캔,DC,250ML/EA,30EA/BOX",
+        "unit": "EA",
+        "rack_name": "A",
+        "initial_stock": 10,
+        "total_inbound": 12,
+        "total_outbound": 12,
+        "current_stock": 10,
+        "stock_status": "충분",
+        "turnover_ratio": 1.2,
+        "daily_movements": [
+          {
+            "date": "2025-01-01",
+            "inbound": 1,
+            "outbound": 2,
+            "net_change": -1
+          },
+          {
+            "date": "2025-01-02",
+            "inbound": 1,
+            "outbound": 1,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-03",
+            "inbound": 2,
+            "outbound": 1,
+            "net_change": 1
+          },
+          {
+            "date": "2025-01-04",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-05",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-06",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-07",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          }
+        ]
+      },
+      {
+        "product_code": "1000661715",
+        "product_name": "순수생수,DC,2L*6EA/BOX",
+        "unit": "BOX",
+        "rack_name": "A",
+        "initial_stock": 10,
+        "total_inbound": 13,
+        "total_outbound": 13,
+        "current_stock": 10,
+        "stock_status": "충분",
+        "turnover_ratio": 1.3,
+        "daily_movements": [
+          {
+            "date": "2025-01-01",
+            "inbound": 1,
+            "outbound": 2,
+            "net_change": -1
+          },
+          {
+            "date": "2025-01-02",
+            "inbound": 3,
+            "outbound": 1,
+            "net_change": 2
+          },
+          {
+            "date": "2025-01-03",
+            "inbound": 1,
+            "outbound": 3,
+            "net_change": -2
+          },
+          {
+            "date": "2025-01-04",
+            "inbound": 2,
+            "outbound": 1,
+            "net_change": 1
+          },
+          {
+            "date": "2025-01-05",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-06",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-07",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          }
+        ]
+      },
+      {
+        "product_code": "1000709016",
+        "product_name": "사조튀김가루,DC,사조동아원,1KG/PAC",
+        "unit": "PAC",
+        "rack_name": "A",
+        "initial_stock": 10,
+        "total_inbound": 17,
+        "total_outbound": 17,
+        "current_stock": 10,
+        "stock_status": "충분",
+        "turnover_ratio": 1.7,
+        "daily_movements": [
+          {
+            "date": "2025-01-01",
+            "inbound": 1,
+            "outbound": 3,
+            "net_change": -2
+          },
+          {
+            "date": "2025-01-02",
+            "inbound": 3,
+            "outbound": 1,
+            "net_change": 2
+          },
+          {
+            "date": "2025-01-03",
+            "inbound": 1,
+            "outbound": 3,
+            "net_change": -2
+          },
+          {
+            "date": "2025-01-04",
+            "inbound": 3,
+            "outbound": 1,
+            "net_change": 2
+          },
+          {
+            "date": "2025-01-05",
+            "inbound": 3,
+            "outbound": 3,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-06",
+            "inbound": 3,
+            "outbound": 3,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-07",
+            "inbound": 3,
+            "outbound": 3,
+            "net_change": 0
+          }
+        ]
+      },
+      {
+        "product_code": "1000687103",
+        "product_name": "사리면,라면사리,DC,농심,3.3KG(110G*30EA)/BOX",
+        "unit": "BOX",
+        "rack_name": "B",
+        "initial_stock": 10,
+        "total_inbound": 11,
+        "total_outbound": 11,
+        "current_stock": 10,
+        "stock_status": "충분",
+        "turnover_ratio": 1.1,
+        "daily_movements": [
+          {
+            "date": "2025-01-01",
+            "inbound": 1,
+            "outbound": 1,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-02",
+            "inbound": 1,
+            "outbound": 1,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-03",
+            "inbound": 2,
+            "outbound": 1,
+            "net_change": 1
+          },
+          {
+            "date": "2025-01-04",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-05",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-06",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-07",
+            "inbound": 1,
+            "outbound": 2,
+            "net_change": -1
+          }
+        ]
+      },
+      {
+        "product_code": "1000730217",
+        "product_name": "맛있는쌈장(VB),DC,대두:외국산,후레시스,참고을,14KG/EA",
+        "unit": "EA",
+        "rack_name": "B",
+        "initial_stock": 10,
+        "total_inbound": 14,
+        "total_outbound": 14,
+        "current_stock": 10,
+        "stock_status": "충분",
+        "turnover_ratio": 1.4,
+        "daily_movements": [
+          {
+            "date": "2025-01-01",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-02",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-03",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-04",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-05",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-06",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-07",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          }
+        ]
+      },
+      {
+        "product_code": "1000625276",
+        "product_name": "오렌지주스팩,DC,델몬트,190ML/EA,24EA/BOX",
+        "unit": "EA",
+        "rack_name": "B",
+        "initial_stock": 10,
+        "total_inbound": 15,
+        "total_outbound": 15,
+        "current_stock": 10,
+        "stock_status": "충분",
+        "turnover_ratio": 1.5,
+        "daily_movements": [
+          {
+            "date": "2025-01-01",
+            "inbound": 4,
+            "outbound": 2,
+            "net_change": 2
+          },
+          {
+            "date": "2025-01-02",
+            "inbound": 1,
+            "outbound": 4,
+            "net_change": -3
+          },
+          {
+            "date": "2025-01-03",
+            "inbound": 2,
+            "outbound": 1,
+            "net_change": 1
+          },
+          {
+            "date": "2025-01-04",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-05",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-06",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-07",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          }
+        ]
+      },
+      {
+        "product_code": "1000717425",
+        "product_name": "조이오렌지주스(팩),DC,미닛메이드,195ML/EA,32EA/BOX",
+        "unit": "EA",
+        "rack_name": "B",
+        "initial_stock": 10,
+        "total_inbound": 15,
+        "total_outbound": 15,
+        "current_stock": 10,
+        "stock_status": "충분",
+        "turnover_ratio": 1.5,
+        "daily_movements": [
+          {
+            "date": "2025-01-01",
+            "inbound": 3,
+            "outbound": 2,
+            "net_change": 1
+          },
+          {
+            "date": "2025-01-02",
+            "inbound": 2,
+            "outbound": 3,
+            "net_change": -1
+          },
+          {
+            "date": "2025-01-03",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-04",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-05",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-06",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-07",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          }
+        ]
+      },
+      {
+        "product_code": "1000755374",
+        "product_name": "맥선감자전분,DC,전분:폴란드산,사조동아원,20KG/PAC",
+        "unit": "PAC",
+        "rack_name": "B",
+        "initial_stock": 10,
+        "total_inbound": 17,
+        "total_outbound": 17,
+        "current_stock": 10,
+        "stock_status": "충분",
+        "turnover_ratio": 1.7,
+        "daily_movements": [
+          {
+            "date": "2025-01-01",
+            "inbound": 1,
+            "outbound": 3,
+            "net_change": -2
+          },
+          {
+            "date": "2025-01-02",
+            "inbound": 3,
+            "outbound": 1,
+            "net_change": 2
+          },
+          {
+            "date": "2025-01-03",
+            "inbound": 1,
+            "outbound": 3,
+            "net_change": -2
+          },
+          {
+            "date": "2025-01-04",
+            "inbound": 3,
+            "outbound": 1,
+            "net_change": 2
+          },
+          {
+            "date": "2025-01-05",
+            "inbound": 3,
+            "outbound": 3,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-06",
+            "inbound": 3,
+            "outbound": 3,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-07",
+            "inbound": 3,
+            "outbound": 3,
+            "net_change": 0
+          }
+        ]
+      },
+      {
+        "product_code": "1000678107",
+        "product_name": "웰치스포도,DC(박스),355ML*24EA/BOX,8.52KG",
+        "unit": "BOX",
+        "rack_name": "C",
+        "initial_stock": 10,
+        "total_inbound": 13,
+        "total_outbound": 13,
+        "current_stock": 10,
+        "stock_status": "충분",
+        "turnover_ratio": 1.3,
+        "daily_movements": [
+          {
+            "date": "2025-01-01",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-02",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-03",
+            "inbound": 1,
+            "outbound": 2,
+            "net_change": -1
+          },
+          {
+            "date": "2025-01-04",
+            "inbound": 2,
+            "outbound": 1,
+            "net_change": 1
+          },
+          {
+            "date": "2025-01-05",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-06",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-07",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          }
+        ]
+      },
+      {
+        "product_code": "1000661491",
+        "product_name": "하얀설탕,DC,대한제당,3KG/PAC",
+        "unit": "PAC",
+        "rack_name": "C",
+        "initial_stock": 10,
+        "total_inbound": 18,
+        "total_outbound": 18,
+        "current_stock": 10,
+        "stock_status": "충분",
+        "turnover_ratio": 1.8,
+        "daily_movements": [
+          {
+            "date": "2025-01-01",
+            "inbound": 1,
+            "outbound": 4,
+            "net_change": -3
+          },
+          {
+            "date": "2025-01-02",
+            "inbound": 1,
+            "outbound": 1,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-03",
+            "inbound": 3,
+            "outbound": 1,
+            "net_change": 2
+          },
+          {
+            "date": "2025-01-04",
+            "inbound": 3,
+            "outbound": 3,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-05",
+            "inbound": 3,
+            "outbound": 3,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-06",
+            "inbound": 3,
+            "outbound": 3,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-07",
+            "inbound": 4,
+            "outbound": 3,
+            "net_change": 1
+          }
+        ]
+      },
+      {
+        "product_code": "1000625279",
+        "product_name": "칠성사이다(작은캔),DC,190ML/EA,30EA/BOX",
+        "unit": "EA",
+        "rack_name": "C",
+        "initial_stock": 10,
+        "total_inbound": 13,
+        "total_outbound": 13,
+        "current_stock": 10,
+        "stock_status": "충분",
+        "turnover_ratio": 1.3,
+        "daily_movements": [
+          {
+            "date": "2025-01-01",
+            "inbound": 1,
+            "outbound": 2,
+            "net_change": -1
+          },
+          {
+            "date": "2025-01-02",
+            "inbound": 2,
+            "outbound": 1,
+            "net_change": 1
+          },
+          {
+            "date": "2025-01-03",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-04",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-05",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-06",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-07",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          }
+        ]
+      },
+      {
+        "product_code": "1000720696",
+        "product_name": "진저에일토닉,캐나다드라이(초록),DC,250ML/EA,30EA/BOX",
+        "unit": "EA",
+        "rack_name": "C",
+        "initial_stock": 10,
+        "total_inbound": 15,
+        "total_outbound": 15,
+        "current_stock": 10,
+        "stock_status": "충분",
+        "turnover_ratio": 1.5,
+        "daily_movements": [
+          {
+            "date": "2025-01-01",
+            "inbound": 3,
+            "outbound": 2,
+            "net_change": 1
+          },
+          {
+            "date": "2025-01-02",
+            "inbound": 2,
+            "outbound": 3,
+            "net_change": -1
+          },
+          {
+            "date": "2025-01-03",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-04",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-05",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-06",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-07",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          }
+        ]
+      },
+      {
+        "product_code": "1000661673",
+        "product_name": "맥선밀가루,강력1등,DC,밀:미국,캐나다산,사조동아원,20KG/PAC",
+        "unit": "PAC",
+        "rack_name": "C",
+        "initial_stock": 10,
+        "total_inbound": 16,
+        "total_outbound": 16,
+        "current_stock": 10,
+        "stock_status": "충분",
+        "turnover_ratio": 1.6,
+        "daily_movements": [
+          {
+            "date": "2025-01-01",
+            "inbound": 4,
+            "outbound": 2,
+            "net_change": 2
+          },
+          {
+            "date": "2025-01-02",
+            "inbound": 2,
+            "outbound": 4,
+            "net_change": -2
+          },
+          {
+            "date": "2025-01-03",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-04",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-05",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-06",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-07",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          }
+        ]
+      },
+      {
+        "product_code": "1000716720",
+        "product_name": "백산수(무라벨),DC,생수:길림성(백두산),농심,10L(500ML*20EA)/BOX",
+        "unit": "BOX",
+        "rack_name": "D",
+        "initial_stock": 10,
+        "total_inbound": 14,
+        "total_outbound": 14,
+        "current_stock": 10,
+        "stock_status": "충분",
+        "turnover_ratio": 1.4,
+        "daily_movements": [
+          {
+            "date": "2025-01-01",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-02",
+            "inbound": 1,
+            "outbound": 2,
+            "net_change": -1
+          },
+          {
+            "date": "2025-01-03",
+            "inbound": 2,
+            "outbound": 1,
+            "net_change": 1
+          },
+          {
+            "date": "2025-01-04",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-05",
+            "inbound": 3,
+            "outbound": 2,
+            "net_change": 1
+          },
+          {
+            "date": "2025-01-06",
+            "inbound": 2,
+            "outbound": 3,
+            "net_change": -1
+          },
+          {
+            "date": "2025-01-07",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          }
+        ]
+      },
+      {
+        "product_code": "1000661496",
+        "product_name": "흑설탕,DC,대한제당,1KG/PAC",
+        "unit": "PAC",
+        "rack_name": "D",
+        "initial_stock": 10,
+        "total_inbound": 15,
+        "total_outbound": 15,
+        "current_stock": 10,
+        "stock_status": "충분",
+        "turnover_ratio": 1.5,
+        "daily_movements": [
+          {
+            "date": "2025-01-01",
+            "inbound": 2,
+            "outbound": 3,
+            "net_change": -1
+          },
+          {
+            "date": "2025-01-02",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-03",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-04",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-05",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-06",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-07",
+            "inbound": 3,
+            "outbound": 2,
+            "net_change": 1
+          }
+        ]
+      },
+      {
+        "product_code": "1000625280",
+        "product_name": "칠성사이다캔,DC,업소용,355ML/EA,24EA/BOX",
+        "unit": "EA",
+        "rack_name": "D",
+        "initial_stock": 10,
+        "total_inbound": 21,
+        "total_outbound": 21,
+        "current_stock": 10,
+        "stock_status": "충분",
+        "turnover_ratio": 2.1,
+        "daily_movements": [
+          {
+            "date": "2025-01-01",
+            "inbound": 3,
+            "outbound": 4,
+            "net_change": -1
+          },
+          {
+            "date": "2025-01-02",
+            "inbound": 1,
+            "outbound": 3,
+            "net_change": -2
+          },
+          {
+            "date": "2025-01-03",
+            "inbound": 1,
+            "outbound": 1,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-04",
+            "inbound": 4,
+            "outbound": 1,
+            "net_change": 3
+          },
+          {
+            "date": "2025-01-05",
+            "inbound": 4,
+            "outbound": 4,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-06",
+            "inbound": 4,
+            "outbound": 4,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-07",
+            "inbound": 4,
+            "outbound": 4,
+            "net_change": 0
+          }
+        ]
+      },
+      {
+        "product_code": "1000649988",
+        "product_name": "콘푸로스트시리얼,DC,옥수수:인도산,켈로그,1.5KG/EA",
+        "unit": "EA",
+        "rack_name": "D",
+        "initial_stock": 10,
+        "total_inbound": 14,
+        "total_outbound": 14,
+        "current_stock": 10,
+        "stock_status": "충분",
+        "turnover_ratio": 1.4,
+        "daily_movements": [
+          {
+            "date": "2025-01-01",
+            "inbound": 3,
+            "outbound": 2,
+            "net_change": 1
+          },
+          {
+            "date": "2025-01-02",
+            "inbound": 1,
+            "outbound": 3,
+            "net_change": -2
+          },
+          {
+            "date": "2025-01-03",
+            "inbound": 2,
+            "outbound": 1,
+            "net_change": 1
+          },
+          {
+            "date": "2025-01-04",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-05",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-06",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-07",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          }
+        ]
+      },
+      {
+        "product_code": "1000711196",
+        "product_name": "쫄깃한메밀국수,DC,밀:호주산,미국산,풍국면,1KG/PAC",
+        "unit": "PAC",
+        "rack_name": "D",
+        "initial_stock": 10,
+        "total_inbound": 16,
+        "total_outbound": 20,
+        "current_stock": 6,
+        "stock_status": "충분",
+        "turnover_ratio": 2.0,
+        "daily_movements": [
+          {
+            "date": "2025-01-01",
+            "inbound": 0,
+            "outbound": 3,
+            "net_change": -3
+          },
+          {
+            "date": "2025-01-02",
+            "inbound": 2,
+            "outbound": 4,
+            "net_change": -2
+          },
+          {
+            "date": "2025-01-03",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-04",
+            "inbound": 3,
+            "outbound": 2,
+            "net_change": 1
+          },
+          {
+            "date": "2025-01-05",
+            "inbound": 3,
+            "outbound": 3,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-06",
+            "inbound": 3,
+            "outbound": 3,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-07",
+            "inbound": 3,
+            "outbound": 3,
+            "net_change": 0
+          }
+        ]
+      },
+      {
+        "product_code": "1000721309",
+        "product_name": "카프리썬주스,오렌지,DC,농심,2KG(200G*10EA)/BOX",
+        "unit": "BOX",
+        "rack_name": "E",
+        "initial_stock": 10,
+        "total_inbound": 20,
+        "total_outbound": 20,
+        "current_stock": 10,
+        "stock_status": "충분",
+        "turnover_ratio": 2.0,
+        "daily_movements": [
+          {
+            "date": "2025-01-01",
+            "inbound": 2,
+            "outbound": 4,
+            "net_change": -2
+          },
+          {
+            "date": "2025-01-02",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-03",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-04",
+            "inbound": 4,
+            "outbound": 2,
+            "net_change": 2
+          },
+          {
+            "date": "2025-01-05",
+            "inbound": 2,
+            "outbound": 4,
+            "net_change": -2
+          },
+          {
+            "date": "2025-01-06",
+            "inbound": 4,
+            "outbound": 2,
+            "net_change": 2
+          },
+          {
+            "date": "2025-01-07",
+            "inbound": 4,
+            "outbound": 4,
+            "net_change": 0
+          }
+        ]
+      },
+      {
+        "product_code": "1000661845",
+        "product_name": "콘시리얼바,DC,옥수수:외국산,후레시스,240G(20G*12EA)/PAC",
+        "unit": "PAC",
+        "rack_name": "E",
+        "initial_stock": 10,
+        "total_inbound": 16,
+        "total_outbound": 16,
+        "current_stock": 10,
+        "stock_status": "충분",
+        "turnover_ratio": 1.6,
+        "daily_movements": [
+          {
+            "date": "2025-01-01",
+            "inbound": 3,
+            "outbound": 2,
+            "net_change": 1
+          },
+          {
+            "date": "2025-01-02",
+            "inbound": 3,
+            "outbound": 3,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-03",
+            "inbound": 2,
+            "outbound": 3,
+            "net_change": -1
+          },
+          {
+            "date": "2025-01-04",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-05",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-06",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-07",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          }
+        ]
+      },
+      {
+        "product_code": "1000625284",
+        "product_name": "포도드링크팩,DC,델몬트,190ML/EA",
+        "unit": "EA",
+        "rack_name": "E",
+        "initial_stock": 10,
+        "total_inbound": 14,
+        "total_outbound": 14,
+        "current_stock": 10,
+        "stock_status": "충분",
+        "turnover_ratio": 1.4,
+        "daily_movements": [
+          {
+            "date": "2025-01-01",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-02",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-03",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-04",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-05",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-06",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-07",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          }
+        ]
+      },
+      {
+        "product_code": "1000453821",
+        "product_name": "진간장,DC(VB),콩:외국산,세우,14KG/EA",
+        "unit": "EA",
+        "rack_name": "E",
+        "initial_stock": 10,
+        "total_inbound": 15,
+        "total_outbound": 15,
+        "current_stock": 10,
+        "stock_status": "충분",
+        "turnover_ratio": 1.5,
+        "daily_movements": [
+          {
+            "date": "2025-01-01",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-02",
+            "inbound": 3,
+            "outbound": 2,
+            "net_change": 1
+          },
+          {
+            "date": "2025-01-03",
+            "inbound": 2,
+            "outbound": 3,
+            "net_change": -1
+          },
+          {
+            "date": "2025-01-04",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-05",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-06",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-07",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          }
+        ]
+      },
+      {
+        "product_code": "1000711201",
+        "product_name": "맛국수,소면,DC,밀:호주산,미국산,풍국면,1KG/PAC",
+        "unit": "PAC",
+        "rack_name": "E",
+        "initial_stock": 10,
+        "total_inbound": 15,
+        "total_outbound": 19,
+        "current_stock": 6,
+        "stock_status": "충분",
+        "turnover_ratio": 1.9,
+        "daily_movements": [
+          {
+            "date": "2025-01-01",
+            "inbound": 0,
+            "outbound": 3,
+            "net_change": -3
+          },
+          {
+            "date": "2025-01-02",
+            "inbound": 2,
+            "outbound": 4,
+            "net_change": -2
+          },
+          {
+            "date": "2025-01-03",
+            "inbound": 1,
+            "outbound": 2,
+            "net_change": -1
+          },
+          {
+            "date": "2025-01-04",
+            "inbound": 3,
+            "outbound": 1,
+            "net_change": 2
+          },
+          {
+            "date": "2025-01-05",
+            "inbound": 3,
+            "outbound": 3,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-06",
+            "inbound": 3,
+            "outbound": 3,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-07",
+            "inbound": 3,
+            "outbound": 3,
+            "net_change": 0
+          }
+        ]
+      },
+      {
+        "product_code": "1000758808",
+        "product_name": "새우깡미니,DC,농심,960G(30G*32EA)/BOX",
+        "unit": "BOX",
+        "rack_name": "F",
+        "initial_stock": 10,
+        "total_inbound": 18,
+        "total_outbound": 18,
+        "current_stock": 10,
+        "stock_status": "충분",
+        "turnover_ratio": 1.8,
+        "daily_movements": [
+          {
+            "date": "2025-01-01",
+            "inbound": 3,
+            "outbound": 3,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-02",
+            "inbound": 1,
+            "outbound": 3,
+            "net_change": -2
+          },
+          {
+            "date": "2025-01-03",
+            "inbound": 2,
+            "outbound": 1,
+            "net_change": 1
+          },
+          {
+            "date": "2025-01-04",
+            "inbound": 3,
+            "outbound": 2,
+            "net_change": 1
+          },
+          {
+            "date": "2025-01-05",
+            "inbound": 3,
+            "outbound": 3,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-06",
+            "inbound": 3,
+            "outbound": 3,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-07",
+            "inbound": 3,
+            "outbound": 3,
+            "net_change": 0
+          }
+        ]
+      },
+      {
+        "product_code": "1000695022",
+        "product_name": "꿀오란다바,DC,씨알푸드,360G(30G*12EA)/PAC",
+        "unit": "PAC",
+        "rack_name": "F",
+        "initial_stock": 10,
+        "total_inbound": 14,
+        "total_outbound": 14,
+        "current_stock": 10,
+        "stock_status": "충분",
+        "turnover_ratio": 1.4,
+        "daily_movements": [
+          {
+            "date": "2025-01-01",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-02",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-03",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-04",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-05",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-06",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-07",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          }
+        ]
+      },
+      {
+        "product_code": "1000625285",
+        "product_name": "레쓰비커피캔,DC,175ML/EA",
+        "unit": "EA",
+        "rack_name": "F",
+        "initial_stock": 10,
+        "total_inbound": 15,
+        "total_outbound": 15,
+        "current_stock": 10,
+        "stock_status": "충분",
+        "turnover_ratio": 1.5,
+        "daily_movements": [
+          {
+            "date": "2025-01-01",
+            "inbound": 1,
+            "outbound": 3,
+            "net_change": -2
+          },
+          {
+            "date": "2025-01-02",
+            "inbound": 1,
+            "outbound": 1,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-03",
+            "inbound": 1,
+            "outbound": 1,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-04",
+            "inbound": 3,
+            "outbound": 1,
+            "net_change": 2
+          },
+          {
+            "date": "2025-01-05",
+            "inbound": 3,
+            "outbound": 3,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-06",
+            "inbound": 3,
+            "outbound": 3,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-07",
+            "inbound": 3,
+            "outbound": 3,
+            "net_change": 0
+          }
+        ]
+      },
+      {
+        "product_code": "1000640379",
+        "product_name": "진라면,매운맛,작은컵라면,DC,소맥분(미국산,호주산),오뚜기,0.975KG(65G*15EA)/BOX",
+        "unit": "BOX",
+        "rack_name": "F",
+        "initial_stock": 10,
+        "total_inbound": 11,
+        "total_outbound": 14,
+        "current_stock": 7,
+        "stock_status": "충분",
+        "turnover_ratio": 1.4,
+        "daily_movements": [
+          {
+            "date": "2025-01-01",
+            "inbound": 0,
+            "outbound": 2,
+            "net_change": -2
+          },
+          {
+            "date": "2025-01-02",
+            "inbound": 1,
+            "outbound": 3,
+            "net_change": -2
+          },
+          {
+            "date": "2025-01-03",
+            "inbound": 2,
+            "outbound": 1,
+            "net_change": 1
+          },
+          {
+            "date": "2025-01-04",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-05",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-06",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-07",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          }
+        ]
+      },
+      {
+        "product_code": "1000711202",
+        "product_name": "풍국국수,소면,DC,밀:호주산,미국산,풍국면,3KG/PAC",
+        "unit": "PAC",
+        "rack_name": "F",
+        "initial_stock": 10,
+        "total_inbound": 14,
+        "total_outbound": 17,
+        "current_stock": 7,
+        "stock_status": "충분",
+        "turnover_ratio": 1.7,
+        "daily_movements": [
+          {
+            "date": "2025-01-01",
+            "inbound": 0,
+            "outbound": 3,
+            "net_change": -3
+          },
+          {
+            "date": "2025-01-02",
+            "inbound": 1,
+            "outbound": 3,
+            "net_change": -2
+          },
+          {
+            "date": "2025-01-03",
+            "inbound": 1,
+            "outbound": 1,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-04",
+            "inbound": 3,
+            "outbound": 1,
+            "net_change": 2
+          },
+          {
+            "date": "2025-01-05",
+            "inbound": 3,
+            "outbound": 3,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-06",
+            "inbound": 3,
+            "outbound": 3,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-07",
+            "inbound": 3,
+            "outbound": 3,
+            "net_change": 0
+          }
+        ]
+      },
+      {
+        "product_code": "1000119514",
+        "product_name": "쌀,진상미,DC,국산,화원도정,20KG/PAC",
+        "unit": "PAC",
+        "rack_name": "G",
+        "initial_stock": 10,
+        "total_inbound": 13,
+        "total_outbound": 13,
+        "current_stock": 10,
+        "stock_status": "충분",
+        "turnover_ratio": 1.3,
+        "daily_movements": [
+          {
+            "date": "2025-01-01",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-02",
+            "inbound": 1,
+            "outbound": 2,
+            "net_change": -1
+          },
+          {
+            "date": "2025-01-03",
+            "inbound": 2,
+            "outbound": 1,
+            "net_change": 1
+          },
+          {
+            "date": "2025-01-04",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-05",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-06",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-07",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          }
+        ]
+      },
+      {
+        "product_code": "1000695037",
+        "product_name": "79콘요구르트바,DC,씨알푸드,300G(25G*12EA)/PAC",
+        "unit": "PAC",
+        "rack_name": "G",
+        "initial_stock": 10,
+        "total_inbound": 13,
+        "total_outbound": 13,
+        "current_stock": 10,
+        "stock_status": "충분",
+        "turnover_ratio": 1.3,
+        "daily_movements": [
+          {
+            "date": "2025-01-01",
+            "inbound": 1,
+            "outbound": 2,
+            "net_change": -1
+          },
+          {
+            "date": "2025-01-02",
+            "inbound": 2,
+            "outbound": 1,
+            "net_change": 1
+          },
+          {
+            "date": "2025-01-03",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-04",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-05",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-06",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-07",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          }
+        ]
+      },
+      {
+        "product_code": "1000707108",
+        "product_name": "트레비라임(캔),탄산수,DC,355ML/EA,24EA/BOX",
+        "unit": "EA",
+        "rack_name": "G",
+        "initial_stock": 10,
+        "total_inbound": 14,
+        "total_outbound": 14,
+        "current_stock": 10,
+        "stock_status": "충분",
+        "turnover_ratio": 1.4,
+        "daily_movements": [
+          {
+            "date": "2025-01-01",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-02",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-03",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-04",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-05",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-06",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-07",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          }
+        ]
+      },
+      {
+        "product_code": "1000640389",
+        "product_name": "참깨라면,큰사발면,DC,오뚜기,1.32KG(110G*12EA)/BOX",
+        "unit": "BOX",
+        "rack_name": "G",
+        "initial_stock": 10,
+        "total_inbound": 10,
+        "total_outbound": 13,
+        "current_stock": 7,
+        "stock_status": "충분",
+        "turnover_ratio": 1.3,
+        "daily_movements": [
+          {
+            "date": "2025-01-01",
+            "inbound": 0,
+            "outbound": 2,
+            "net_change": -2
+          },
+          {
+            "date": "2025-01-02",
+            "inbound": 1,
+            "outbound": 3,
+            "net_change": -2
+          },
+          {
+            "date": "2025-01-03",
+            "inbound": 1,
+            "outbound": 1,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-04",
+            "inbound": 2,
+            "outbound": 1,
+            "net_change": 1
+          },
+          {
+            "date": "2025-01-05",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-06",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-07",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          }
+        ]
+      },
+      {
+        "product_code": "1000754333",
+        "product_name": "맛칼국수(건칼국수),DC,풍국면,1KG/PAC",
+        "unit": "PAC",
+        "rack_name": "G",
+        "initial_stock": 10,
+        "total_inbound": 7,
+        "total_outbound": 10,
+        "current_stock": 7,
+        "stock_status": "충분",
+        "turnover_ratio": 1.0,
+        "daily_movements": [
+          {
+            "date": "2025-01-01",
+            "inbound": 0,
+            "outbound": 1,
+            "net_change": -1
+          },
+          {
+            "date": "2025-01-02",
+            "inbound": 1,
+            "outbound": 3,
+            "net_change": -2
+          },
+          {
+            "date": "2025-01-03",
+            "inbound": 2,
+            "outbound": 1,
+            "net_change": 1
+          },
+          {
+            "date": "2025-01-04",
+            "inbound": 1,
+            "outbound": 2,
+            "net_change": -1
+          },
+          {
+            "date": "2025-01-05",
+            "inbound": 1,
+            "outbound": 1,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-06",
+            "inbound": 1,
+            "outbound": 1,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-07",
+            "inbound": 1,
+            "outbound": 1,
+            "net_change": 0
+          }
+        ]
+      },
+      {
+        "product_code": "1000162821",
+        "product_name": "쌀,두룸벌쌀,DC,국산,광복영농,20KG/PAC",
+        "unit": "PAC",
+        "rack_name": "H",
+        "initial_stock": 10,
+        "total_inbound": 16,
+        "total_outbound": 16,
+        "current_stock": 10,
+        "stock_status": "충분",
+        "turnover_ratio": 1.6,
+        "daily_movements": [
+          {
+            "date": "2025-01-01",
+            "inbound": 4,
+            "outbound": 3,
+            "net_change": 1
+          },
+          {
+            "date": "2025-01-02",
+            "inbound": 1,
+            "outbound": 4,
+            "net_change": -3
+          },
+          {
+            "date": "2025-01-03",
+            "inbound": 2,
+            "outbound": 1,
+            "net_change": 1
+          },
+          {
+            "date": "2025-01-04",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-05",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-06",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-07",
+            "inbound": 3,
+            "outbound": 2,
+            "net_change": 1
+          }
+        ]
+      },
+      {
+        "product_code": "1000713042",
+        "product_name": "마시멜로크런치링시리얼,DC,씨알푸드,1KG/PAC",
+        "unit": "PAC",
+        "rack_name": "H",
+        "initial_stock": 10,
+        "total_inbound": 15,
+        "total_outbound": 15,
+        "current_stock": 10,
+        "stock_status": "충분",
+        "turnover_ratio": 1.5,
+        "daily_movements": [
+          {
+            "date": "2025-01-01",
+            "inbound": 1,
+            "outbound": 2,
+            "net_change": -1
+          },
+          {
+            "date": "2025-01-02",
+            "inbound": 2,
+            "outbound": 1,
+            "net_change": 1
+          },
+          {
+            "date": "2025-01-03",
+            "inbound": 1,
+            "outbound": 2,
+            "net_change": -1
+          },
+          {
+            "date": "2025-01-04",
+            "inbound": 3,
+            "outbound": 1,
+            "net_change": 2
+          },
+          {
+            "date": "2025-01-05",
+            "inbound": 3,
+            "outbound": 3,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-06",
+            "inbound": 3,
+            "outbound": 3,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-07",
+            "inbound": 2,
+            "outbound": 3,
+            "net_change": -1
+          }
+        ]
+      },
+      {
+        "product_code": "1000707110",
+        "product_name": "트레비레몬(캔),탄산수,DC,355ML/EA,24EA/BOX",
+        "unit": "EA",
+        "rack_name": "H",
+        "initial_stock": 10,
+        "total_inbound": 21,
+        "total_outbound": 21,
+        "current_stock": 10,
+        "stock_status": "충분",
+        "turnover_ratio": 2.1,
+        "daily_movements": [
+          {
+            "date": "2025-01-01",
+            "inbound": 3,
+            "outbound": 4,
+            "net_change": -1
+          },
+          {
+            "date": "2025-01-02",
+            "inbound": 1,
+            "outbound": 3,
+            "net_change": -2
+          },
+          {
+            "date": "2025-01-03",
+            "inbound": 1,
+            "outbound": 1,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-04",
+            "inbound": 4,
+            "outbound": 1,
+            "net_change": 3
+          },
+          {
+            "date": "2025-01-05",
+            "inbound": 4,
+            "outbound": 4,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-06",
+            "inbound": 4,
+            "outbound": 4,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-07",
+            "inbound": 4,
+            "outbound": 4,
+            "net_change": 0
+          }
+        ]
+      },
+      {
+        "product_code": "1000640349",
+        "product_name": "이금기치킨파우더,DC,미국산,1KG/EA",
+        "unit": "EA",
+        "rack_name": "H",
+        "initial_stock": 10,
+        "total_inbound": 13,
+        "total_outbound": 14,
+        "current_stock": 9,
+        "stock_status": "충분",
+        "turnover_ratio": 1.4,
+        "daily_movements": [
+          {
+            "date": "2025-01-01",
+            "inbound": 0,
+            "outbound": 2,
+            "net_change": -2
+          },
+          {
+            "date": "2025-01-02",
+            "inbound": 3,
+            "outbound": 1,
+            "net_change": 2
+          },
+          {
+            "date": "2025-01-03",
+            "inbound": 2,
+            "outbound": 3,
+            "net_change": -1
+          },
+          {
+            "date": "2025-01-04",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-05",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-06",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-07",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          }
+        ]
+      },
+      {
+        "product_code": "1000739918",
+        "product_name": "(HK)양념먹태채/간장맛,DC,명태:러시아산,정필,80G/PAC",
+        "unit": "PAC",
+        "rack_name": "H",
+        "initial_stock": 10,
+        "total_inbound": 16,
+        "total_outbound": 18,
+        "current_stock": 8,
+        "stock_status": "충분",
+        "turnover_ratio": 1.8,
+        "daily_movements": [
+          {
+            "date": "2025-01-01",
+            "inbound": 0,
+            "outbound": 3,
+            "net_change": -3
+          },
+          {
+            "date": "2025-01-02",
+            "inbound": 3,
+            "outbound": 2,
+            "net_change": 1
+          },
+          {
+            "date": "2025-01-03",
+            "inbound": 1,
+            "outbound": 3,
+            "net_change": -2
+          },
+          {
+            "date": "2025-01-04",
+            "inbound": 3,
+            "outbound": 1,
+            "net_change": 2
+          },
+          {
+            "date": "2025-01-05",
+            "inbound": 3,
+            "outbound": 3,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-06",
+            "inbound": 3,
+            "outbound": 3,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-07",
+            "inbound": 3,
+            "outbound": 3,
+            "net_change": 0
+          }
+        ]
+      },
+      {
+        "product_code": "1000738024",
+        "product_name": "쌀,절대미각고시히카리,DC,국산,롯데상사,10KG/PAC",
+        "unit": "PAC",
+        "rack_name": "I",
+        "initial_stock": 10,
+        "total_inbound": 16,
+        "total_outbound": 16,
+        "current_stock": 10,
+        "stock_status": "충분",
+        "turnover_ratio": 1.6,
+        "daily_movements": [
+          {
+            "date": "2025-01-01",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-02",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-03",
+            "inbound": 1,
+            "outbound": 2,
+            "net_change": -1
+          },
+          {
+            "date": "2025-01-04",
+            "inbound": 3,
+            "outbound": 1,
+            "net_change": 2
+          },
+          {
+            "date": "2025-01-05",
+            "inbound": 3,
+            "outbound": 3,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-06",
+            "inbound": 3,
+            "outbound": 3,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-07",
+            "inbound": 2,
+            "outbound": 3,
+            "net_change": -1
+          }
+        ]
+      },
+      {
+        "product_code": "1000697112",
+        "product_name": "쌀,머드의고향쌀,DC,국산,만세보령농협,20KG/PAC",
+        "unit": "PAC",
+        "rack_name": "I",
+        "initial_stock": 10,
+        "total_inbound": 14,
+        "total_outbound": 14,
+        "current_stock": 10,
+        "stock_status": "충분",
+        "turnover_ratio": 1.4,
+        "daily_movements": [
+          {
+            "date": "2025-01-01",
+            "inbound": 1,
+            "outbound": 3,
+            "net_change": -2
+          },
+          {
+            "date": "2025-01-02",
+            "inbound": 2,
+            "outbound": 1,
+            "net_change": 1
+          },
+          {
+            "date": "2025-01-03",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-04",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-05",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-06",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-07",
+            "inbound": 3,
+            "outbound": 2,
+            "net_change": 1
+          }
+        ]
+      },
+      {
+        "product_code": "1000757636",
+        "product_name": "(푸드차지)NEW음료컵(32온스),투명,DC,500EA/BOX",
+        "unit": "BOX",
+        "rack_name": "I",
+        "initial_stock": 10,
+        "total_inbound": 12,
+        "total_outbound": 14,
+        "current_stock": 8,
+        "stock_status": "충분",
+        "turnover_ratio": 1.4,
+        "daily_movements": [
+          {
+            "date": "2025-01-01",
+            "inbound": 0,
+            "outbound": 2,
+            "net_change": -2
+          },
+          {
+            "date": "2025-01-02",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-03",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-04",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-05",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-06",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-07",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          }
+        ]
+      },
+      {
+        "product_code": "1000640355",
+        "product_name": "이금기중화두반장소스(병),DC,중국산,368G/EA",
+        "unit": "EA",
+        "rack_name": "I",
+        "initial_stock": 10,
+        "total_inbound": 12,
+        "total_outbound": 13,
+        "current_stock": 9,
+        "stock_status": "충분",
+        "turnover_ratio": 1.3,
+        "daily_movements": [
+          {
+            "date": "2025-01-01",
+            "inbound": 0,
+            "outbound": 2,
+            "net_change": -2
+          },
+          {
+            "date": "2025-01-02",
+            "inbound": 2,
+            "outbound": 1,
+            "net_change": 1
+          },
+          {
+            "date": "2025-01-03",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-04",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-05",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-06",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-07",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          }
+        ]
+      },
+      {
+        "product_code": "1000739926",
+        "product_name": "(HK)양념먹태채/매운맛,DC,명태:러시아산,정필,80G/PAC",
+        "unit": "PAC",
+        "rack_name": "I",
+        "initial_stock": 10,
+        "total_inbound": 13,
+        "total_outbound": 15,
+        "current_stock": 8,
+        "stock_status": "충분",
+        "turnover_ratio": 1.5,
+        "daily_movements": [
+          {
+            "date": "2025-01-01",
+            "inbound": 0,
+            "outbound": 2,
+            "net_change": -2
+          },
+          {
+            "date": "2025-01-02",
+            "inbound": 3,
+            "outbound": 2,
+            "net_change": 1
+          },
+          {
+            "date": "2025-01-03",
+            "inbound": 2,
+            "outbound": 3,
+            "net_change": -1
+          },
+          {
+            "date": "2025-01-04",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-05",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-06",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-07",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          }
+        ]
+      },
+      {
+        "product_code": "1000695370",
+        "product_name": "시타올리브오일,포마스,DC,이탈리아산,5L/EA",
+        "unit": "EA",
+        "rack_name": "J",
+        "initial_stock": 10,
+        "total_inbound": 11,
+        "total_outbound": 12,
+        "current_stock": 9,
+        "stock_status": "충분",
+        "turnover_ratio": 1.2,
+        "daily_movements": [
+          {
+            "date": "2025-01-01",
+            "inbound": 0,
+            "outbound": 2,
+            "net_change": -2
+          },
+          {
+            "date": "2025-01-02",
+            "inbound": 2,
+            "outbound": 1,
+            "net_change": 1
+          },
+          {
+            "date": "2025-01-03",
+            "inbound": 1,
+            "outbound": 2,
+            "net_change": -1
+          },
+          {
+            "date": "2025-01-04",
+            "inbound": 2,
+            "outbound": 1,
+            "net_change": 1
+          },
+          {
+            "date": "2025-01-05",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-06",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-07",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          }
+        ]
+      },
+      {
+        "product_code": "1000649403",
+        "product_name": "식혜페트,DC,엿기름:국내산,하늘청,1.8L/EA",
+        "unit": "EA",
+        "rack_name": "J",
+        "initial_stock": 10,
+        "total_inbound": 14,
+        "total_outbound": 14,
+        "current_stock": 10,
+        "stock_status": "충분",
+        "turnover_ratio": 1.4,
+        "daily_movements": [
+          {
+            "date": "2025-01-01",
+            "inbound": 3,
+            "outbound": 2,
+            "net_change": 1
+          },
+          {
+            "date": "2025-01-02",
+            "inbound": 1,
+            "outbound": 3,
+            "net_change": -2
+          },
+          {
+            "date": "2025-01-03",
+            "inbound": 2,
+            "outbound": 1,
+            "net_change": 1
+          },
+          {
+            "date": "2025-01-04",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-05",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-06",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-07",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          }
+        ]
+      },
+      {
+        "product_code": "1000734913",
+        "product_name": "(푸드차지)음료돔리드(92MM,14/20온스)/투명컵,,1000EA/BOX",
+        "unit": "BOX",
+        "rack_name": "J",
+        "initial_stock": 10,
+        "total_inbound": 11,
+        "total_outbound": 12,
+        "current_stock": 9,
+        "stock_status": "충분",
+        "turnover_ratio": 1.2,
+        "daily_movements": [
+          {
+            "date": "2025-01-01",
+            "inbound": 0,
+            "outbound": 2,
+            "net_change": -2
+          },
+          {
+            "date": "2025-01-02",
+            "inbound": 1,
+            "outbound": 1,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-03",
+            "inbound": 2,
+            "outbound": 1,
+            "net_change": 1
+          },
+          {
+            "date": "2025-01-04",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-05",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-06",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-07",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          }
+        ]
+      },
+      {
+        "product_code": "1000710569",
+        "product_name": "이금기팬더굴소스(스파우트팩),DC,중국산,오뚜기,2KG/PAC",
+        "unit": "PAC",
+        "rack_name": "J",
+        "initial_stock": 10,
+        "total_inbound": 15,
+        "total_outbound": 19,
+        "current_stock": 6,
+        "stock_status": "충분",
+        "turnover_ratio": 1.9,
+        "daily_movements": [
+          {
+            "date": "2025-01-01",
+            "inbound": 0,
+            "outbound": 3,
+            "net_change": -3
+          },
+          {
+            "date": "2025-01-02",
+            "inbound": 2,
+            "outbound": 4,
+            "net_change": -2
+          },
+          {
+            "date": "2025-01-03",
+            "inbound": 1,
+            "outbound": 2,
+            "net_change": -1
+          },
+          {
+            "date": "2025-01-04",
+            "inbound": 3,
+            "outbound": 1,
+            "net_change": 2
+          },
+          {
+            "date": "2025-01-05",
+            "inbound": 3,
+            "outbound": 3,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-06",
+            "inbound": 3,
+            "outbound": 3,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-07",
+            "inbound": 3,
+            "outbound": 3,
+            "net_change": 0
+          }
+        ]
+      },
+      {
+        "product_code": "1000739925",
+        "product_name": "(HK)양념먹태채/버터맛,DC,명태:러시아산,정필,80G/PAC",
+        "unit": "PAC",
+        "rack_name": "J",
+        "initial_stock": 10,
+        "total_inbound": 16,
+        "total_outbound": 18,
+        "current_stock": 8,
+        "stock_status": "충분",
+        "turnover_ratio": 1.8,
+        "daily_movements": [
+          {
+            "date": "2025-01-01",
+            "inbound": 0,
+            "outbound": 3,
+            "net_change": -3
+          },
+          {
+            "date": "2025-01-02",
+            "inbound": 3,
+            "outbound": 2,
+            "net_change": 1
+          },
+          {
+            "date": "2025-01-03",
+            "inbound": 1,
+            "outbound": 3,
+            "net_change": -2
+          },
+          {
+            "date": "2025-01-04",
+            "inbound": 3,
+            "outbound": 1,
+            "net_change": 2
+          },
+          {
+            "date": "2025-01-05",
+            "inbound": 3,
+            "outbound": 3,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-06",
+            "inbound": 3,
+            "outbound": 3,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-07",
+            "inbound": 3,
+            "outbound": 3,
+            "net_change": 0
+          }
+        ]
+      },
+      {
+        "product_code": "1000700239",
+        "product_name": "일회용나이프,DC,자작나무,L140mm,100EA/PAC",
+        "unit": "PAC",
+        "rack_name": "K",
+        "initial_stock": 10,
+        "total_inbound": 16,
+        "total_outbound": 18,
+        "current_stock": 8,
+        "stock_status": "충분",
+        "turnover_ratio": 1.8,
+        "daily_movements": [
+          {
+            "date": "2025-01-01",
+            "inbound": 0,
+            "outbound": 4,
+            "net_change": -4
+          },
+          {
+            "date": "2025-01-02",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-03",
+            "inbound": 1,
+            "outbound": 2,
+            "net_change": -1
+          },
+          {
+            "date": "2025-01-04",
+            "inbound": 3,
+            "outbound": 1,
+            "net_change": 2
+          },
+          {
+            "date": "2025-01-05",
+            "inbound": 3,
+            "outbound": 3,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-06",
+            "inbound": 3,
+            "outbound": 3,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-07",
+            "inbound": 4,
+            "outbound": 3,
+            "net_change": 1
+          }
+        ]
+      },
+      {
+        "product_code": "1000694720",
+        "product_name": "[H]유기농밥알없는식혜,DC,하늘청,125ML/EA,24EA/BOX",
+        "unit": "EA",
+        "rack_name": "K",
+        "initial_stock": 10,
+        "total_inbound": 20,
+        "total_outbound": 20,
+        "current_stock": 10,
+        "stock_status": "충분",
+        "turnover_ratio": 2.0,
+        "daily_movements": [
+          {
+            "date": "2025-01-01",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-02",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-03",
+            "inbound": 1,
+            "outbound": 2,
+            "net_change": -1
+          },
+          {
+            "date": "2025-01-04",
+            "inbound": 5,
+            "outbound": 1,
+            "net_change": 4
+          },
+          {
+            "date": "2025-01-05",
+            "inbound": 3,
+            "outbound": 5,
+            "net_change": -2
+          },
+          {
+            "date": "2025-01-06",
+            "inbound": 5,
+            "outbound": 3,
+            "net_change": 2
+          },
+          {
+            "date": "2025-01-07",
+            "inbound": 2,
+            "outbound": 5,
+            "net_change": -3
+          }
+        ]
+      },
+      {
+        "product_code": "1000730167",
+        "product_name": "알찬고추장(VB),DC,해찬들,14KG/EA",
+        "unit": "EA",
+        "rack_name": "K",
+        "initial_stock": 10,
+        "total_inbound": 17,
+        "total_outbound": 17,
+        "current_stock": 10,
+        "stock_status": "충분",
+        "turnover_ratio": 1.7,
+        "daily_movements": [
+          {
+            "date": "2025-01-01",
+            "inbound": 1,
+            "outbound": 3,
+            "net_change": -2
+          },
+          {
+            "date": "2025-01-02",
+            "inbound": 1,
+            "outbound": 1,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-03",
+            "inbound": 3,
+            "outbound": 1,
+            "net_change": 2
+          },
+          {
+            "date": "2025-01-04",
+            "inbound": 3,
+            "outbound": 3,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-05",
+            "inbound": 3,
+            "outbound": 3,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-06",
+            "inbound": 3,
+            "outbound": 3,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-07",
+            "inbound": 3,
+            "outbound": 3,
+            "net_change": 0
+          }
+        ]
+      },
+      {
+        "product_code": "1000758810",
+        "product_name": "닭다리스낵,DC,농심,1.32KG(66G*20EA)/BOX",
+        "unit": "BOX",
+        "rack_name": "K",
+        "initial_stock": 10,
+        "total_inbound": 12,
+        "total_outbound": 12,
+        "current_stock": 10,
+        "stock_status": "충분",
+        "turnover_ratio": 1.2,
+        "daily_movements": [
+          {
+            "date": "2025-01-01",
+            "inbound": 1,
+            "outbound": 2,
+            "net_change": -1
+          },
+          {
+            "date": "2025-01-02",
+            "inbound": 1,
+            "outbound": 1,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-03",
+            "inbound": 2,
+            "outbound": 1,
+            "net_change": 1
+          },
+          {
+            "date": "2025-01-04",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-05",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-06",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-07",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          }
+        ]
+      },
+      {
+        "product_code": "1000698092",
+        "product_name": "쌀,온새미,DC,미아토,경기미,혼합,국산,20KG/PAC",
+        "unit": "PAC",
+        "rack_name": "K",
+        "initial_stock": 10,
+        "total_inbound": 13,
+        "total_outbound": 17,
+        "current_stock": 6,
+        "stock_status": "충분",
+        "turnover_ratio": 1.7,
+        "daily_movements": [
+          {
+            "date": "2025-01-01",
+            "inbound": 0,
+            "outbound": 2,
+            "net_change": -2
+          },
+          {
+            "date": "2025-01-02",
+            "inbound": 3,
+            "outbound": 4,
+            "net_change": -1
+          },
+          {
+            "date": "2025-01-03",
+            "inbound": 2,
+            "outbound": 3,
+            "net_change": -1
+          },
+          {
+            "date": "2025-01-04",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-05",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-06",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-07",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          }
+        ]
+      },
+      {
+        "product_code": "1000700233",
+        "product_name": "일회용포크,DC,자작나무,L140mm,100EA/PAC",
+        "unit": "PAC",
+        "rack_name": "L",
+        "initial_stock": 10,
+        "total_inbound": 17,
+        "total_outbound": 18,
+        "current_stock": 9,
+        "stock_status": "충분",
+        "turnover_ratio": 1.8,
+        "daily_movements": [
+          {
+            "date": "2025-01-01",
+            "inbound": 0,
+            "outbound": 2,
+            "net_change": -2
+          },
+          {
+            "date": "2025-01-02",
+            "inbound": 2,
+            "outbound": 1,
+            "net_change": 1
+          },
+          {
+            "date": "2025-01-03",
+            "inbound": 1,
+            "outbound": 2,
+            "net_change": -1
+          },
+          {
+            "date": "2025-01-04",
+            "inbound": 4,
+            "outbound": 1,
+            "net_change": 3
+          },
+          {
+            "date": "2025-01-05",
+            "inbound": 4,
+            "outbound": 4,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-06",
+            "inbound": 4,
+            "outbound": 4,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-07",
+            "inbound": 2,
+            "outbound": 4,
+            "net_change": -2
+          }
+        ]
+      },
+      {
+        "product_code": "1000684000",
+        "product_name": "신라면건면,DC,농심,3.88KG(97G*40EA)/BOX",
+        "unit": "BOX",
+        "rack_name": "L",
+        "initial_stock": 10,
+        "total_inbound": 14,
+        "total_outbound": 14,
+        "current_stock": 10,
+        "stock_status": "충분",
+        "turnover_ratio": 1.4,
+        "daily_movements": [
+          {
+            "date": "2025-01-01",
+            "inbound": 3,
+            "outbound": 2,
+            "net_change": 1
+          },
+          {
+            "date": "2025-01-02",
+            "inbound": 1,
+            "outbound": 3,
+            "net_change": -2
+          },
+          {
+            "date": "2025-01-03",
+            "inbound": 2,
+            "outbound": 1,
+            "net_change": 1
+          },
+          {
+            "date": "2025-01-04",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-05",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-06",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-07",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          }
+        ]
+      },
+      {
+        "product_code": "1000730237",
+        "product_name": "사계절쌈장(VB),DC,해찬들,3KG/EA",
+        "unit": "EA",
+        "rack_name": "L",
+        "initial_stock": 10,
+        "total_inbound": 14,
+        "total_outbound": 14,
+        "current_stock": 10,
+        "stock_status": "충분",
+        "turnover_ratio": 1.4,
+        "daily_movements": [
+          {
+            "date": "2025-01-01",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-02",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-03",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-04",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-05",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-06",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-07",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          }
+        ]
+      },
+      {
+        "product_code": "1000734366",
+        "product_name": "초정탄산수,DC,일화,190ML/EA,30EA",
+        "unit": "EA",
+        "rack_name": "L",
+        "initial_stock": 10,
+        "total_inbound": 15,
+        "total_outbound": 15,
+        "current_stock": 10,
+        "stock_status": "충분",
+        "turnover_ratio": 1.5,
+        "daily_movements": [
+          {
+            "date": "2025-01-01",
+            "inbound": 3,
+            "outbound": 2,
+            "net_change": 1
+          },
+          {
+            "date": "2025-01-02",
+            "inbound": 2,
+            "outbound": 3,
+            "net_change": -1
+          },
+          {
+            "date": "2025-01-03",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-04",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-05",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-06",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-07",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          }
+        ]
+      },
+      {
+        "product_code": "1000684493",
+        "product_name": "쌀,오늘쌀,DC,국산,미아토,20KG/PAC",
+        "unit": "PAC",
+        "rack_name": "L",
+        "initial_stock": 10,
+        "total_inbound": 12,
+        "total_outbound": 15,
+        "current_stock": 7,
+        "stock_status": "충분",
+        "turnover_ratio": 1.5,
+        "daily_movements": [
+          {
+            "date": "2025-01-01",
+            "inbound": 0,
+            "outbound": 2,
+            "net_change": -2
+          },
+          {
+            "date": "2025-01-02",
+            "inbound": 2,
+            "outbound": 3,
+            "net_change": -1
+          },
+          {
+            "date": "2025-01-03",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-04",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-05",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-06",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-07",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          }
+        ]
+      },
+      {
+        "product_code": "1000736225",
+        "product_name": "(브런치빈)투움바파우더,DC,태원식품산업,1KG/PAC",
+        "unit": "PAC",
+        "rack_name": "M",
+        "initial_stock": 10,
+        "total_inbound": 14,
+        "total_outbound": 14,
+        "current_stock": 10,
+        "stock_status": "충분",
+        "turnover_ratio": 1.4,
+        "daily_movements": [
+          {
+            "date": "2025-01-01",
+            "inbound": 1,
+            "outbound": 2,
+            "net_change": -1
+          },
+          {
+            "date": "2025-01-02",
+            "inbound": 2,
+            "outbound": 1,
+            "net_change": 1
+          },
+          {
+            "date": "2025-01-03",
+            "inbound": 1,
+            "outbound": 2,
+            "net_change": -1
+          },
+          {
+            "date": "2025-01-04",
+            "inbound": 3,
+            "outbound": 1,
+            "net_change": 2
+          },
+          {
+            "date": "2025-01-05",
+            "inbound": 2,
+            "outbound": 3,
+            "net_change": -1
+          },
+          {
+            "date": "2025-01-06",
+            "inbound": 3,
+            "outbound": 2,
+            "net_change": 1
+          },
+          {
+            "date": "2025-01-07",
+            "inbound": 2,
+            "outbound": 3,
+            "net_change": -1
+          }
+        ]
+      },
+      {
+        "product_code": "1000687111",
+        "product_name": "너구리,DC,농심,3.6KG(120G*30EA)/BOX",
+        "unit": "BOX",
+        "rack_name": "M",
+        "initial_stock": 10,
+        "total_inbound": 12,
+        "total_outbound": 12,
+        "current_stock": 10,
+        "stock_status": "충분",
+        "turnover_ratio": 1.2,
+        "daily_movements": [
+          {
+            "date": "2025-01-01",
+            "inbound": 1,
+            "outbound": 2,
+            "net_change": -1
+          },
+          {
+            "date": "2025-01-02",
+            "inbound": 1,
+            "outbound": 1,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-03",
+            "inbound": 2,
+            "outbound": 1,
+            "net_change": 1
+          },
+          {
+            "date": "2025-01-04",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-05",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-06",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-07",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          }
+        ]
+      },
+      {
+        "product_code": "1000684817",
+        "product_name": "실속진한다시,DC,CJ,2KG/EA",
+        "unit": "EA",
+        "rack_name": "M",
+        "initial_stock": 10,
+        "total_inbound": 14,
+        "total_outbound": 14,
+        "current_stock": 10,
+        "stock_status": "충분",
+        "turnover_ratio": 1.4,
+        "daily_movements": [
+          {
+            "date": "2025-01-01",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-02",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-03",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-04",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-05",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-06",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-07",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          }
+        ]
+      },
+      {
+        "product_code": "1000734367",
+        "product_name": "탄산수,플레인,초정,DC,국내산,일화,1.5L/EA,12EA/BOX",
+        "unit": "EA",
+        "rack_name": "M",
+        "initial_stock": 10,
+        "total_inbound": 18,
+        "total_outbound": 18,
+        "current_stock": 10,
+        "stock_status": "충분",
+        "turnover_ratio": 1.8,
+        "daily_movements": [
+          {
+            "date": "2025-01-01",
+            "inbound": 4,
+            "outbound": 3,
+            "net_change": 1
+          },
+          {
+            "date": "2025-01-02",
+            "inbound": 1,
+            "outbound": 4,
+            "net_change": -3
+          },
+          {
+            "date": "2025-01-03",
+            "inbound": 1,
+            "outbound": 1,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-04",
+            "inbound": 3,
+            "outbound": 1,
+            "net_change": 2
+          },
+          {
+            "date": "2025-01-05",
+            "inbound": 3,
+            "outbound": 3,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-06",
+            "inbound": 3,
+            "outbound": 3,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-07",
+            "inbound": 3,
+            "outbound": 3,
+            "net_change": 0
+          }
+        ]
+      },
+      {
+        "product_code": "1000661571",
+        "product_name": "스프라이트캔,업소용,DC,355ML/EA,24EA/BOX",
+        "unit": "EA",
+        "rack_name": "M",
+        "initial_stock": 10,
+        "total_inbound": 14,
+        "total_outbound": 14,
+        "current_stock": 10,
+        "stock_status": "충분",
+        "turnover_ratio": 1.4,
+        "daily_movements": [
+          {
+            "date": "2025-01-01",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-02",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-03",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-04",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-05",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-06",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-07",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          }
+        ]
+      },
+      {
+        "product_code": "1000700278",
+        "product_name": "접지냅킨,10000매/BOX,DC",
+        "unit": "BOX",
+        "rack_name": "N",
+        "initial_stock": 10,
+        "total_inbound": 14,
+        "total_outbound": 14,
+        "current_stock": 10,
+        "stock_status": "충분",
+        "turnover_ratio": 1.4,
+        "daily_movements": [
+          {
+            "date": "2025-01-01",
+            "inbound": 2,
+            "outbound": 3,
+            "net_change": -1
+          },
+          {
+            "date": "2025-01-02",
+            "inbound": 1,
+            "outbound": 2,
+            "net_change": -1
+          },
+          {
+            "date": "2025-01-03",
+            "inbound": 2,
+            "outbound": 1,
+            "net_change": 1
+          },
+          {
+            "date": "2025-01-04",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-05",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-06",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-07",
+            "inbound": 3,
+            "outbound": 2,
+            "net_change": 1
+          }
+        ]
+      },
+      {
+        "product_code": "1000721308",
+        "product_name": "신라면,DC,농심,3.6KG(120G*30EA)/BOX　",
+        "unit": "BOX",
+        "rack_name": "N",
+        "initial_stock": 10,
+        "total_inbound": 15,
+        "total_outbound": 15,
+        "current_stock": 10,
+        "stock_status": "충분",
+        "turnover_ratio": 1.5,
+        "daily_movements": [
+          {
+            "date": "2025-01-01",
+            "inbound": 4,
+            "outbound": 2,
+            "net_change": 2
+          },
+          {
+            "date": "2025-01-02",
+            "inbound": 1,
+            "outbound": 4,
+            "net_change": -3
+          },
+          {
+            "date": "2025-01-03",
+            "inbound": 2,
+            "outbound": 1,
+            "net_change": 1
+          },
+          {
+            "date": "2025-01-04",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-05",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-06",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-07",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          }
+        ]
+      },
+      {
+        "product_code": "1000757331",
+        "product_name": "스팸캔,DC,돈육:외국산,국산,CJ,1.81KG/EA",
+        "unit": "EA",
+        "rack_name": "N",
+        "initial_stock": 10,
+        "total_inbound": 17,
+        "total_outbound": 17,
+        "current_stock": 10,
+        "stock_status": "충분",
+        "turnover_ratio": 1.7,
+        "daily_movements": [
+          {
+            "date": "2025-01-01",
+            "inbound": 1,
+            "outbound": 3,
+            "net_change": -2
+          },
+          {
+            "date": "2025-01-02",
+            "inbound": 1,
+            "outbound": 1,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-03",
+            "inbound": 3,
+            "outbound": 1,
+            "net_change": 2
+          },
+          {
+            "date": "2025-01-04",
+            "inbound": 3,
+            "outbound": 3,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-05",
+            "inbound": 3,
+            "outbound": 3,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-06",
+            "inbound": 3,
+            "outbound": 3,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-07",
+            "inbound": 3,
+            "outbound": 3,
+            "net_change": 0
+          }
+        ]
+      },
+      {
+        "product_code": "1000712235",
+        "product_name": "아임보리(페트),DC,일화,410ML/EA,20EA/BOX",
+        "unit": "EA",
+        "rack_name": "N",
+        "initial_stock": 10,
+        "total_inbound": 17,
+        "total_outbound": 17,
+        "current_stock": 10,
+        "stock_status": "충분",
+        "turnover_ratio": 1.7,
+        "daily_movements": [
+          {
+            "date": "2025-01-01",
+            "inbound": 5,
+            "outbound": 2,
+            "net_change": 3
+          },
+          {
+            "date": "2025-01-02",
+            "inbound": 2,
+            "outbound": 5,
+            "net_change": -3
+          },
+          {
+            "date": "2025-01-03",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-04",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-05",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-06",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-07",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          }
+        ]
+      },
+      {
+        "product_code": "1000720805",
+        "product_name": "코카콜라제로(뚱캔),DC,355ML/EA,24EA/BOX",
+        "unit": "EA",
+        "rack_name": "N",
+        "initial_stock": 10,
+        "total_inbound": 15,
+        "total_outbound": 15,
+        "current_stock": 10,
+        "stock_status": "충분",
+        "turnover_ratio": 1.5,
+        "daily_movements": [
+          {
+            "date": "2025-01-01",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-02",
+            "inbound": 3,
+            "outbound": 2,
+            "net_change": 1
+          },
+          {
+            "date": "2025-01-03",
+            "inbound": 2,
+            "outbound": 3,
+            "net_change": -1
+          },
+          {
+            "date": "2025-01-04",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-05",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-06",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-07",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          }
+        ]
+      },
+      {
+        "product_code": "1000700281",
+        "product_name": "파트너핸드타올갈색지,DC,BROWN,BROWN,5000매/박스",
+        "unit": "BOX",
+        "rack_name": "O",
+        "initial_stock": 10,
+        "total_inbound": 13,
+        "total_outbound": 15,
+        "current_stock": 8,
+        "stock_status": "충분",
+        "turnover_ratio": 1.5,
+        "daily_movements": [
+          {
+            "date": "2025-01-01",
+            "inbound": 0,
+            "outbound": 3,
+            "net_change": -3
+          },
+          {
+            "date": "2025-01-02",
+            "inbound": 1,
+            "outbound": 2,
+            "net_change": -1
+          },
+          {
+            "date": "2025-01-03",
+            "inbound": 2,
+            "outbound": 1,
+            "net_change": 1
+          },
+          {
+            "date": "2025-01-04",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-05",
+            "inbound": 3,
+            "outbound": 2,
+            "net_change": 1
+          },
+          {
+            "date": "2025-01-06",
+            "inbound": 2,
+            "outbound": 3,
+            "net_change": -1
+          },
+          {
+            "date": "2025-01-07",
+            "inbound": 3,
+            "outbound": 2,
+            "net_change": 1
+          }
+        ]
+      },
+      {
+        "product_code": "1000687085",
+        "product_name": "튀김우동,큰사발,DC,농심,1.776KG(111G*16EA)/BOX",
+        "unit": "BOX",
+        "rack_name": "O",
+        "initial_stock": 10,
+        "total_inbound": 18,
+        "total_outbound": 18,
+        "current_stock": 10,
+        "stock_status": "충분",
+        "turnover_ratio": 1.8,
+        "daily_movements": [
+          {
+            "date": "2025-01-01",
+            "inbound": 1,
+            "outbound": 2,
+            "net_change": -1
+          },
+          {
+            "date": "2025-01-02",
+            "inbound": 2,
+            "outbound": 1,
+            "net_change": 1
+          },
+          {
+            "date": "2025-01-03",
+            "inbound": 1,
+            "outbound": 2,
+            "net_change": -1
+          },
+          {
+            "date": "2025-01-04",
+            "inbound": 4,
+            "outbound": 1,
+            "net_change": 3
+          },
+          {
+            "date": "2025-01-05",
+            "inbound": 4,
+            "outbound": 4,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-06",
+            "inbound": 4,
+            "outbound": 4,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-07",
+            "inbound": 2,
+            "outbound": 4,
+            "net_change": -2
+          }
+        ]
+      },
+      {
+        "product_code": "1000739074",
+        "product_name": "식용유(해피스푼),DC,대두:외국산,CJ,18L/EA",
+        "unit": "EA",
+        "rack_name": "O",
+        "initial_stock": 10,
+        "total_inbound": 14,
+        "total_outbound": 14,
+        "current_stock": 10,
+        "stock_status": "충분",
+        "turnover_ratio": 1.4,
+        "daily_movements": [
+          {
+            "date": "2025-01-01",
+            "inbound": 3,
+            "outbound": 2,
+            "net_change": 1
+          },
+          {
+            "date": "2025-01-02",
+            "inbound": 2,
+            "outbound": 3,
+            "net_change": -1
+          },
+          {
+            "date": "2025-01-03",
+            "inbound": 1,
+            "outbound": 2,
+            "net_change": -1
+          },
+          {
+            "date": "2025-01-04",
+            "inbound": 2,
+            "outbound": 1,
+            "net_change": 1
+          },
+          {
+            "date": "2025-01-05",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-06",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-07",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          }
+        ]
+      },
+      {
+        "product_code": "1000640196",
+        "product_name": "케찹,DC,토마토페이스트:외국산,후레시스,스파우트,3KG/PAC",
+        "unit": "PAC",
+        "rack_name": "O",
+        "initial_stock": 10,
+        "total_inbound": 11,
+        "total_outbound": 12,
+        "current_stock": 9,
+        "stock_status": "충분",
+        "turnover_ratio": 1.2,
+        "daily_movements": [
+          {
+            "date": "2025-01-01",
+            "inbound": 0,
+            "outbound": 2,
+            "net_change": -2
+          },
+          {
+            "date": "2025-01-02",
+            "inbound": 2,
+            "outbound": 1,
+            "net_change": 1
+          },
+          {
+            "date": "2025-01-03",
+            "inbound": 1,
+            "outbound": 2,
+            "net_change": -1
+          },
+          {
+            "date": "2025-01-04",
+            "inbound": 2,
+            "outbound": 1,
+            "net_change": 1
+          },
+          {
+            "date": "2025-01-05",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-06",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-07",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          }
+        ]
+      },
+      {
+        "product_code": "1000721544",
+        "product_name": "조이망고주스(팩),DC,미닛메이드,195ML/EA,32EA/BOX",
+        "unit": "EA",
+        "rack_name": "O",
+        "initial_stock": 10,
+        "total_inbound": 20,
+        "total_outbound": 20,
+        "current_stock": 10,
+        "stock_status": "충분",
+        "turnover_ratio": 2.0,
+        "daily_movements": [
+          {
+            "date": "2025-01-01",
+            "inbound": 3,
+            "outbound": 3,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-02",
+            "inbound": 2,
+            "outbound": 3,
+            "net_change": -1
+          },
+          {
+            "date": "2025-01-03",
+            "inbound": 3,
+            "outbound": 2,
+            "net_change": 1
+          },
+          {
+            "date": "2025-01-04",
+            "inbound": 3,
+            "outbound": 3,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-05",
+            "inbound": 3,
+            "outbound": 3,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-06",
+            "inbound": 3,
+            "outbound": 3,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-07",
+            "inbound": 3,
+            "outbound": 3,
+            "net_change": 0
+          }
+        ]
+      },
+      {
+        "product_code": "1000687089",
+        "product_name": "짜파게티,DC,농심,4.2KG(140G*30EA)/BOX",
+        "unit": "BOX",
+        "rack_name": "P",
+        "initial_stock": 10,
+        "total_inbound": 19,
+        "total_outbound": 19,
+        "current_stock": 10,
+        "stock_status": "충분",
+        "turnover_ratio": 1.9,
+        "daily_movements": [
+          {
+            "date": "2025-01-01",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-02",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-03",
+            "inbound": 1,
+            "outbound": 2,
+            "net_change": -1
+          },
+          {
+            "date": "2025-01-04",
+            "inbound": 4,
+            "outbound": 1,
+            "net_change": 3
+          },
+          {
+            "date": "2025-01-05",
+            "inbound": 4,
+            "outbound": 4,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-06",
+            "inbound": 4,
+            "outbound": 4,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-07",
+            "inbound": 2,
+            "outbound": 4,
+            "net_change": -2
+          }
+        ]
+      },
+      {
+        "product_code": "1000612564",
+        "product_name": "갈색설탕,DC,CJ,15KG/PAC",
+        "unit": "PAC",
+        "rack_name": "P",
+        "initial_stock": 10,
+        "total_inbound": 17,
+        "total_outbound": 17,
+        "current_stock": 10,
+        "stock_status": "충분",
+        "turnover_ratio": 1.7,
+        "daily_movements": [
+          {
+            "date": "2025-01-01",
+            "inbound": 1,
+            "outbound": 3,
+            "net_change": -2
+          },
+          {
+            "date": "2025-01-02",
+            "inbound": 1,
+            "outbound": 1,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-03",
+            "inbound": 3,
+            "outbound": 1,
+            "net_change": 2
+          },
+          {
+            "date": "2025-01-04",
+            "inbound": 3,
+            "outbound": 3,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-05",
+            "inbound": 3,
+            "outbound": 3,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-06",
+            "inbound": 3,
+            "outbound": 3,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-07",
+            "inbound": 3,
+            "outbound": 3,
+            "net_change": 0
+          }
+        ]
+      },
+      {
+        "product_code": "1000641822",
+        "product_name": "식용유(오쉐프),DC,대두:외국산,오뚜기,18L/EA",
+        "unit": "EA",
+        "rack_name": "P",
+        "initial_stock": 10,
+        "total_inbound": 19,
+        "total_outbound": 21,
+        "current_stock": 8,
+        "stock_status": "충분",
+        "turnover_ratio": 2.1,
+        "daily_movements": [
+          {
+            "date": "2025-01-01",
+            "inbound": 0,
+            "outbound": 4,
+            "net_change": -4
+          },
+          {
+            "date": "2025-01-02",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-03",
+            "inbound": 1,
+            "outbound": 2,
+            "net_change": -1
+          },
+          {
+            "date": "2025-01-04",
+            "inbound": 4,
+            "outbound": 1,
+            "net_change": 3
+          },
+          {
+            "date": "2025-01-05",
+            "inbound": 4,
+            "outbound": 4,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-06",
+            "inbound": 4,
+            "outbound": 4,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-07",
+            "inbound": 4,
+            "outbound": 4,
+            "net_change": 0
+          }
+        ]
+      },
+      {
+        "product_code": "1000661576",
+        "product_name": "코카콜라페트,DC,1.5L/EA",
+        "unit": "EA",
+        "rack_name": "P",
+        "initial_stock": 10,
+        "total_inbound": 19,
+        "total_outbound": 19,
+        "current_stock": 10,
+        "stock_status": "충분",
+        "turnover_ratio": 1.9,
+        "daily_movements": [
+          {
+            "date": "2025-01-01",
+            "inbound": 1,
+            "outbound": 3,
+            "net_change": -2
+          },
+          {
+            "date": "2025-01-02",
+            "inbound": 3,
+            "outbound": 1,
+            "net_change": 2
+          },
+          {
+            "date": "2025-01-03",
+            "inbound": 1,
+            "outbound": 3,
+            "net_change": -2
+          },
+          {
+            "date": "2025-01-04",
+            "inbound": 4,
+            "outbound": 1,
+            "net_change": 3
+          },
+          {
+            "date": "2025-01-05",
+            "inbound": 3,
+            "outbound": 4,
+            "net_change": -1
+          },
+          {
+            "date": "2025-01-06",
+            "inbound": 4,
+            "outbound": 3,
+            "net_change": 1
+          },
+          {
+            "date": "2025-01-07",
+            "inbound": 3,
+            "outbound": 4,
+            "net_change": -1
+          }
+        ]
+      },
+      {
+        "product_code": "1000687091",
+        "product_name": "육개장,사발면,DC,농심,2.064KG(86G*24EA)/BOX",
+        "unit": "BOX",
+        "rack_name": "Q",
+        "initial_stock": 10,
+        "total_inbound": 14,
+        "total_outbound": 14,
+        "current_stock": 10,
+        "stock_status": "충분",
+        "turnover_ratio": 1.4,
+        "daily_movements": [
+          {
+            "date": "2025-01-01",
+            "inbound": 3,
+            "outbound": 2,
+            "net_change": 1
+          },
+          {
+            "date": "2025-01-02",
+            "inbound": 1,
+            "outbound": 3,
+            "net_change": -2
+          },
+          {
+            "date": "2025-01-03",
+            "inbound": 2,
+            "outbound": 1,
+            "net_change": 1
+          },
+          {
+            "date": "2025-01-04",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-05",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-06",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-07",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          }
+        ]
+      },
+      {
+        "product_code": "1000672088",
+        "product_name": "쌀,굿뜨래,DC,국산,부여농협,20KG/PAC",
+        "unit": "PAC",
+        "rack_name": "Q",
+        "initial_stock": 10,
+        "total_inbound": 14,
+        "total_outbound": 14,
+        "current_stock": 10,
+        "stock_status": "충분",
+        "turnover_ratio": 1.4,
+        "daily_movements": [
+          {
+            "date": "2025-01-01",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-02",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-03",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-04",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-05",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-06",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-07",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          }
+        ]
+      },
+      {
+        "product_code": "1000707371",
+        "product_name": "블랙올리브슬라이스캔(대),DC,스페인산,리치스,3KG/EA",
+        "unit": "EA",
+        "rack_name": "Q",
+        "initial_stock": 10,
+        "total_inbound": 15,
+        "total_outbound": 15,
+        "current_stock": 10,
+        "stock_status": "충분",
+        "turnover_ratio": 1.5,
+        "daily_movements": [
+          {
+            "date": "2025-01-01",
+            "inbound": 3,
+            "outbound": 2,
+            "net_change": 1
+          },
+          {
+            "date": "2025-01-02",
+            "inbound": 2,
+            "outbound": 3,
+            "net_change": -1
+          },
+          {
+            "date": "2025-01-03",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-04",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-05",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-06",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-07",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          }
+        ]
+      },
+      {
+        "product_code": "1000661578",
+        "product_name": "코카콜라제로캔,DC,250ML/EA,30EA/BOX",
+        "unit": "EA",
+        "rack_name": "Q",
+        "initial_stock": 10,
+        "total_inbound": 22,
+        "total_outbound": 22,
+        "current_stock": 10,
+        "stock_status": "충분",
+        "turnover_ratio": 2.2,
+        "daily_movements": [
+          {
+            "date": "2025-01-01",
+            "inbound": 3,
+            "outbound": 3,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-02",
+            "inbound": 3,
+            "outbound": 3,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-03",
+            "inbound": 1,
+            "outbound": 3,
+            "net_change": -2
+          },
+          {
+            "date": "2025-01-04",
+            "inbound": 5,
+            "outbound": 1,
+            "net_change": 4
+          },
+          {
+            "date": "2025-01-05",
+            "inbound": 2,
+            "outbound": 5,
+            "net_change": -3
+          },
+          {
+            "date": "2025-01-06",
+            "inbound": 5,
+            "outbound": 2,
+            "net_change": 3
+          },
+          {
+            "date": "2025-01-07",
+            "inbound": 3,
+            "outbound": 5,
+            "net_change": -2
+          }
+        ]
+      },
+      {
+        "product_code": "1000687092",
+        "product_name": "우육탕,큰사발,DC,농심,1.84KG(115G*16EA)/BOX",
+        "unit": "BOX",
+        "rack_name": "R",
+        "initial_stock": 10,
+        "total_inbound": 13,
+        "total_outbound": 13,
+        "current_stock": 10,
+        "stock_status": "충분",
+        "turnover_ratio": 1.3,
+        "daily_movements": [
+          {
+            "date": "2025-01-01",
+            "inbound": 1,
+            "outbound": 3,
+            "net_change": -2
+          },
+          {
+            "date": "2025-01-02",
+            "inbound": 1,
+            "outbound": 1,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-03",
+            "inbound": 2,
+            "outbound": 1,
+            "net_change": 1
+          },
+          {
+            "date": "2025-01-04",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-05",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-06",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-07",
+            "inbound": 3,
+            "outbound": 2,
+            "net_change": 1
+          }
+        ]
+      },
+      {
+        "product_code": "1000680058",
+        "product_name": "백물엿,DC,옥수수:외국산,참고을,9KG/EA",
+        "unit": "EA",
+        "rack_name": "R",
+        "initial_stock": 10,
+        "total_inbound": 15,
+        "total_outbound": 15,
+        "current_stock": 10,
+        "stock_status": "충분",
+        "turnover_ratio": 1.5,
+        "daily_movements": [
+          {
+            "date": "2025-01-01",
+            "inbound": 4,
+            "outbound": 2,
+            "net_change": 2
+          },
+          {
+            "date": "2025-01-02",
+            "inbound": 1,
+            "outbound": 4,
+            "net_change": -3
+          },
+          {
+            "date": "2025-01-03",
+            "inbound": 2,
+            "outbound": 1,
+            "net_change": 1
+          },
+          {
+            "date": "2025-01-04",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-05",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-06",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-07",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          }
+        ]
+      },
+      {
+        "product_code": "1000625267",
+        "product_name": "펩시콜라(작은캔),DC,190ML/EA,30EA/BOX",
+        "unit": "EA",
+        "rack_name": "R",
+        "initial_stock": 10,
+        "total_inbound": 14,
+        "total_outbound": 14,
+        "current_stock": 10,
+        "stock_status": "충분",
+        "turnover_ratio": 1.4,
+        "daily_movements": [
+          {
+            "date": "2025-01-01",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-02",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-03",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-04",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-05",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-06",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-07",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          }
+        ]
+      },
+      {
+        "product_code": "1000661579",
+        "product_name": "코카콜라캔,DC,355ML/EA,24EA/BOX,특수채널용",
+        "unit": "EA",
+        "rack_name": "R",
+        "initial_stock": 10,
+        "total_inbound": 20,
+        "total_outbound": 20,
+        "current_stock": 10,
+        "stock_status": "충분",
+        "turnover_ratio": 2.0,
+        "daily_movements": [
+          {
+            "date": "2025-01-01",
+            "inbound": 0,
+            "outbound": 3,
+            "net_change": -3
+          },
+          {
+            "date": "2025-01-02",
+            "inbound": 2,
+            "outbound": 5,
+            "net_change": -3
+          },
+          {
+            "date": "2025-01-03",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-04",
+            "inbound": 3,
+            "outbound": 2,
+            "net_change": 1
+          },
+          {
+            "date": "2025-01-05",
+            "inbound": 2,
+            "outbound": 3,
+            "net_change": -1
+          },
+          {
+            "date": "2025-01-06",
+            "inbound": 3,
+            "outbound": 2,
+            "net_change": 1
+          },
+          {
+            "date": "2025-01-07",
+            "inbound": 3,
+            "outbound": 3,
+            "net_change": 0
+          }
+        ]
+      },
+      {
+        "product_code": "1000687096",
+        "product_name": "안성탕면,DC,농심,6KG(125G*48EA)/BOX",
+        "unit": "BOX",
+        "rack_name": "S",
+        "initial_stock": 10,
+        "total_inbound": 16,
+        "total_outbound": 16,
+        "current_stock": 10,
+        "stock_status": "충분",
+        "turnover_ratio": 1.6,
+        "daily_movements": [
+          {
+            "date": "2025-01-01",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-02",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-03",
+            "inbound": 1,
+            "outbound": 2,
+            "net_change": -1
+          },
+          {
+            "date": "2025-01-04",
+            "inbound": 3,
+            "outbound": 1,
+            "net_change": 2
+          },
+          {
+            "date": "2025-01-05",
+            "inbound": 3,
+            "outbound": 3,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-06",
+            "inbound": 3,
+            "outbound": 3,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-07",
+            "inbound": 2,
+            "outbound": 3,
+            "net_change": -1
+          }
+        ]
+      },
+      {
+        "product_code": "1000693846",
+        "product_name": "백물엿,DC,옥수수: 외국산,참고을,5KG/EA",
+        "unit": "EA",
+        "rack_name": "S",
+        "initial_stock": 10,
+        "total_inbound": 13,
+        "total_outbound": 13,
+        "current_stock": 10,
+        "stock_status": "충분",
+        "turnover_ratio": 1.3,
+        "daily_movements": [
+          {
+            "date": "2025-01-01",
+            "inbound": 1,
+            "outbound": 3,
+            "net_change": -2
+          },
+          {
+            "date": "2025-01-02",
+            "inbound": 1,
+            "outbound": 1,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-03",
+            "inbound": 2,
+            "outbound": 1,
+            "net_change": 1
+          },
+          {
+            "date": "2025-01-04",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-05",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-06",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-07",
+            "inbound": 3,
+            "outbound": 2,
+            "net_change": 1
+          }
+        ]
+      },
+      {
+        "product_code": "1000720840",
+        "product_name": "제로칠성사이다캔,DC,250ML/EA,30EA/BOX",
+        "unit": "EA",
+        "rack_name": "S",
+        "initial_stock": 10,
+        "total_inbound": 15,
+        "total_outbound": 15,
+        "current_stock": 10,
+        "stock_status": "충분",
+        "turnover_ratio": 1.5,
+        "daily_movements": [
+          {
+            "date": "2025-01-01",
+            "inbound": 3,
+            "outbound": 2,
+            "net_change": 1
+          },
+          {
+            "date": "2025-01-02",
+            "inbound": 2,
+            "outbound": 3,
+            "net_change": -1
+          },
+          {
+            "date": "2025-01-03",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-04",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-05",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-06",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-07",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          }
+        ]
+      },
+      {
+        "product_code": "1000661600",
+        "product_name": "스프라이트(페트),업소용,DC,1.5L/EA",
+        "unit": "EA",
+        "rack_name": "S",
+        "initial_stock": 10,
+        "total_inbound": 16,
+        "total_outbound": 17,
+        "current_stock": 9,
+        "stock_status": "충분",
+        "turnover_ratio": 1.7,
+        "daily_movements": [
+          {
+            "date": "2025-01-01",
+            "inbound": 0,
+            "outbound": 3,
+            "net_change": -3
+          },
+          {
+            "date": "2025-01-02",
+            "inbound": 2,
+            "outbound": 1,
+            "net_change": 1
+          },
+          {
+            "date": "2025-01-03",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-04",
+            "inbound": 3,
+            "outbound": 2,
+            "net_change": 1
+          },
+          {
+            "date": "2025-01-05",
+            "inbound": 3,
+            "outbound": 3,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-06",
+            "inbound": 3,
+            "outbound": 3,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-07",
+            "inbound": 3,
+            "outbound": 3,
+            "net_change": 0
+          }
+        ]
+      },
+      {
+        "product_code": "1000687097",
+        "product_name": "신라면,큰사발면,DC,농심,1.824KG(114G*16EA)/BOX",
+        "unit": "BOX",
+        "rack_name": "T",
+        "initial_stock": 10,
+        "total_inbound": 18,
+        "total_outbound": 18,
+        "current_stock": 10,
+        "stock_status": "충분",
+        "turnover_ratio": 1.8,
+        "daily_movements": [
+          {
+            "date": "2025-01-01",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-02",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-03",
+            "inbound": 1,
+            "outbound": 2,
+            "net_change": -1
+          },
+          {
+            "date": "2025-01-04",
+            "inbound": 4,
+            "outbound": 1,
+            "net_change": 3
+          },
+          {
+            "date": "2025-01-05",
+            "inbound": 3,
+            "outbound": 4,
+            "net_change": -1
+          },
+          {
+            "date": "2025-01-06",
+            "inbound": 4,
+            "outbound": 3,
+            "net_change": 1
+          },
+          {
+            "date": "2025-01-07",
+            "inbound": 2,
+            "outbound": 4,
+            "net_change": -2
+          }
+        ]
+      },
+      {
+        "product_code": "1000730149",
+        "product_name": "맛있는찰맛고추장(VB),DC,참고을,14KG/EA",
+        "unit": "EA",
+        "rack_name": "T",
+        "initial_stock": 10,
+        "total_inbound": 17,
+        "total_outbound": 17,
+        "current_stock": 10,
+        "stock_status": "충분",
+        "turnover_ratio": 1.7,
+        "daily_movements": [
+          {
+            "date": "2025-01-01",
+            "inbound": 1,
+            "outbound": 2,
+            "net_change": -1
+          },
+          {
+            "date": "2025-01-02",
+            "inbound": 1,
+            "outbound": 1,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-03",
+            "inbound": 1,
+            "outbound": 1,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-04",
+            "inbound": 4,
+            "outbound": 1,
+            "net_change": 3
+          },
+          {
+            "date": "2025-01-05",
+            "inbound": 4,
+            "outbound": 4,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-06",
+            "inbound": 4,
+            "outbound": 4,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-07",
+            "inbound": 2,
+            "outbound": 4,
+            "net_change": -2
+          }
+        ]
+      },
+      {
+        "product_code": "1000720924",
+        "product_name": "칠성사이다,업소용펫,DC,1.25L/EA",
+        "unit": "EA",
+        "rack_name": "T",
+        "initial_stock": 10,
+        "total_inbound": 15,
+        "total_outbound": 15,
+        "current_stock": 10,
+        "stock_status": "충분",
+        "turnover_ratio": 1.5,
+        "daily_movements": [
+          {
+            "date": "2025-01-01",
+            "inbound": 1,
+            "outbound": 3,
+            "net_change": -2
+          },
+          {
+            "date": "2025-01-02",
+            "inbound": 1,
+            "outbound": 1,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-03",
+            "inbound": 1,
+            "outbound": 1,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-04",
+            "inbound": 3,
+            "outbound": 1,
+            "net_change": 2
+          },
+          {
+            "date": "2025-01-05",
+            "inbound": 3,
+            "outbound": 3,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-06",
+            "inbound": 3,
+            "outbound": 3,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-07",
+            "inbound": 3,
+            "outbound": 3,
+            "net_change": 0
+          }
+        ]
+      },
+      {
+        "product_code": "1000661603",
+        "product_name": "스프라이트캔,DC,250ML/EA,30EA/BOX",
+        "unit": "EA",
+        "rack_name": "T",
+        "initial_stock": 10,
+        "total_inbound": 19,
+        "total_outbound": 19,
+        "current_stock": 10,
+        "stock_status": "충분",
+        "turnover_ratio": 1.9,
+        "daily_movements": [
+          {
+            "date": "2025-01-01",
+            "inbound": 3,
+            "outbound": 3,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-02",
+            "inbound": 1,
+            "outbound": 3,
+            "net_change": -2
+          },
+          {
+            "date": "2025-01-03",
+            "inbound": 3,
+            "outbound": 1,
+            "net_change": 2
+          },
+          {
+            "date": "2025-01-04",
+            "inbound": 3,
+            "outbound": 3,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-05",
+            "inbound": 3,
+            "outbound": 3,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-06",
+            "inbound": 3,
+            "outbound": 3,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-07",
+            "inbound": 3,
+            "outbound": 3,
+            "net_change": 0
+          }
+        ]
+      },
+      {
+        "product_code": "1000000001",
+        "product_name": "DX아몬드브리즈오리지널45,DC,매일,190G/EA",
+        "unit": "BOX",
+        "rack_name": "U",
+        "initial_stock": 10,
+        "total_inbound": 12,
+        "total_outbound": 14,
+        "current_stock": 8,
+        "stock_status": "충분",
+        "turnover_ratio": 1.4,
+        "daily_movements": [
+          {
+            "date": "2025-01-01",
+            "inbound": 0,
+            "outbound": 2,
+            "net_change": -2
+          },
+          {
+            "date": "2025-01-02",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-03",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-04",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-05",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-06",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-07",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          }
+        ]
+      },
+      {
+        "product_code": "1000000002",
+        "product_name": "[G]고구마말랭이,DC,중국산,60G/PAC",
+        "unit": "PAC",
+        "rack_name": "V",
+        "initial_stock": 10,
+        "total_inbound": 12,
+        "total_outbound": 14,
+        "current_stock": 8,
+        "stock_status": "충분",
+        "turnover_ratio": 1.4,
+        "daily_movements": [
+          {
+            "date": "2025-01-01",
+            "inbound": 0,
+            "outbound": 2,
+            "net_change": -2
+          },
+          {
+            "date": "2025-01-02",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-03",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-04",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-05",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-06",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-07",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          }
+        ]
+      },
+      {
+        "product_code": "1000000003",
+        "product_name": "(위키스마일)NEW양념소대창,DC,우육(소대창):국산한우,2KG/PACK",
+        "unit": "PAC",
+        "rack_name": "W",
+        "initial_stock": 10,
+        "total_inbound": 12,
+        "total_outbound": 14,
+        "current_stock": 8,
+        "stock_status": "충분",
+        "turnover_ratio": 1.4,
+        "daily_movements": [
+          {
+            "date": "2025-01-01",
+            "inbound": 0,
+            "outbound": 2,
+            "net_change": -2
+          },
+          {
+            "date": "2025-01-02",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-03",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-04",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-05",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-06",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-07",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          }
+        ]
+      },
+      {
+        "product_code": "1000000004",
+        "product_name": "(RD)가쓰오쯔유소스(우동용/소바용),DC,혼합간장:국산,매일식품,2KG/EA",
+        "unit": "EA",
+        "rack_name": "X",
+        "initial_stock": 10,
+        "total_inbound": 14,
+        "total_outbound": 14,
+        "current_stock": 10,
+        "stock_status": "충분",
+        "turnover_ratio": 1.4,
+        "daily_movements": [
+          {
+            "date": "2025-01-01",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-02",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-03",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-04",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-05",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-06",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-07",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          }
+        ]
+      },
+      {
+        "product_code": "1000000005",
+        "product_name": "(파더스베이글)딥블루에스프레소,DC,맥널티,1KG/EA",
+        "unit": "BOX",
+        "rack_name": "Y",
+        "initial_stock": 10,
+        "total_inbound": 12,
+        "total_outbound": 14,
+        "current_stock": 8,
+        "stock_status": "충분",
+        "turnover_ratio": 1.4,
+        "daily_movements": [
+          {
+            "date": "2025-01-01",
+            "inbound": 0,
+            "outbound": 2,
+            "net_change": -2
+          },
+          {
+            "date": "2025-01-02",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-03",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-04",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-05",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-06",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-07",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          }
+        ]
+      },
+      {
+        "product_code": "1000000006",
+        "product_name": "(슬림비빔밥)비빔고추장,DC,엘엔에프,2KG/EA",
+        "unit": "BOX",
+        "rack_name": "Z",
+        "initial_stock": 10,
+        "total_inbound": 12,
+        "total_outbound": 14,
+        "current_stock": 8,
+        "stock_status": "충분",
+        "turnover_ratio": 1.4,
+        "daily_movements": [
+          {
+            "date": "2025-01-01",
+            "inbound": 0,
+            "outbound": 2,
+            "net_change": -2
+          },
+          {
+            "date": "2025-01-02",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-03",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-04",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-05",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-06",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          },
+          {
+            "date": "2025-01-07",
+            "inbound": 2,
+            "outbound": 2,
+            "net_change": 0
+          }
+        ]
+      }
+    ],
+    "rack_summary": [
+      {
+        "rack_name": "A",
+        "product_count": 5,
+        "total_initial_stock": 50,
+        "total_current_stock": 50,
+        "total_inbound": 68,
+        "total_outbound": 68,
+        "low_stock_products": [],
+        "utilization_rate": 100.0
+      },
+      {
+        "rack_name": "B",
+        "product_count": 5,
+        "total_initial_stock": 50,
+        "total_current_stock": 50,
+        "total_inbound": 72,
+        "total_outbound": 72,
+        "low_stock_products": [],
+        "utilization_rate": 100.0
+      },
+      {
+        "rack_name": "C",
+        "product_count": 5,
+        "total_initial_stock": 50,
+        "total_current_stock": 50,
+        "total_inbound": 75,
+        "total_outbound": 75,
+        "low_stock_products": [],
+        "utilization_rate": 100.0
+      },
+      {
+        "rack_name": "D",
+        "product_count": 5,
+        "total_initial_stock": 50,
+        "total_current_stock": 46,
+        "total_inbound": 80,
+        "total_outbound": 84,
+        "low_stock_products": [],
+        "utilization_rate": 92.0
+      },
+      {
+        "rack_name": "E",
+        "product_count": 5,
+        "total_initial_stock": 50,
+        "total_current_stock": 46,
+        "total_inbound": 80,
+        "total_outbound": 84,
+        "low_stock_products": [],
+        "utilization_rate": 92.0
+      },
+      {
+        "rack_name": "F",
+        "product_count": 5,
+        "total_initial_stock": 50,
+        "total_current_stock": 44,
+        "total_inbound": 72,
+        "total_outbound": 78,
+        "low_stock_products": [],
+        "utilization_rate": 88.0
+      },
+      {
+        "rack_name": "G",
+        "product_count": 5,
+        "total_initial_stock": 50,
+        "total_current_stock": 44,
+        "total_inbound": 57,
+        "total_outbound": 63,
+        "low_stock_products": [],
+        "utilization_rate": 88.0
+      },
+      {
+        "rack_name": "H",
+        "product_count": 5,
+        "total_initial_stock": 50,
+        "total_current_stock": 47,
+        "total_inbound": 81,
+        "total_outbound": 84,
+        "low_stock_products": [],
+        "utilization_rate": 94.0
+      },
+      {
+        "rack_name": "I",
+        "product_count": 5,
+        "total_initial_stock": 50,
+        "total_current_stock": 45,
+        "total_inbound": 67,
+        "total_outbound": 72,
+        "low_stock_products": [],
+        "utilization_rate": 90.0
+      },
+      {
+        "rack_name": "J",
+        "product_count": 5,
+        "total_initial_stock": 50,
+        "total_current_stock": 42,
+        "total_inbound": 67,
+        "total_outbound": 75,
+        "low_stock_products": [],
+        "utilization_rate": 84.0
+      },
+      {
+        "rack_name": "K",
+        "product_count": 5,
+        "total_initial_stock": 50,
+        "total_current_stock": 44,
+        "total_inbound": 78,
+        "total_outbound": 84,
+        "low_stock_products": [],
+        "utilization_rate": 88.0
+      },
+      {
+        "rack_name": "L",
+        "product_count": 5,
+        "total_initial_stock": 50,
+        "total_current_stock": 46,
+        "total_inbound": 72,
+        "total_outbound": 76,
+        "low_stock_products": [],
+        "utilization_rate": 92.0
+      },
+      {
+        "rack_name": "M",
+        "product_count": 5,
+        "total_initial_stock": 50,
+        "total_current_stock": 50,
+        "total_inbound": 72,
+        "total_outbound": 72,
+        "low_stock_products": [],
+        "utilization_rate": 100.0
+      },
+      {
+        "rack_name": "N",
+        "product_count": 5,
+        "total_initial_stock": 50,
+        "total_current_stock": 50,
+        "total_inbound": 78,
+        "total_outbound": 78,
+        "low_stock_products": [],
+        "utilization_rate": 100.0
+      },
+      {
+        "rack_name": "O",
+        "product_count": 5,
+        "total_initial_stock": 50,
+        "total_current_stock": 47,
+        "total_inbound": 76,
+        "total_outbound": 79,
+        "low_stock_products": [],
+        "utilization_rate": 94.0
+      },
+      {
+        "rack_name": "P",
+        "product_count": 4,
+        "total_initial_stock": 40,
+        "total_current_stock": 38,
+        "total_inbound": 74,
+        "total_outbound": 76,
+        "low_stock_products": [],
+        "utilization_rate": 95.0
+      },
+      {
+        "rack_name": "Q",
+        "product_count": 4,
+        "total_initial_stock": 40,
+        "total_current_stock": 40,
+        "total_inbound": 65,
+        "total_outbound": 65,
+        "low_stock_products": [],
+        "utilization_rate": 100.0
+      },
+      {
+        "rack_name": "R",
+        "product_count": 4,
+        "total_initial_stock": 40,
+        "total_current_stock": 40,
+        "total_inbound": 62,
+        "total_outbound": 62,
+        "low_stock_products": [],
+        "utilization_rate": 100.0
+      },
+      {
+        "rack_name": "S",
+        "product_count": 4,
+        "total_initial_stock": 40,
+        "total_current_stock": 39,
+        "total_inbound": 60,
+        "total_outbound": 61,
+        "low_stock_products": [],
+        "utilization_rate": 97.5
+      },
+      {
+        "rack_name": "T",
+        "product_count": 4,
+        "total_initial_stock": 40,
+        "total_current_stock": 40,
+        "total_inbound": 69,
+        "total_outbound": 69,
+        "low_stock_products": [],
+        "utilization_rate": 100.0
+      },
+      {
+        "rack_name": "U",
+        "product_count": 1,
+        "total_initial_stock": 10,
+        "total_current_stock": 8,
+        "total_inbound": 12,
+        "total_outbound": 14,
+        "low_stock_products": [],
+        "utilization_rate": 80.0
+      },
+      {
+        "rack_name": "V",
+        "product_count": 1,
+        "total_initial_stock": 10,
+        "total_current_stock": 8,
+        "total_inbound": 12,
+        "total_outbound": 14,
+        "low_stock_products": [],
+        "utilization_rate": 80.0
+      },
+      {
+        "rack_name": "W",
+        "product_count": 1,
+        "total_initial_stock": 10,
+        "total_current_stock": 8,
+        "total_inbound": 12,
+        "total_outbound": 14,
+        "low_stock_products": [],
+        "utilization_rate": 80.0
+      },
+      {
+        "rack_name": "X",
+        "product_count": 1,
+        "total_initial_stock": 10,
+        "total_current_stock": 10,
+        "total_inbound": 14,
+        "total_outbound": 14,
+        "low_stock_products": [],
+        "utilization_rate": 100.0
+      },
+      {
+        "rack_name": "Y",
+        "product_count": 1,
+        "total_initial_stock": 10,
+        "total_current_stock": 8,
+        "total_inbound": 12,
+        "total_outbound": 14,
+        "low_stock_products": [],
+        "utilization_rate": 80.0
+      },
+      {
+        "rack_name": "Z",
+        "product_count": 1,
+        "total_initial_stock": 10,
+        "total_current_stock": 8,
+        "total_inbound": 12,
+        "total_outbound": 14,
+        "low_stock_products": [],
+        "utilization_rate": 80.0
+      }
+    ],
+    "summary_stats": {
+      "total_products": 101,
+      "total_current_stock": 948,
+      "total_inbound": 1499,
+      "total_outbound": 1561,
+      "net_change": -62,
+      "low_stock_count": 0,
+      "out_of_stock_count": 0,
+      "low_stock_rate": 0.0,
+      "high_turnover_products": [
+        {
+          "product_code": "1000661578",
+          "product_name": "코카콜라제로캔,DC,250ML/EA,30EA/BOX",
+          "unit": "EA",
+          "rack_name": "Q",
+          "initial_stock": 10,
+          "total_inbound": 22,
+          "total_outbound": 22,
+          "current_stock": 10,
+          "stock_status": "충분",
+          "turnover_ratio": 2.2,
+          "daily_movements": [
+            {
+              "date": "2025-01-01",
+              "inbound": 3,
+              "outbound": 3,
+              "net_change": 0
+            },
+            {
+              "date": "2025-01-02",
+              "inbound": 3,
+              "outbound": 3,
+              "net_change": 0
+            },
+            {
+              "date": "2025-01-03",
+              "inbound": 1,
+              "outbound": 3,
+              "net_change": -2
+            },
+            {
+              "date": "2025-01-04",
+              "inbound": 5,
+              "outbound": 1,
+              "net_change": 4
+            },
+            {
+              "date": "2025-01-05",
+              "inbound": 2,
+              "outbound": 5,
+              "net_change": -3
+            },
+            {
+              "date": "2025-01-06",
+              "inbound": 5,
+              "outbound": 2,
+              "net_change": 3
+            },
+            {
+              "date": "2025-01-07",
+              "inbound": 3,
+              "outbound": 5,
+              "net_change": -2
+            }
+          ]
+        },
+        {
+          "product_code": "1000625280",
+          "product_name": "칠성사이다캔,DC,업소용,355ML/EA,24EA/BOX",
+          "unit": "EA",
+          "rack_name": "D",
+          "initial_stock": 10,
+          "total_inbound": 21,
+          "total_outbound": 21,
+          "current_stock": 10,
+          "stock_status": "충분",
+          "turnover_ratio": 2.1,
+          "daily_movements": [
+            {
+              "date": "2025-01-01",
+              "inbound": 3,
+              "outbound": 4,
+              "net_change": -1
+            },
+            {
+              "date": "2025-01-02",
+              "inbound": 1,
+              "outbound": 3,
+              "net_change": -2
+            },
+            {
+              "date": "2025-01-03",
+              "inbound": 1,
+              "outbound": 1,
+              "net_change": 0
+            },
+            {
+              "date": "2025-01-04",
+              "inbound": 4,
+              "outbound": 1,
+              "net_change": 3
+            },
+            {
+              "date": "2025-01-05",
+              "inbound": 4,
+              "outbound": 4,
+              "net_change": 0
+            },
+            {
+              "date": "2025-01-06",
+              "inbound": 4,
+              "outbound": 4,
+              "net_change": 0
+            },
+            {
+              "date": "2025-01-07",
+              "inbound": 4,
+              "outbound": 4,
+              "net_change": 0
+            }
+          ]
+        },
+        {
+          "product_code": "1000707110",
+          "product_name": "트레비레몬(캔),탄산수,DC,355ML/EA,24EA/BOX",
+          "unit": "EA",
+          "rack_name": "H",
+          "initial_stock": 10,
+          "total_inbound": 21,
+          "total_outbound": 21,
+          "current_stock": 10,
+          "stock_status": "충분",
+          "turnover_ratio": 2.1,
+          "daily_movements": [
+            {
+              "date": "2025-01-01",
+              "inbound": 3,
+              "outbound": 4,
+              "net_change": -1
+            },
+            {
+              "date": "2025-01-02",
+              "inbound": 1,
+              "outbound": 3,
+              "net_change": -2
+            },
+            {
+              "date": "2025-01-03",
+              "inbound": 1,
+              "outbound": 1,
+              "net_change": 0
+            },
+            {
+              "date": "2025-01-04",
+              "inbound": 4,
+              "outbound": 1,
+              "net_change": 3
+            },
+            {
+              "date": "2025-01-05",
+              "inbound": 4,
+              "outbound": 4,
+              "net_change": 0
+            },
+            {
+              "date": "2025-01-06",
+              "inbound": 4,
+              "outbound": 4,
+              "net_change": 0
+            },
+            {
+              "date": "2025-01-07",
+              "inbound": 4,
+              "outbound": 4,
+              "net_change": 0
+            }
+          ]
+        },
+        {
+          "product_code": "1000641822",
+          "product_name": "식용유(오쉐프),DC,대두:외국산,오뚜기,18L/EA",
+          "unit": "EA",
+          "rack_name": "P",
+          "initial_stock": 10,
+          "total_inbound": 19,
+          "total_outbound": 21,
+          "current_stock": 8,
+          "stock_status": "충분",
+          "turnover_ratio": 2.1,
+          "daily_movements": [
+            {
+              "date": "2025-01-01",
+              "inbound": 0,
+              "outbound": 4,
+              "net_change": -4
+            },
+            {
+              "date": "2025-01-02",
+              "inbound": 2,
+              "outbound": 2,
+              "net_change": 0
+            },
+            {
+              "date": "2025-01-03",
+              "inbound": 1,
+              "outbound": 2,
+              "net_change": -1
+            },
+            {
+              "date": "2025-01-04",
+              "inbound": 4,
+              "outbound": 1,
+              "net_change": 3
+            },
+            {
+              "date": "2025-01-05",
+              "inbound": 4,
+              "outbound": 4,
+              "net_change": 0
+            },
+            {
+              "date": "2025-01-06",
+              "inbound": 4,
+              "outbound": 4,
+              "net_change": 0
+            },
+            {
+              "date": "2025-01-07",
+              "inbound": 4,
+              "outbound": 4,
+              "net_change": 0
+            }
+          ]
+        },
+        {
+          "product_code": "1000711196",
+          "product_name": "쫄깃한메밀국수,DC,밀:호주산,미국산,풍국면,1KG/PAC",
+          "unit": "PAC",
+          "rack_name": "D",
+          "initial_stock": 10,
+          "total_inbound": 16,
+          "total_outbound": 20,
+          "current_stock": 6,
+          "stock_status": "충분",
+          "turnover_ratio": 2.0,
+          "daily_movements": [
+            {
+              "date": "2025-01-01",
+              "inbound": 0,
+              "outbound": 3,
+              "net_change": -3
+            },
+            {
+              "date": "2025-01-02",
+              "inbound": 2,
+              "outbound": 4,
+              "net_change": -2
+            },
+            {
+              "date": "2025-01-03",
+              "inbound": 2,
+              "outbound": 2,
+              "net_change": 0
+            },
+            {
+              "date": "2025-01-04",
+              "inbound": 3,
+              "outbound": 2,
+              "net_change": 1
+            },
+            {
+              "date": "2025-01-05",
+              "inbound": 3,
+              "outbound": 3,
+              "net_change": 0
+            },
+            {
+              "date": "2025-01-06",
+              "inbound": 3,
+              "outbound": 3,
+              "net_change": 0
+            },
+            {
+              "date": "2025-01-07",
+              "inbound": 3,
+              "outbound": 3,
+              "net_change": 0
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "recommendations": [
+    {
+      "category": "데이터 품질",
+      "priority": "높음",
+      "issue": "입고 데이터의 상품코드 매칭률이 낮음",
+      "recommendation": "상품 마스터와 입고 데이터의 ProductCode 정합성 확인 필요"
+    },
+    {
+      "category": "수요 예측",
+      "priority": "낮음",
+      "issue": "5개 상품이 높은 회전율을 보임",
+      "recommendation": "고회전율 상품의 안전재고 수준 재검토 권장"
+    }
+  ]
+}

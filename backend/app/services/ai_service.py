@@ -255,9 +255,12 @@ class WarehouseAI:
             for key_name, key_value in api_keys.items():
                 if key_value:
                     masked_key = f"{key_value[:10]}...{key_value[-5:]}" if len(key_value) > 15 else "짧은키"
-                    self.logger.info(f"  ✅ {key_name}: {masked_key}")
+                    self.logger.info(f"  ✅ {key_name}: {masked_key} (길이: {len(key_value)})")
                 else:
                     self.logger.warning(f"  ❌ {key_name}: 설정되지 않음")
+                    # 디버깅: 환경변수가 정말 없는지 확인
+                    env_val = os.getenv(f'GEMINI_API_KEY_{key_name.split("_")[-1]}')
+                    self.logger.warning(f"  🔍 직접 조회: {env_val is not None} (값 존재: {bool(env_val)})")
 
             valid_keys = {k: v for k, v in api_keys.items() if v and len(v) > 30}  # 최소 길이 검증
             if not valid_keys:
@@ -481,15 +484,19 @@ class WarehouseAI:
         
         # VectorDB 전용 프롬프트 생성
         prompt = f"""
-당신은 창고 관리 전문 AI입니다. 검색된 데이터를 바탕으로 정확하고 구체적인 답변을 제공하세요.
+당신은 창고 관리 전문 AI입니다. 검색된 실제 데이터를 바탕으로 정확하고 구체적인 답변을 제공하세요.
 
 {structured_context}
 
 **답변 규칙:**
-1. 검색된 정보를 기반으로 구체적인 수치와 함께 답변
-2. 3-5문장으로 간결하게 답변
-3. 불확실한 정보는 "데이터에 따르면" 등으로 명시
-4. 관련 차트나 데이터가 있으면 참조 언급
+1. 검색된 정보에서 구체적인 회사명, 수치, 날짜 등을 포함하여 답변
+2. 공급업체 질문이면 상위 5-10개 업체를 명시하고 입고량도 함께 제시
+3. "데이터에 따르면" 또는 "검색 결과"로 시작하여 신뢰성 표시
+4. 4-6문장으로 상세하고 구체적인 답변 제공
+5. 차트 데이터가 있으면 "상위 공급업체는 ○○(△△개), □□(●●개)" 형식으로 나열
+
+**공급업체 질문 답변 예시:**
+"데이터에 따르면 주요 공급업체는 (주)농심(총 45개), 롯데상사(총 23개), (주)서브원(총 18개) 순입니다. 전체 15개 공급업체 중에서 (주)농심이 가장 많은 물량을 납품하고 있으며, 주로 라면류와 음료류를 공급하고 있습니다."
 
 답변:"""
         
@@ -508,12 +515,19 @@ class WarehouseAI:
             return f"죄송합니다. 검색된 정보를 처리하는 중 오류가 발생했습니다."
     
     async def answer_simple_query(self, question: str, context_data: dict) -> str:
-        """간단한 질문에 대한 기본 처리"""
+        """간단한 질문에 대한 기본 처리 - CoT 분석용 JSON 응답 지원"""
         if self.offline_mode or not self.gemini_models:
             return self._get_offline_response(question, context_data)
         
-        # 간단한 프롬프트 생성
-        prompt = f"""
+        # CoT 분석 요청인지 확인
+        is_cot_request = context_data and context_data.get("cot_analysis", False)
+        
+        if is_cot_request:
+            # CoT 분석을 위한 JSON 구조화 프롬프트
+            prompt = question  # CoT 분석에서는 이미 완전한 프롬프트가 전달됨
+        else:
+            # 일반적인 간단한 질문 처리 프롬프트
+            prompt = f"""
 당신은 창고 관리 AI 어시스턴트입니다. 간단하고 직접적으로 답변하세요.
 
 **질문:** {question}
