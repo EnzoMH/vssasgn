@@ -179,32 +179,122 @@
           </div>
 
           <!-- AI 분석 결과 -->
-          <div class="chart-container">
+          <div class="chart-container ai-analysis-container">
             <div class="chart-header">
-              <h3><i class="fas fa-brain"></i> AI 분석 결과</h3>
+              <h3><i class="fas fa-brain"></i> AI 고급 분석</h3>
               <div class="ml-controls">
                 <button
-                  id="browserDemandPredictBtn"
+                  id="demandPredictBtn"
                   class="btn btn-sm btn-primary"
+                  data-analysis="demand"
                 >
-                  수요 예측
+                  <i class="fas fa-chart-line"></i> 수요 예측
                 </button>
                 <button
-                  id="browserClusterAnalysisBtn"
+                  id="clusterAnalysisBtn"
                   class="btn btn-sm btn-secondary"
+                  data-analysis="cluster"
                 >
-                  제품 클러스터링
+                  <i class="fas fa-project-diagram"></i> 제품 클러스터링
                 </button>
                 <button
-                  id="browserAnomalyDetectionBtn"
+                  id="anomalyDetectionBtn"
                   class="btn btn-sm btn-warning"
+                  data-analysis="anomaly"
                 >
-                  이상 탐지
+                  <i class="fas fa-exclamation-triangle"></i> 이상 탐지
+                </button>
+                <button
+                  id="optimizationBtn"
+                  class="btn btn-sm btn-success"
+                  data-analysis="optimization"
+                >
+                  <i class="fas fa-cogs"></i> 최적화 분석
                 </button>
               </div>
             </div>
-            <div id="browserMlResults" class="ml-results">
-              <p>AI 분석 버튼을 클릭하여 결과를 확인하세요.</p>
+
+            <!-- 실시간 분석 상태 -->
+            <div class="analysis-status-panel">
+              <div class="status-row">
+                <div class="status-item">
+                  <span class="status-label">마지막 분석:</span>
+                  <span id="lastAnalysisTime" class="status-value">-</span>
+                </div>
+                <div class="status-item">
+                  <span class="status-label">분석 모델:</span>
+                  <span id="currentModel" class="status-value"
+                    >XGBoost v2.1</span
+                  >
+                </div>
+                <div class="status-item">
+                  <span class="status-label">예측 신뢰도:</span>
+                  <span
+                    id="confidenceScore"
+                    class="status-value confidence-high"
+                    >94.2%</span
+                  >
+                </div>
+              </div>
+            </div>
+
+            <!-- 분석 결과 표시 영역 -->
+            <div class="analysis-results-section">
+              <!-- 분석 결과 내용 -->
+              <div id="mlResults" class="ml-results">
+                <div class="analysis-welcome">
+                  <div class="welcome-icon">
+                    <i class="fas fa-robot"></i>
+                  </div>
+                  <h4>AI 분석 시스템 준비 완료</h4>
+                  <p>위 버튼을 클릭하여 고급 AI 분석을 시작하세요.</p>
+                  <div class="feature-highlights">
+                    <div class="feature-item">
+                      <i class="fas fa-chart-line"></i>
+                      <span>실시간 수요 예측</span>
+                    </div>
+                    <div class="feature-item">
+                      <i class="fas fa-project-diagram"></i>
+                      <span>스마트 클러스터링</span>
+                    </div>
+                    <div class="feature-item">
+                      <i class="fas fa-shield-alt"></i>
+                      <span>이상 패턴 감지</span>
+                    </div>
+                    <div class="feature-item">
+                      <i class="fas fa-cogs"></i>
+                      <span>운영 최적화</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- 추천 액션 패널 -->
+              <div
+                id="recommendedActions"
+                class="recommended-actions"
+                style="display: none"
+              >
+                <h5><i class="fas fa-lightbulb"></i> 추천 액션</h5>
+                <div id="actionsList" class="actions-list">
+                  <!-- 동적으로 추가됨 -->
+                </div>
+              </div>
+
+              <!-- 분석 히스토리 -->
+              <div
+                id="analysisHistory"
+                class="analysis-history"
+                style="display: none"
+              >
+                <h5><i class="fas fa-history"></i> 분석 히스토리</h5>
+                <div id="historyChart" class="history-chart">
+                  <canvas
+                    id="analysisHistoryChart"
+                    style="max-height: 200px"
+                  ></canvas>
+                </div>
+              </div>
             </div>
           </div>
 
@@ -213,29 +303,21 @@
             <div class="chart-header">
               <h3><i class="fas fa-drafting-compass"></i> DWG CAD 시각화</h3>
               <div class="cad-controls">
-                <button id="browserUploadCADBtn" class="btn btn-primary">
+                <button id="uploadCADBtn" class="btn btn-primary">
                   <i class="fas fa-upload"></i> DWG 업로드
                 </button>
-                <button
-                  id="browserToggleLayersBtn"
-                  class="btn btn-secondary"
-                  disabled
-                >
+                <button id="toggleLayersBtn" class="btn btn-secondary" disabled>
                   <i class="fas fa-layer-group"></i> 레이어
                 </button>
-                <button
-                  id="browserZoomFitBtn"
-                  class="btn btn-secondary"
-                  disabled
-                >
+                <button id="zoomFitBtn" class="btn btn-secondary" disabled>
                   <i class="fas fa-expand"></i> 전체보기
                 </button>
               </div>
             </div>
 
             <!-- CAD 파일 업로드 영역 -->
-            <div id="browserCadUploadArea" class="cad-upload-area">
-              <div class="upload-dropzone" id="browserCadDropzone">
+            <div id="cadUploadArea" class="cad-upload-area">
+              <div class="upload-dropzone" id="cadDropzone">
                 <div class="upload-icon">
                   <i class="fas fa-file-code"></i>
                 </div>
@@ -246,29 +328,21 @@
                 </p>
                 <input
                   type="file"
-                  id="browserCadFileInput"
+                  id="cadFileInput"
                   accept=".dwg,.dxf,.dwf"
                   style="display: none"
                 />
-                <button id="browserSelectCADFileBtn" class="btn btn-primary">
+                <button id="selectCADFileBtn" class="btn btn-primary">
                   <i class="fas fa-folder-open"></i> 파일 선택
                 </button>
               </div>
             </div>
 
             <!-- CAD 뷰어 영역 -->
-            <div id="browserCadViewer" class="cad-viewer" style="display: none">
+            <div id="cadViewer" class="cad-viewer" style="display: none">
               <div class="cad-canvas-container">
-                <canvas
-                  id="browserWarehouseCanvas"
-                  width="800"
-                  height="400"
-                ></canvas>
-                <div
-                  class="cad-loading"
-                  id="browserCadLoading"
-                  style="display: none"
-                >
+                <canvas id="warehouseCanvas" width="1000" height="600"></canvas>
+                <div class="cad-loading" id="cadLoading" style="display: none">
                   <div class="loading-spinner">
                     <i class="fas fa-spinner fa-spin"></i>
                     <p>도면을 분석하고 있습니다...</p>
@@ -277,13 +351,34 @@
               </div>
 
               <!-- CAD 정보 패널 -->
-              <div class="cad-info-panel" id="browserCadInfoPanel">
+              <div class="cad-info-panel" id="cadInfoPanel">
                 <h5><i class="fas fa-info-circle"></i> 선택된 영역 정보</h5>
-                <div id="browserSelectedRackInfo">
+                <div id="selectedRackInfo">
                   <p>랙을 클릭하면 상세 정보가 표시됩니다.</p>
                 </div>
               </div>
             </div>
+
+            <!-- CAD 업로드 진행률 -->
+            <div
+              id="cadUploadProgress"
+              class="upload-progress"
+              style="display: none"
+            >
+              <div class="progress-bar">
+                <div class="progress-fill" id="cadProgressFill"></div>
+              </div>
+              <div class="progress-text" id="cadProgressText">
+                파일 업로드 중...
+              </div>
+            </div>
+
+            <!-- CAD 분석 결과 -->
+            <div
+              id="cadAnalysisResult"
+              class="upload-result"
+              style="display: none"
+            ></div>
           </div>
 
           <!-- ML 제품 클러스터링 -->
@@ -291,45 +386,78 @@
             <div class="chart-header">
               <h3><i class="fas fa-project-diagram"></i> ML 제품 클러스터링</h3>
               <div class="ml-controls">
-                <button id="browserRefreshClustersBtn" class="btn btn-primary">
+                <button id="refreshClustersBtn" class="btn btn-primary">
                   <i class="fas fa-sync-alt"></i> 새로고침
                 </button>
-                <button id="browserRetrainModelBtn" class="btn btn-warning">
+                <button id="retrainModelBtn" class="btn btn-warning">
                   <i class="fas fa-brain"></i> 모델 재훈련
                 </button>
-                <button id="browserExportClustersBtn" class="btn btn-success">
+                <button id="exportClustersBtn" class="btn btn-success">
                   <i class="fas fa-download"></i> 결과 내보내기
                 </button>
               </div>
             </div>
 
             <!-- 모델 상태 표시 -->
-            <div id="browserMlModelStatus" class="model-status-panel">
+            <div id="mlModelStatus" class="model-status-panel">
               <div class="status-item">
                 <span class="status-label">모델 상태:</span>
-                <span id="browserModelStatusText" class="status-value"
+                <span id="modelStatusText" class="status-value"
                   >로딩 중...</span
                 >
               </div>
               <div class="status-item">
                 <span class="status-label">훈련 시간:</span>
-                <span id="browserModelTrainedAt" class="status-value">-</span>
+                <span id="modelTrainedAt" class="status-value">-</span>
               </div>
               <div class="status-item">
                 <span class="status-label">클러스터 수:</span>
-                <span id="browserModelClusters" class="status-value">-</span>
+                <span id="modelClusters" class="status-value">-</span>
               </div>
               <div class="status-item">
                 <span class="status-label">분석 상품:</span>
-                <span id="browserModelProducts" class="status-value">-</span>
+                <span id="modelProducts" class="status-value">-</span>
               </div>
             </div>
 
             <!-- 클러스터 개요 카드들 -->
-            <div id="browserClustersOverview" class="clusters-overview">
+            <div id="clustersOverview" class="clusters-overview">
               <div class="overview-loading">
                 <i class="fas fa-spinner fa-spin"></i> 클러스터 데이터 로딩
                 중...
+              </div>
+            </div>
+
+            <!-- 고회전 상품 하이라이트 -->
+            <div class="highlight-section">
+              <h4><i class="fas fa-star"></i> 고회전 상품 (최우선 관리)</h4>
+              <div id="highTurnoverProducts" class="high-turnover-grid">
+                <div class="loading-placeholder">
+                  <i class="fas fa-spinner fa-spin"></i> 고회전 상품 분석 중...
+                </div>
+              </div>
+            </div>
+
+            <!-- 상품 검색 및 분석 -->
+            <div class="product-search-section">
+              <h4><i class="fas fa-search"></i> 상품별 클러스터 분석</h4>
+              <div class="search-input-group">
+                <input
+                  type="text"
+                  id="productCodeInput"
+                  placeholder="상품 코드를 입력하세요 (예: 1000661578)"
+                  class="form-control"
+                />
+                <button id="searchProductBtn" class="btn btn-primary">
+                  <i class="fas fa-search"></i> 분석
+                </button>
+              </div>
+              <div
+                id="productAnalysisResult"
+                class="product-analysis-result"
+                style="display: none"
+              >
+                <!-- 상품별 분석 결과가 여기에 표시됩니다 -->
               </div>
             </div>
 
@@ -340,6 +468,55 @@
                 id="clusterDistributionChart"
                 style="max-height: 300px"
               ></canvas>
+            </div>
+          </div>
+
+          <!-- AI 차트 생성 -->
+          <div class="chart-container ai-chart-container">
+            <div class="chart-header">
+              <h3><i class="fas fa-magic"></i> AI 차트 생성</h3>
+              <div class="ai-chart-controls">
+                <div class="input-group">
+                  <input
+                    type="text"
+                    id="chartRequestInput"
+                    class="form-control"
+                    placeholder="원하는 차트를 자연어로 요청하세요. 예: '최근 일주일 입고량을 막대차트로'"
+                  />
+                  <button id="generateChartBtn" class="btn btn-primary">
+                    <i class="fas fa-chart-bar"></i> 차트 생성
+                  </button>
+                </div>
+                <div class="quick-chart-buttons mt-2">
+                  <button
+                    class="btn btn-sm btn-outline-primary quick-chart-btn"
+                    data-request="최근 7일간 입고량을 막대차트로 보여줘"
+                  >
+                    입고 트렌드
+                  </button>
+                  <button
+                    class="btn btn-sm btn-outline-secondary quick-chart-btn"
+                    data-request="랙별 재고 현황을 막대차트로 보여줘"
+                  >
+                    랙별 재고
+                  </button>
+                  <button
+                    class="btn btn-sm btn-outline-success quick-chart-btn"
+                    data-request="공급업체별 입고량을 파이차트로 보여줘"
+                  >
+                    공급업체 분석
+                  </button>
+                  <button
+                    class="btn btn-sm btn-outline-warning quick-chart-btn"
+                    data-request="상품별 출고량을 막대차트로 보여줘"
+                  >
+                    상품별 출고
+                  </button>
+                </div>
+              </div>
+            </div>
+            <div class="ai-chart-content">
+              <canvas id="aiGeneratedChart" style="min-height: 400px"></canvas>
             </div>
           </div>
         </div>
@@ -408,29 +585,122 @@
 
           <!-- AI분석 탭 -->
           <div class="tab-content" id="ai-analysis-tab">
-            <div class="chart-container">
+            <div class="chart-container ai-analysis-container">
               <div class="chart-header">
-                <h3><i class="fas fa-brain"></i> AI 분석 결과</h3>
+                <h3><i class="fas fa-brain"></i> AI 고급 분석</h3>
                 <div class="ml-controls">
-                  <button id="demandPredictBtn" class="btn btn-sm btn-primary">
-                    수요 예측
+                  <button
+                    id="tabDemandPredictBtn"
+                    class="btn btn-sm btn-primary"
+                    data-analysis="demand"
+                  >
+                    <i class="fas fa-chart-line"></i> 수요 예측
                   </button>
                   <button
-                    id="clusterAnalysisBtn"
+                    id="tabClusterAnalysisBtn"
                     class="btn btn-sm btn-secondary"
+                    data-analysis="cluster"
                   >
-                    제품 클러스터링
+                    <i class="fas fa-project-diagram"></i> 제품 클러스터링
                   </button>
                   <button
-                    id="anomalyDetectionBtn"
+                    id="tabAnomalyDetectionBtn"
                     class="btn btn-sm btn-warning"
+                    data-analysis="anomaly"
                   >
-                    이상 탐지
+                    <i class="fas fa-exclamation-triangle"></i> 이상 탐지
+                  </button>
+                  <button
+                    id="tabOptimizationBtn"
+                    class="btn btn-sm btn-success"
+                    data-analysis="optimization"
+                  >
+                    <i class="fas fa-cogs"></i> 최적화 분석
                   </button>
                 </div>
               </div>
-              <div id="mlResults" class="ml-results">
-                <p>AI 분석 버튼을 클릭하여 결과를 확인하세요.</p>
+
+              <!-- 실시간 분석 상태 -->
+              <div class="analysis-status-panel">
+                <div class="status-row">
+                  <div class="status-item">
+                    <span class="status-label">마지막 분석:</span>
+                    <span id="tabLastAnalysisTime" class="status-value">-</span>
+                  </div>
+                  <div class="status-item">
+                    <span class="status-label">분석 모델:</span>
+                    <span id="tabCurrentModel" class="status-value"
+                      >XGBoost v2.1</span
+                    >
+                  </div>
+                  <div class="status-item">
+                    <span class="status-label">예측 신뢰도:</span>
+                    <span
+                      id="tabConfidenceScore"
+                      class="status-value confidence-high"
+                      >94.2%</span
+                    >
+                  </div>
+                </div>
+              </div>
+
+              <!-- 분석 결과 표시 영역 -->
+              <div class="analysis-results-section">
+                <!-- 분석 결과 내용 -->
+                <div id="tabMlResults" class="ml-results">
+                  <div class="analysis-welcome">
+                    <div class="welcome-icon">
+                      <i class="fas fa-robot"></i>
+                    </div>
+                    <h4>AI 분석 시스템 준비 완료</h4>
+                    <p>위 버튼을 클릭하여 고급 AI 분석을 시작하세요.</p>
+                    <div class="feature-highlights">
+                      <div class="feature-item">
+                        <i class="fas fa-chart-line"></i>
+                        <span>실시간 수요 예측</span>
+                      </div>
+                      <div class="feature-item">
+                        <i class="fas fa-project-diagram"></i>
+                        <span>스마트 클러스터링</span>
+                      </div>
+                      <div class="feature-item">
+                        <i class="fas fa-shield-alt"></i>
+                        <span>이상 패턴 감지</span>
+                      </div>
+                      <div class="feature-item">
+                        <i class="fas fa-cogs"></i>
+                        <span>운영 최적화</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- 추천 액션 패널 -->
+                <div
+                  id="tabRecommendedActions"
+                  class="recommended-actions"
+                  style="display: none"
+                >
+                  <h5><i class="fas fa-lightbulb"></i> 추천 액션</h5>
+                  <div id="tabActionsList" class="actions-list">
+                    <!-- 동적으로 추가됨 -->
+                  </div>
+                </div>
+
+                <!-- 분석 히스토리 -->
+                <div
+                  id="tabAnalysisHistory"
+                  class="analysis-history"
+                  style="display: none"
+                >
+                  <h5><i class="fas fa-history"></i> 분석 히스토리</h5>
+                  <div id="tabHistoryChart" class="history-chart">
+                    <canvas
+                      id="tabAnalysisHistoryChart"
+                      style="max-height: 200px"
+                    ></canvas>
+                  </div>
+                </div>
               </div>
             </div>
           </div>

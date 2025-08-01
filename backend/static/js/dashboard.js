@@ -896,4 +896,350 @@ window.addEventListener("beforeunload", () => {
       }
     });
   }
+  
+  // Tab Mode AI 분석 초기화
+  initializeTabModeAIAnalysis();
 });
+
+// Tab Mode AI 분석 초기화 함수
+function initializeTabModeAIAnalysis() {
+  console.log("🤖 Tab Mode AI 분석 초기화...");
+  
+  // Tab Mode 전용 AI 분석 버튼들
+  const tabDemandBtn = document.getElementById("tabDemandPredictBtn");
+  const tabClusterBtn = document.getElementById("tabClusterAnalysisBtn");
+  const tabAnomalyBtn = document.getElementById("tabAnomalyDetectionBtn");
+  const tabOptimizationBtn = document.getElementById("tabOptimizationBtn");
+
+  // 공통 이벤트 핸들러
+  [tabDemandBtn, tabClusterBtn, tabAnomalyBtn, tabOptimizationBtn].forEach(btn => {
+    if (btn) {
+      btn.addEventListener("click", (e) => {
+        const analysisType = e.target.closest('button').dataset.analysis;
+        runTabModeAdvancedAnalysis(analysisType);
+      });
+    }
+  });
+
+  // 초기 상태 업데이트
+  updateTabAnalysisStatus();
+  
+  console.log("✅ Tab Mode AI 분석 활성화됨");
+}
+
+async function runTabModeAdvancedAnalysis(type) {
+  const resultsDiv = document.getElementById("tabMlResults");
+  const lastAnalysisTime = document.getElementById("tabLastAnalysisTime");
+  const confidenceScore = document.getElementById("tabConfidenceScore");
+  const recommendedActions = document.getElementById("tabRecommendedActions");
+  const actionsList = document.getElementById("tabActionsList");
+
+  if (!resultsDiv) return;
+
+  // 로딩 상태 표시
+  resultsDiv.innerHTML = `
+    <div class="analysis-loading">
+      <div class="loading-spinner">
+        <i class="fas fa-cog fa-spin"></i>
+      </div>
+      <h4>${getTabAnalysisTitle(type)} 실행 중...</h4>
+      <p>AI 모델이 데이터를 분석하고 있습니다.</p>
+      <div class="progress-indicator">
+        <div class="progress-step active">데이터 수집</div>
+        <div class="progress-step">모델 실행</div>
+        <div class="progress-step">결과 생성</div>
+      </div>
+    </div>
+  `;
+
+  // 진행률 시뮬레이션
+  setTimeout(() => {
+    const steps = resultsDiv.querySelectorAll('.progress-step');
+    if (steps[1]) steps[1].classList.add('active');
+  }, 1000);
+
+  setTimeout(() => {
+    const steps = resultsDiv.querySelectorAll('.progress-step');
+    if (steps[2]) steps[2].classList.add('active');
+  }, 2000);
+
+  // 분석 결과 표시
+  setTimeout(() => {
+    const result = generateTabAnalysisResult(type);
+    resultsDiv.innerHTML = result.content;
+    
+    // 상태 업데이트
+    if (lastAnalysisTime) {
+      lastAnalysisTime.textContent = new Date().toLocaleTimeString();
+    }
+    
+    if (confidenceScore) {
+      confidenceScore.textContent = result.confidence;
+      confidenceScore.className = `status-value ${result.confidenceClass}`;
+    }
+
+    // 추천 액션 표시
+    if (result.actions && result.actions.length > 0) {
+      showTabRecommendedActions(result.actions);
+    }
+
+  }, 3000);
+}
+
+function getTabAnalysisTitle(type) {
+  const titles = {
+    'demand': '수요 예측 분석',
+    'cluster': '제품 클러스터링 분석',
+    'anomaly': '이상 탐지 분석',
+    'optimization': '운영 최적화 분석'
+  };
+  return titles[type] || 'AI 분석';
+}
+
+function generateTabAnalysisResult(type) {
+  // Browser Mode와 동일한 분석 결과 재사용
+  const results = {
+    'demand': {
+      content: `
+        <div class="analysis-result demand-analysis">
+          <div class="result-header">
+            <h4><i class="fas fa-chart-line"></i> 수요 예측 분석 결과</h4>
+            <span class="analysis-badge success">예측 완료</span>
+          </div>
+          
+          <div class="key-metrics">
+            <div class="metric-card">
+              <h5>다음 주 예상 입고량</h5>
+              <div class="metric-value">1,247 <span class="unit">개</span></div>
+              <div class="metric-change positive">+12.3% vs 이번 주</div>
+            </div>
+            <div class="metric-card">
+              <h5>권장 재고 수준</h5>
+              <div class="metric-value">87 <span class="unit">%</span></div>
+              <div class="metric-change neutral">최적 범위</div>
+            </div>
+            <div class="metric-card">
+              <h5>예상 회전율</h5>
+              <div class="metric-value">2.4 <span class="unit">배/월</span></div>
+              <div class="metric-change positive">+0.3 개선</div>
+            </div>
+          </div>
+
+          <div class="prediction-details">
+            <h5>상세 예측</h5>
+            <div class="prediction-items">
+              <div class="prediction-item">
+                <span class="product-category">면류/라면</span>
+                <span class="prediction-value">345개</span>
+                <span class="confidence">95%</span>
+              </div>
+              <div class="prediction-item">
+                <span class="product-category">음료/음료수</span>
+                <span class="prediction-value">287개</span>
+                <span class="confidence">92%</span>
+              </div>
+              <div class="prediction-item">
+                <span class="product-category">조미료/양념</span>
+                <span class="prediction-value">198개</span>
+                <span class="confidence">89%</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      `,
+      confidence: '94.2%',
+      confidenceClass: 'confidence-high',
+      actions: [
+        { type: 'warning', text: 'A랙 용량 확보 필요 (85% 포화)', priority: 'high' },
+        { type: 'info', text: '면류 제품 입고 일정 앞당기기 권장', priority: 'medium' },
+        { type: 'success', text: '전반적 재고 운영 효율성 양호', priority: 'low' }
+      ]
+    },
+    'cluster': {
+      content: `
+        <div class="analysis-result cluster-analysis">
+          <div class="result-header">
+            <h4><i class="fas fa-project-diagram"></i> 제품 클러스터링 분석 결과</h4>
+            <span class="analysis-badge success">분석 완료</span>
+          </div>
+
+          <div class="cluster-summary">
+            <div class="cluster-stats">
+              <div class="stat-item">
+                <span class="stat-number">6</span>
+                <span class="stat-label">클러스터</span>
+              </div>
+              <div class="stat-item">
+                <span class="stat-number">89</span>
+                <span class="stat-label">총 상품</span>
+              </div>
+              <div class="stat-item">
+                <span class="stat-number">23</span>
+                <span class="stat-label">고회전 상품</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="cluster-details">
+            <div class="cluster-item high-priority">
+              <div class="cluster-name">고회전-고수익 클러스터</div>
+              <div class="cluster-info">
+                <span>23개 상품</span>
+                <span>회전율: 3.2배/월</span>
+                <span>우선 관리 필요</span>
+              </div>
+            </div>
+            <div class="cluster-item medium-priority">
+              <div class="cluster-name">안정적 수요 클러스터</div>
+              <div class="cluster-info">
+                <span>34개 상품</span>
+                <span>회전율: 1.8배/월</span>
+                <span>현재 관리 유지</span>
+              </div>
+            </div>
+            <div class="cluster-item low-priority">
+              <div class="cluster-name">저회전 클러스터</div>
+              <div class="cluster-info">
+                <span>12개 상품</span>
+                <span>회전율: 0.9배/월</span>
+                <span>재고 최적화 검토</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      `,
+      confidence: '91.7%',
+      confidenceClass: 'confidence-high',
+      actions: [
+        { type: 'info', text: '고회전 상품 별도 구역 배치 검토', priority: 'high' },
+        { type: 'warning', text: '저회전 상품 재고 수준 조정 필요', priority: 'medium' }
+      ]
+    },
+    'anomaly': {
+      content: `
+        <div class="analysis-result anomaly-analysis">
+          <div class="result-header">
+            <h4><i class="fas fa-shield-alt"></i> 이상 탐지 분석 결과</h4>
+            <span class="analysis-badge warning">주의 필요</span>
+          </div>
+
+          <div class="anomaly-overview">
+            <div class="anomaly-status">
+              <div class="status-indicator warning"></div>
+              <span>1개 이상 패턴 감지됨</span>
+            </div>
+          </div>
+
+          <div class="anomaly-details">
+            <div class="anomaly-item critical">
+              <div class="anomaly-header">
+                <i class="fas fa-exclamation-triangle"></i>
+                <span class="anomaly-title">C-001 랙 비정상 출고 패턴</span>
+                <span class="severity critical">Critical</span>
+              </div>
+              <div class="anomaly-description">
+                <p>지난 3일간 평균 대비 347% 높은 출고량 기록</p>
+                <p>추정 원인: 대량 주문 또는 시스템 오류</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      `,
+      confidence: '88.9%',
+      confidenceClass: 'confidence-medium',
+      actions: [
+        { type: 'error', text: 'C-001 랙 긴급 점검 필요', priority: 'critical' },
+        { type: 'warning', text: '대량 출고 승인 프로세스 강화 검토', priority: 'high' }
+      ]
+    },
+    'optimization': {
+      content: `
+        <div class="analysis-result optimization-analysis">
+          <div class="result-header">
+            <h4><i class="fas fa-cogs"></i> 운영 최적화 분석 결과</h4>
+            <span class="analysis-badge success">최적화 완료</span>
+          </div>
+
+          <div class="optimization-summary">
+            <div class="efficiency-score">
+              <div class="score-circle">
+                <span class="score">87</span>
+                <span class="score-label">효율성 점수</span>
+              </div>
+              <div class="score-improvement">
+                <span class="improvement-value">+5점</span>
+                <span class="improvement-period">지난 달 대비</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="optimization-recommendations">
+            <h5>최적화 권장사항</h5>
+            
+            <div class="recommendation-item high-impact">
+              <div class="recommendation-header">
+                <span class="impact-badge high">높은 효과</span>
+                <span class="recommendation-title">랙 배치 최적화</span>
+              </div>
+              <div class="recommendation-details">
+                <p>고회전 상품을 입구 근처 A, B랙으로 이동</p>
+                <p>예상 효율성 향상: 12-15%</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      `,
+      confidence: '92.8%',
+      confidenceClass: 'confidence-high',
+      actions: [
+        { type: 'success', text: '랙 배치 최적화 계획 수립 권장', priority: 'high' },
+        { type: 'info', text: '입고 스케줄 변경 테스트 진행', priority: 'medium' }
+      ]
+    }
+  };
+
+  return results[type] || results['demand'];
+}
+
+function showTabRecommendedActions(actions) {
+  const recommendedActions = document.getElementById("tabRecommendedActions");
+  const actionsList = document.getElementById("tabActionsList");
+  
+  if (!recommendedActions || !actionsList) return;
+
+  actionsList.innerHTML = actions.map(action => `
+    <div class="action-item ${action.type} priority-${action.priority}">
+      <div class="action-icon">
+        <i class="fas ${getTabActionIcon(action.type)}"></i>
+      </div>
+      <div class="action-content">
+        <span class="action-text">${action.text}</span>
+        <span class="action-priority">${action.priority}</span>
+      </div>
+      <div class="action-buttons">
+        <button class="btn btn-sm btn-outline-primary">실행</button>
+        <button class="btn btn-sm btn-outline-secondary">나중에</button>
+      </div>
+    </div>
+  `).join('');
+
+  recommendedActions.style.display = 'block';
+}
+
+function getTabActionIcon(type) {
+  const icons = {
+    'error': 'fa-exclamation-circle',
+    'warning': 'fa-exclamation-triangle', 
+    'info': 'fa-info-circle',
+    'success': 'fa-check-circle'
+  };
+  return icons[type] || 'fa-info-circle';
+}
+
+function updateTabAnalysisStatus() {
+  const lastAnalysisTime = document.getElementById("tabLastAnalysisTime");
+  
+  if (lastAnalysisTime) {
+    lastAnalysisTime.textContent = "시스템 대기 중";
+  }
+}

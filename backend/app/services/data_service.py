@@ -1,6 +1,10 @@
 import pandas as pd
 import os
+import logging
 from typing import Dict, List
+
+# Logger 설정
+logger = logging.getLogger(__name__)
 
 class DataService:
     def __init__(self):

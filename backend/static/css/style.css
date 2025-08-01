@@ -1802,3 +1802,919 @@ body {
     grid-template-columns: 1fr 1fr;
   }
 }
+
+/* =============================================================================
+   지연 로딩 시스템 스타일
+   ============================================================================= */
+
+.lazy-loading-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(255, 255, 255, 0.95);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  z-index: 10;
+}
+
+.loading-content {
+  text-align: center;
+  padding: 2rem;
+}
+
+.loading-content i {
+  font-size: 2rem;
+  color: var(--primary-color);
+  margin-bottom: 1rem;
+  animation: spin 1s linear infinite;
+}
+
+.loading-content p {
+  margin: 0;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.lazy-loading-error {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(248, 249, 250, 0.95);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  z-index: 10;
+}
+
+.error-content {
+  text-align: center;
+  padding: 2rem;
+}
+
+.error-content i {
+  font-size: 2rem;
+  color: var(--warning-color);
+  margin-bottom: 1rem;
+}
+
+.error-content p {
+  margin: 0 0 1rem 0;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.retry-btn {
+  margin-top: 0.5rem;
+}
+
+/* 차트 컨테이너 지연 로딩 상태 */
+.chart-container[data-chart-type] {
+  position: relative;
+  min-height: 300px;
+}
+
+.chart-container[data-component-type] {
+  position: relative;
+}
+
+/* 로딩 스켈레톤 애니메이션 */
+@keyframes skeleton-loading {
+  0% {
+    background-position: -200px 0;
+  }
+  100% {
+    background-position: calc(200px + 100%) 0;
+  }
+}
+
+.skeleton-loading {
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200px 100%;
+  animation: skeleton-loading 1.5s infinite;
+}
+
+/* 지연 로딩 성능 표시기 */
+.lazy-load-indicator {
+  position: fixed;
+  top: 10px;
+  right: 10px;
+  background: rgba(0, 0, 0, 0.8);
+  color: white;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  z-index: 1000;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.lazy-load-indicator.show {
+  opacity: 1;
+}
+
+/* 지연 로딩 프로그레스 바 */
+.lazy-progress {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 3px;
+  background: rgba(0, 0, 0, 0.1);
+  z-index: 1001;
+  overflow: hidden;
+}
+
+.lazy-progress-bar {
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    var(--primary-color),
+    var(--secondary-color)
+  );
+  width: 0%;
+  transition: width 0.3s ease;
+}
+
+/* 컴포넌트별 지연 로딩 상태 */
+.ml-clustering-container.lazy-loading,
+.cad-container.lazy-loading,
+.ai-analysis-container.lazy-loading {
+  opacity: 0.7;
+  pointer-events: none;
+}
+
+.ml-clustering-container.lazy-loaded,
+.cad-container.lazy-loaded,
+.ai-analysis-container.lazy-loaded {
+  opacity: 1;
+  pointer-events: auto;
+  transition: opacity 0.5s ease;
+}
+
+/* 반응형 지연 로딩 */
+@media (max-width: 768px) {
+  .lazy-loading-overlay {
+    background: rgba(255, 255, 255, 0.98);
+  }
+
+  .loading-content,
+  .error-content {
+    padding: 1rem;
+  }
+
+  .loading-content i,
+  .error-content i {
+    font-size: 1.5rem;
+  }
+}
+
+/* 다크 모드 지연 로딩 (필요시) */
+@media (prefers-color-scheme: dark) {
+  .lazy-loading-overlay {
+    background: rgba(31, 41, 55, 0.95);
+  }
+
+  .lazy-loading-error {
+    background: rgba(31, 41, 55, 0.95);
+  }
+
+  .loading-content p,
+  .error-content p {
+    color: #d1d5db;
+  }
+}
+
+/* =============================================================================
+   AI 분석 결과 스타일
+   ============================================================================= */
+
+/* 분석 결과 컨테이너 */
+.analysis-result {
+  background: #fff;
+  border-radius: 8px;
+  padding: 1.5rem;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  margin-bottom: 1rem;
+}
+
+.result-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.result-header h4 {
+  margin: 0;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.analysis-badge {
+  padding: 0.25rem 0.75rem;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.analysis-badge.success {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.analysis-badge.warning {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.analysis-badge.error {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+/* 클러스터 분석 스타일 */
+.cluster-summary {
+  margin-bottom: 1.5rem;
+}
+
+.cluster-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.stat-item {
+  text-align: center;
+  padding: 1rem;
+  background: #f8fafc;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+}
+
+.stat-number {
+  display: block;
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--primary-color);
+  margin-bottom: 0.25rem;
+}
+
+.stat-label {
+  display: block;
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.cluster-details {
+  margin-top: 1.5rem;
+}
+
+.cluster-item {
+  background: #f8fafc;
+  border-radius: 8px;
+  padding: 1rem;
+  margin-bottom: 0.75rem;
+  border-left: 4px solid transparent;
+  transition: all 0.2s ease;
+}
+
+.cluster-item:hover {
+  background: #f1f5f9;
+  transform: translateX(2px);
+}
+
+.cluster-item.high-priority {
+  border-left-color: #ef4444;
+  background: linear-gradient(135deg, #fef2f2 0%, #f8fafc 100%);
+}
+
+.cluster-item.medium-priority {
+  border-left-color: #f59e0b;
+  background: linear-gradient(135deg, #fffbeb 0%, #f8fafc 100%);
+}
+
+.cluster-item.low-priority {
+  border-left-color: #10b981;
+  background: linear-gradient(135deg, #f0fdf4 0%, #f8fafc 100%);
+}
+
+.cluster-name {
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 0.5rem;
+  font-size: 1rem;
+}
+
+.cluster-info {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+}
+
+.cluster-info span {
+  background: rgba(255, 255, 255, 0.8);
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  border: 1px solid #e2e8f0;
+}
+
+/* 수요 예측 분석 스타일 */
+.demand-analysis .key-metrics {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.metric-card {
+  background: #f8fafc;
+  padding: 1.5rem;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  text-align: center;
+}
+
+.metric-card h5 {
+  margin: 0 0 0.75rem 0;
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.metric-value {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--primary-color);
+  margin-bottom: 0.5rem;
+}
+
+.metric-value .unit {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  font-weight: 400;
+}
+
+.metric-change {
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+}
+
+.metric-change.positive {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.metric-change.negative {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.metric-change.neutral {
+  background: #f3f4f6;
+  color: #374151;
+}
+
+.prediction-details {
+  margin-top: 1.5rem;
+}
+
+.prediction-items {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+.prediction-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem;
+  background: #f8fafc;
+  border-radius: 6px;
+  border: 1px solid #e2e8f0;
+}
+
+.product-category {
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.prediction-value {
+  font-weight: 600;
+  color: var(--primary-color);
+}
+
+.confidence {
+  font-size: 0.75rem;
+  background: #dcfce7;
+  color: #166534;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+}
+
+/* 이상 탐지 분석 스타일 */
+.anomaly-analysis .anomaly-overview {
+  margin-bottom: 1.5rem;
+}
+
+.anomaly-status {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 1rem;
+  background: #fef3c7;
+  border-radius: 8px;
+  border: 1px solid #f59e0b;
+}
+
+.status-indicator {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+}
+
+.status-indicator.warning {
+  background: #f59e0b;
+}
+
+.status-indicator.critical {
+  background: #ef4444;
+}
+
+.status-indicator.normal {
+  background: #10b981;
+}
+
+.anomaly-details {
+  margin-top: 1rem;
+}
+
+.anomaly-item {
+  background: #f8fafc;
+  border-radius: 8px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+  border-left: 4px solid transparent;
+}
+
+.anomaly-item.critical {
+  border-left-color: #ef4444;
+  background: linear-gradient(135deg, #fef2f2 0%, #f8fafc 100%);
+}
+
+.anomaly-item.normal {
+  border-left-color: #10b981;
+  background: linear-gradient(135deg, #f0fdf4 0%, #f8fafc 100%);
+}
+
+.anomaly-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.75rem;
+}
+
+.anomaly-title {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.severity {
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  text-transform: uppercase;
+}
+
+.severity.critical {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.severity.normal {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.anomaly-description {
+  color: var(--text-secondary);
+  margin-bottom: 1rem;
+}
+
+.anomaly-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+/* 최적화 분석 스타일 */
+.optimization-analysis .optimization-summary {
+  margin-bottom: 1.5rem;
+}
+
+.efficiency-score {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  padding: 1.5rem;
+  background: linear-gradient(135deg, #f0fdf4 0%, #f8fafc 100%);
+  border-radius: 8px;
+  border: 1px solid #10b981;
+}
+
+.score-circle {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: #10b981;
+  color: white;
+}
+
+.score {
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+.score-label {
+  font-size: 0.75rem;
+  text-align: center;
+}
+
+.score-improvement {
+  display: flex;
+  flex-direction: column;
+}
+
+.improvement-value {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #10b981;
+}
+
+.improvement-period {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+}
+
+.optimization-recommendations {
+  margin-top: 1.5rem;
+}
+
+.recommendation-item {
+  background: #f8fafc;
+  border-radius: 8px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+  border-left: 4px solid transparent;
+}
+
+.recommendation-item.high-impact {
+  border-left-color: #10b981;
+  background: linear-gradient(135deg, #f0fdf4 0%, #f8fafc 100%);
+}
+
+.recommendation-item.medium-impact {
+  border-left-color: #f59e0b;
+  background: linear-gradient(135deg, #fffbeb 0%, #f8fafc 100%);
+}
+
+.recommendation-item.low-impact {
+  border-left-color: #6b7280;
+  background: linear-gradient(135deg, #f9fafb 0%, #f8fafc 100%);
+}
+
+.recommendation-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.impact-badge {
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  text-transform: uppercase;
+}
+
+.impact-badge.high {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.impact-badge.medium {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.impact-badge.low {
+  background: #f3f4f6;
+  color: #374151;
+}
+
+.recommendation-title {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.recommendation-details {
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+}
+
+/* AI 분석 공통 스타일 */
+.analysis-welcome {
+  text-align: center;
+  padding: 2rem;
+  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+  border-radius: 8px;
+  margin-bottom: 1rem;
+}
+
+.welcome-icon {
+  font-size: 3rem;
+  color: var(--primary-color);
+  margin-bottom: 1rem;
+}
+
+.analysis-welcome h4 {
+  color: var(--text-primary);
+  margin-bottom: 0.5rem;
+}
+
+.analysis-welcome p {
+  color: var(--text-secondary);
+  margin-bottom: 1.5rem;
+}
+
+.feature-highlights {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.feature-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 1rem;
+  background: rgba(255, 255, 255, 0.8);
+  border-radius: 6px;
+  border: 1px solid #e2e8f0;
+}
+
+.feature-item i {
+  font-size: 1.25rem;
+  color: var(--primary-color);
+}
+
+.feature-item span {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  text-align: center;
+}
+
+/* 분석 상태 패널 */
+.analysis-status-panel {
+  background: #f8fafc;
+  border-radius: 8px;
+  padding: 1rem;
+  margin-bottom: 1.5rem;
+  border: 1px solid #e2e8f0;
+}
+
+.status-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+}
+
+.status-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.status-label {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.status-value {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.status-value.confidence-high {
+  color: #10b981;
+}
+
+.status-value.confidence-medium {
+  color: #f59e0b;
+}
+
+.status-value.confidence-low {
+  color: #ef4444;
+}
+
+/* 로딩 및 진행률 */
+.analysis-loading {
+  text-align: center;
+  padding: 3rem 2rem;
+}
+
+.loading-spinner {
+  margin-bottom: 1.5rem;
+}
+
+.loading-spinner i {
+  font-size: 2.5rem;
+  color: var(--primary-color);
+}
+
+.progress-indicator {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+
+.progress-step {
+  padding: 0.5rem 1rem;
+  background: #f3f4f6;
+  border-radius: 20px;
+  font-size: 0.875rem;
+  color: #6b7280;
+  border: 1px solid #e5e7eb;
+  transition: all 0.3s ease;
+}
+
+.progress-step.active {
+  background: var(--primary-color);
+  color: white;
+  border-color: var(--primary-color);
+}
+
+/* 추천 액션 스타일 */
+.recommended-actions {
+  background: #f8fafc;
+  border-radius: 8px;
+  padding: 1.5rem;
+  margin-top: 1.5rem;
+  border: 1px solid #e2e8f0;
+}
+
+.recommended-actions h5 {
+  margin: 0 0 1rem 0;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.actions-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.action-item {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+  background: white;
+  border-radius: 6px;
+  border: 1px solid #e2e8f0;
+  border-left: 4px solid transparent;
+}
+
+.action-item.error {
+  border-left-color: #ef4444;
+}
+
+.action-item.warning {
+  border-left-color: #f59e0b;
+}
+
+.action-item.info {
+  border-left-color: #3b82f6;
+}
+
+.action-item.success {
+  border-left-color: #10b981;
+}
+
+.action-icon {
+  flex-shrink: 0;
+}
+
+.action-content {
+  flex: 1;
+}
+
+.action-text {
+  display: block;
+  font-weight: 500;
+  color: var(--text-primary);
+  margin-bottom: 0.25rem;
+}
+
+.action-priority {
+  display: inline-block;
+  font-size: 0.75rem;
+  padding: 0.125rem 0.5rem;
+  border-radius: 4px;
+  background: #f3f4f6;
+  color: #6b7280;
+  text-transform: uppercase;
+  font-weight: 600;
+}
+
+.action-buttons {
+  display: flex;
+  gap: 0.5rem;
+}
+
+/* 반응형 AI 분석 결과 */
+@media (max-width: 768px) {
+  .cluster-stats {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .demand-analysis .key-metrics {
+    grid-template-columns: 1fr;
+  }
+
+  .efficiency-score {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .cluster-info {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .anomaly-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+
+  .prediction-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+
+  .feature-highlights {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .status-row {
+    grid-template-columns: 1fr;
+  }
+
+  .progress-indicator {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .action-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.75rem;
+  }
+
+  .action-buttons {
+    align-self: stretch;
+  }
+}

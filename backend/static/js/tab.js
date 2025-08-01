@@ -78,22 +78,28 @@ class ViewModeManager {
     if (!window.chartManager) return;
 
     try {
-      // API에서 데이터 가져오기
-      const [inventoryData, trendData, categoryData] = await Promise.all([
-        fetch("/api/inventory/by-rack").then((r) => r.json()),
-        fetch("/api/trends/daily").then((r) => r.json()),
-        fetch("/api/product/category-distribution").then((r) => r.json()),
-      ]);
+      console.log("🖥️ Browser Mode 지연 로딩 시스템 시작...");
 
-      // Browser 모드용 차트 생성 (표준 ID 사용)
-      chartManager.createInventoryChart(inventoryData, "inventoryChart");
-      chartManager.createTrendChart(trendData, "trendChart");
-      chartManager.createCategoryChart(categoryData, "categoryChart");
+      // 기존 차트들 정리
+      ["inventoryChart", "trendChart", "categoryChart"].forEach((chartId) => {
+        if (chartManager.charts[chartId]) {
+          chartManager.charts[chartId].destroy();
+          delete chartManager.charts[chartId];
+        }
+      });
 
-      // Browser 모드 추가 기능 초기화
+      // 지연 로딩 관리자 초기화
+      this.initializeLazyLoading();
+
+      // 핵심 차트만 우선 로딩 (인벤토리 차트)
+      await this.loadPriorityChart();
+
+      // Browser 모드 기본 기능 초기화 (지연 로딩 포함)
       this.initializeBrowserModeFeatures();
+
+      console.log("🎉 Browser Mode 지연 로딩 시스템 활성화 완료!");
     } catch (error) {
-      console.warn("Browser 모드 차트 생성 중 오류:", error);
+      console.error("❌ Browser 모드 초기화 중 오류:", error);
     }
   }
 
@@ -106,34 +112,628 @@ class ViewModeManager {
 
     // Browser 모드 AI 분석 버튼 초기화
     this.initializeBrowserAIAnalysis();
+
+    // Browser 모드 AI 차트 생성 초기화
+    this.initializeBrowserAICharts();
   }
 
   initializeBrowserMLClustering() {
-    // ML 클러스터링 상태 로드
-    this.loadMLClusteringStatus("browser");
+    // Browser 모드 고급 ML 클러스터링 초기화
+    console.log("🧠 Browser Mode 고급 ML 클러스터링 초기화...");
 
-    // 버튼 이벤트 바인딩
-    const refreshBtn = document.getElementById("browserRefreshClustersBtn");
-    const retrainBtn = document.getElementById("browserRetrainModelBtn");
-    const exportBtn = document.getElementById("browserExportClustersBtn");
+    // ML 클러스터링 상태 로드 (표준 ID 사용)
+    this.loadMLClusteringStatus("");
+
+    // 기본 버튼 이벤트 바인딩 (표준 ID 사용)
+    const refreshBtn = document.getElementById("refreshClustersBtn");
+    const retrainBtn = document.getElementById("retrainModelBtn");
+    const exportBtn = document.getElementById("exportClustersBtn");
 
     if (refreshBtn) {
       refreshBtn.addEventListener("click", () => {
-        this.loadMLClusteringStatus("browser");
+        this.loadMLClusteringStatus("");
       });
     }
 
     if (retrainBtn) {
       retrainBtn.addEventListener("click", () => {
-        this.retrainMLModel("browser");
+        this.retrainMLModel("");
       });
     }
 
     if (exportBtn) {
       exportBtn.addEventListener("click", () => {
-        this.exportMLResults("browser");
+        this.exportMLResults("");
       });
     }
+
+    // 고급 기능 초기화: 고회전 상품 및 상품 검색
+    this.initializeBrowserAdvancedMLFeatures();
+  }
+
+  initializeBrowserAdvancedMLFeatures() {
+    // 고회전 상품 기능
+    this.loadBrowserHighTurnoverProducts();
+
+    // 상품 검색 기능
+    const searchBtn = document.getElementById("searchProductBtn");
+    const productInput = document.getElementById("productCodeInput");
+
+    if (searchBtn) {
+      searchBtn.addEventListener("click", () => {
+        this.searchBrowserProduct();
+      });
+    }
+
+    if (productInput) {
+      productInput.addEventListener("keypress", (e) => {
+        if (e.key === "Enter") {
+          this.searchBrowserProduct();
+        }
+      });
+    }
+
+    console.log("✅ Browser Mode 고급 ML 기능 활성화됨");
+  }
+
+  initializeBrowserAICharts() {
+    // Browser 모드에서도 AI 차트 생성 기능 사용
+    console.log("🎨 Browser Mode AI 차트 기능 초기화...");
+
+    // dashboard.js의 AI 차트 초기화 함수 호출
+    if (typeof initializeAIChartGeneration === "function") {
+      initializeAIChartGeneration();
+      console.log("✅ Browser Mode AI 차트 기능 활성화됨");
+    } else {
+      console.warn("⚠️ AI 차트 생성 함수를 찾을 수 없습니다.");
+    }
+  }
+
+  initializeLazyLoading() {
+    // 지연 로딩 상태 관리
+    this.lazyLoadState = {
+      chartsLoaded: { inventory: false, trend: false, category: false },
+      mlComponentsLoaded: false,
+      cadViewerLoaded: false,
+      aiAnalysisLoaded: false,
+      observerInitialized: false,
+    };
+
+    // Intersection Observer를 사용한 뷰포트 감지
+    this.setupIntersectionObserver();
+
+    // 사용자 상호작용 감지 설정
+    this.setupInteractionDetection();
+
+    console.log("🔄 지연 로딩 시스템 초기화 완료");
+  }
+
+  setupIntersectionObserver() {
+    if (!("IntersectionObserver" in window)) {
+      console.warn("⚠️ IntersectionObserver 미지원, 즉시 로딩으로 전환");
+      this.loadAllChartsImmediately();
+      return;
+    }
+
+    // 차트 컨테이너 감지 옵저버
+    this.chartObserver = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            this.loadChartOnDemand(entry.target);
+          }
+        });
+      },
+      { rootMargin: "50px", threshold: 0.1 }
+    );
+
+    // 컴포넌트 컨테이너 감지 옵저버
+    this.componentObserver = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            this.loadComponentOnDemand(entry.target);
+          }
+        });
+      },
+      { rootMargin: "100px", threshold: 0.05 }
+    );
+
+    // 관찰 대상 등록
+    this.registerObserverTargets();
+  }
+
+  registerObserverTargets() {
+    // 차트 컨테이너들 관찰
+    const chartContainers = [
+      {
+        element: document
+          .querySelector("#trendChart")
+          ?.closest(".chart-container"),
+        type: "trend",
+      },
+      {
+        element: document
+          .querySelector("#categoryChart")
+          ?.closest(".chart-container"),
+        type: "category",
+      },
+    ];
+
+    chartContainers.forEach(({ element, type }) => {
+      if (element) {
+        element.dataset.chartType = type;
+        this.chartObserver.observe(element);
+      }
+    });
+
+    // 컴포넌트 컨테이너들 관찰
+    const componentContainers = [
+      {
+        element: document.querySelector(".ml-clustering-container"),
+        type: "ml",
+      },
+      { element: document.querySelector(".cad-container"), type: "cad" },
+      { element: document.querySelector(".ai-analysis-container"), type: "ai" },
+    ];
+
+    componentContainers.forEach(({ element, type }) => {
+      if (element) {
+        element.dataset.componentType = type;
+        this.componentObserver.observe(element);
+      }
+    });
+  }
+
+  setupInteractionDetection() {
+    // 사용자 첫 상호작용 감지
+    const interactionEvents = ["click", "scroll", "keydown", "mousemove"];
+
+    const handleFirstInteraction = () => {
+      console.log("👆 사용자 상호작용 감지, 백그라운드 로딩 시작");
+      this.startBackgroundLoading();
+
+      // 이벤트 리스너 제거 (한 번만 실행)
+      interactionEvents.forEach((event) => {
+        document.removeEventListener(event, handleFirstInteraction, {
+          passive: true,
+        });
+      });
+    };
+
+    // 이벤트 리스너 등록
+    interactionEvents.forEach((event) => {
+      document.addEventListener(event, handleFirstInteraction, {
+        passive: true,
+      });
+    });
+
+    // 3초 후 자동 백그라운드 로딩 (상호작용이 없어도)
+    setTimeout(() => {
+      if (!this.lazyLoadState.observerInitialized) {
+        console.log("⏰ 자동 백그라운드 로딩 시작");
+        this.startBackgroundLoading();
+      }
+    }, 3000);
+  }
+
+  async loadPriorityChart() {
+    // 인벤토리 차트만 우선 로딩 (가장 중요한 차트)
+    try {
+      const inventoryData = await fetch("/api/inventory/by-rack").then((r) =>
+        r.json()
+      );
+      chartManager.createInventoryChart(inventoryData, "inventoryChart");
+      this.lazyLoadState.chartsLoaded.inventory = true;
+
+      console.log("📊 우선순위 차트 로딩 완료");
+    } catch (error) {
+      console.error("❌ 우선순위 차트 로딩 실패:", error);
+    }
+  }
+
+  async loadChartOnDemand(container) {
+    const chartType = container.dataset.chartType;
+    if (!chartType || this.lazyLoadState.chartsLoaded[chartType]) return;
+
+    console.log(`📈 ${chartType} 차트 온디맨드 로딩 시작`);
+
+    // 로딩 상태 표시
+    this.showChartLoading(container, chartType);
+
+    try {
+      let data, chartId;
+
+      switch (chartType) {
+        case "trend":
+          data = await fetch("/api/trends/daily").then((r) => r.json());
+          chartId = "trendChart";
+          chartManager.createTrendChart(data, chartId);
+          break;
+        case "category":
+          data = await fetch("/api/product/category-distribution").then((r) =>
+            r.json()
+          );
+          chartId = "categoryChart";
+          chartManager.createCategoryChart(data, chartId);
+          break;
+      }
+
+      this.lazyLoadState.chartsLoaded[chartType] = true;
+      this.hideChartLoading(container);
+
+      // 관찰 중지
+      this.chartObserver.unobserve(container);
+
+      console.log(`✅ ${chartType} 차트 로딩 완료`);
+    } catch (error) {
+      console.error(`❌ ${chartType} 차트 로딩 실패:`, error);
+      this.showChartLoadingError(container, chartType);
+    }
+  }
+
+  async loadComponentOnDemand(container) {
+    const componentType = container.dataset.componentType;
+
+    switch (componentType) {
+      case "ml":
+        if (!this.lazyLoadState.mlComponentsLoaded) {
+          await this.lazyLoadMLComponents();
+        }
+        break;
+      case "cad":
+        if (!this.lazyLoadState.cadViewerLoaded) {
+          await this.lazyLoadCADViewer();
+        }
+        break;
+      case "ai":
+        if (!this.lazyLoadState.aiAnalysisLoaded) {
+          await this.lazyLoadAIAnalysis();
+        }
+        break;
+    }
+  }
+
+  async startBackgroundLoading() {
+    if (this.lazyLoadState.observerInitialized) return;
+    this.lazyLoadState.observerInitialized = true;
+
+    console.log("🚀 백그라운드 로딩 시작");
+
+    // 우선순위가 낮은 차트들을 순차적으로 로딩
+    setTimeout(async () => {
+      if (!this.lazyLoadState.chartsLoaded.trend) {
+        await this.loadRemainingChart("trend");
+      }
+    }, 500);
+
+    setTimeout(async () => {
+      if (!this.lazyLoadState.chartsLoaded.category) {
+        await this.loadRemainingChart("category");
+      }
+    }, 1000);
+
+    // 컴포넌트들 백그라운드 사전 로딩
+    setTimeout(() => {
+      this.preloadComponents();
+    }, 1500);
+  }
+
+  async loadRemainingChart(chartType) {
+    if (this.lazyLoadState.chartsLoaded[chartType]) return;
+
+    try {
+      let data, chartId;
+
+      switch (chartType) {
+        case "trend":
+          data = await fetch("/api/trends/daily").then((r) => r.json());
+          chartId = "trendChart";
+          chartManager.createTrendChart(data, chartId);
+          break;
+        case "category":
+          data = await fetch("/api/product/category-distribution").then((r) =>
+            r.json()
+          );
+          chartId = "categoryChart";
+          chartManager.createCategoryChart(data, chartId);
+          break;
+      }
+
+      this.lazyLoadState.chartsLoaded[chartType] = true;
+      console.log(`📊 백그라운드 ${chartType} 차트 로딩 완료`);
+    } catch (error) {
+      console.error(`❌ 백그라운드 ${chartType} 차트 로딩 실패:`, error);
+    }
+  }
+
+  preloadComponents() {
+    // ML 컴포넌트 사전 로딩
+    if (!this.lazyLoadState.mlComponentsLoaded) {
+      this.lazyLoadMLComponents();
+    }
+  }
+
+  async lazyLoadMLComponents() {
+    if (this.lazyLoadState.mlComponentsLoaded) return;
+
+    console.log("🧠 ML 컴포넌트 지연 로딩 시작");
+
+    try {
+      // ML 상태 데이터 미리 로딩
+      await this.loadMLClusteringStatus("");
+      await this.loadBrowserHighTurnoverProducts();
+
+      this.lazyLoadState.mlComponentsLoaded = true;
+      console.log("✅ ML 컴포넌트 지연 로딩 완료");
+    } catch (error) {
+      console.error("❌ ML 컴포넌트 로딩 실패:", error);
+    }
+  }
+
+  async lazyLoadCADViewer() {
+    if (this.lazyLoadState.cadViewerLoaded) return;
+
+    console.log("🏗️ CAD 뷰어 지연 로딩 시작");
+
+    // CAD 관련 리소스나 초기화 작업
+    this.lazyLoadState.cadViewerLoaded = true;
+    console.log("✅ CAD 뷰어 지연 로딩 완료");
+  }
+
+  async lazyLoadAIAnalysis() {
+    if (this.lazyLoadState.aiAnalysisLoaded) return;
+
+    console.log("🤖 AI 분석 지연 로딩 시작");
+
+    // AI 분석 관련 리소스 사전 로딩
+    this.lazyLoadState.aiAnalysisLoaded = true;
+    console.log("✅ AI 분석 지연 로딩 완료");
+  }
+
+  showChartLoading(container, chartType) {
+    const canvas = container.querySelector("canvas");
+    if (canvas) {
+      const loadingDiv = document.createElement("div");
+      loadingDiv.className = "lazy-loading-overlay";
+      loadingDiv.innerHTML = `
+        <div class="loading-content">
+          <i class="fas fa-spinner fa-spin"></i>
+          <p>${chartType} 차트 로딩 중...</p>
+        </div>
+      `;
+      canvas.parentNode.insertBefore(loadingDiv, canvas);
+    }
+  }
+
+  hideChartLoading(container) {
+    const loadingOverlay = container.querySelector(".lazy-loading-overlay");
+    if (loadingOverlay) {
+      loadingOverlay.remove();
+    }
+  }
+
+  showChartLoadingError(container, chartType) {
+    const canvas = container.querySelector("canvas");
+    if (canvas) {
+      const errorDiv = document.createElement("div");
+      errorDiv.className = "lazy-loading-error";
+      errorDiv.innerHTML = `
+        <div class="error-content">
+          <i class="fas fa-exclamation-triangle"></i>
+          <p>${chartType} 차트 로딩 실패</p>
+          <button class="btn btn-sm btn-primary retry-btn">재시도</button>
+        </div>
+      `;
+
+      // 재시도 버튼 이벤트
+      errorDiv.querySelector(".retry-btn").addEventListener("click", () => {
+        errorDiv.remove();
+        this.loadChartOnDemand(container);
+      });
+
+      canvas.parentNode.insertBefore(errorDiv, canvas);
+    }
+  }
+
+  async loadAllChartsImmediately() {
+    // IntersectionObserver 미지원 환경용 즉시 로딩
+    console.log("⚡ 즉시 로딩 모드 활성화");
+
+    try {
+      const [inventoryData, trendData, categoryData] = await Promise.all([
+        fetch("/api/inventory/by-rack").then((r) => r.json()),
+        fetch("/api/trends/daily").then((r) => r.json()),
+        fetch("/api/product/category-distribution").then((r) => r.json()),
+      ]);
+
+      chartManager.createInventoryChart(inventoryData, "inventoryChart");
+      chartManager.createTrendChart(trendData, "trendChart");
+      chartManager.createCategoryChart(categoryData, "categoryChart");
+
+      // 상태 업데이트
+      Object.keys(this.lazyLoadState.chartsLoaded).forEach((key) => {
+        this.lazyLoadState.chartsLoaded[key] = true;
+      });
+
+      console.log("✅ 모든 차트 즉시 로딩 완료");
+    } catch (error) {
+      console.error("❌ 즉시 로딩 실패:", error);
+    }
+  }
+
+  async loadBrowserHighTurnoverProducts() {
+    try {
+      const response = await fetch("/api/ml/product-clustering/high-turnover");
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      this.renderBrowserHighTurnoverProducts(data);
+    } catch (error) {
+      console.error("Browser Mode 고회전 상품 로딩 실패:", error);
+      this.showBrowserHighTurnoverError(error.message);
+    }
+  }
+
+  renderBrowserHighTurnoverProducts(data) {
+    const highTurnoverGrid = document.getElementById("highTurnoverProducts");
+    if (!data || !highTurnoverGrid) return;
+
+    if (data.high_turnover_products?.length === 0) {
+      highTurnoverGrid.innerHTML = `
+        <div class="text-center text-muted">
+          고회전 상품이 없습니다.
+        </div>
+      `;
+      return;
+    }
+
+    highTurnoverGrid.innerHTML = data.high_turnover_products
+      .map(
+        (product) => `
+      <div class="turnover-product-card" data-product-code="${
+        product.product_code
+      }">
+        <div class="product-header">
+          <span class="product-code">${product.product_code}</span>
+          <span class="turnover-badge">${product.turnover_ratio.toFixed(
+            1
+          )}배</span>
+        </div>
+        <div class="product-name">${product.product_name}</div>
+        <div class="product-metrics">
+          <span>클러스터: ${product.cluster_name}</span>
+          <span>중요도: ${product.business_importance?.toFixed(2) || "-"}</span>
+        </div>
+      </div>
+    `
+      )
+      .join("");
+
+    // 상품 카드 클릭 이벤트
+    highTurnoverGrid
+      .querySelectorAll(".turnover-product-card")
+      .forEach((card) => {
+        card.addEventListener("click", (e) => {
+          const productCode = e.currentTarget.dataset.productCode;
+          this.searchBrowserSpecificProduct(productCode);
+        });
+      });
+  }
+
+  showBrowserHighTurnoverError(message) {
+    const highTurnoverGrid = document.getElementById("highTurnoverProducts");
+    if (highTurnoverGrid) {
+      highTurnoverGrid.innerHTML = `
+        <div class="alert alert-warning">
+          <i class="fas fa-exclamation-triangle"></i>
+          고회전 상품 로딩 실패: ${message}
+        </div>
+      `;
+    }
+  }
+
+  async searchBrowserProduct() {
+    const productInput = document.getElementById("productCodeInput");
+    const productCode = productInput?.value?.trim();
+
+    if (!productCode) {
+      alert("상품 코드를 입력해주세요.");
+      return;
+    }
+
+    await this.searchBrowserSpecificProduct(productCode);
+  }
+
+  async searchBrowserSpecificProduct(productCode) {
+    const resultDiv = document.getElementById("productAnalysisResult");
+    if (!resultDiv) return;
+
+    try {
+      // 로딩 상태 표시
+      resultDiv.style.display = "block";
+      resultDiv.innerHTML = `
+        <div class="loading-state">
+          <i class="fas fa-spinner fa-spin"></i> ${productCode} 분석 중...
+        </div>
+      `;
+
+      const response = await fetch(
+        `/api/ml/product-clustering/analyze/${encodeURIComponent(productCode)}`
+      );
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      this.renderBrowserProductAnalysis(data);
+    } catch (error) {
+      console.error("Browser Mode 상품 분석 실패:", error);
+      resultDiv.innerHTML = `
+        <div class="alert alert-danger">
+          <i class="fas fa-exclamation-circle"></i>
+          상품 분석 실패: ${error.message}
+        </div>
+      `;
+    }
+  }
+
+  renderBrowserProductAnalysis(data) {
+    const resultDiv = document.getElementById("productAnalysisResult");
+    if (!resultDiv || !data) return;
+
+    const { product, cluster, similar_products } = data;
+
+    resultDiv.innerHTML = `
+      <div class="product-analysis-card">
+        <div class="product-details">
+          <h5><i class="fas fa-box"></i> ${product.product_name}</h5>
+          <p><strong>상품 코드:</strong> ${product.product_code}</p>
+          <p><strong>클러스터:</strong> ${cluster.cluster_name}</p>
+          <p><strong>사업 중요도:</strong> ${
+            product.business_importance?.toFixed(2) || "-"
+          }</p>
+          <p><strong>회전율:</strong> ${
+            product.turnover_ratio?.toFixed(2) || "-"
+          }배</p>
+        </div>
+        
+        <div class="cluster-info">
+          <h6><i class="fas fa-layer-group"></i> 클러스터 정보</h6>
+          <p><strong>전략:</strong> ${cluster.strategy}</p>
+          <p><strong>설명:</strong> ${cluster.description}</p>
+          <p><strong>상품 수:</strong> ${cluster.product_count}개</p>
+        </div>
+        
+        ${
+          similar_products?.length > 0
+            ? `
+        <div class="similar-products">
+          <h6><i class="fas fa-sitemap"></i> 유사 상품</h6>
+          <div class="similar-products-grid">
+            ${similar_products
+              .map(
+                (sp) => `
+              <div class="similar-product-item">
+                <span class="product-code">${sp.product_code}</span>
+                <span class="similarity">${
+                  sp.similarity?.toFixed(2) || "-"
+                }</span>
+              </div>
+            `
+              )
+              .join("")}
+          </div>
+        </div>
+        `
+            : ""
+        }
+      </div>
+    `;
   }
 
   async loadMLClusteringStatus(prefix = "") {
@@ -207,7 +807,9 @@ class ViewModeManager {
         };
 
         const ctx = document.getElementById(
-          prefix ? `${prefix}ClusterDistributionChart` : "clusterDistributionChart"
+          prefix
+            ? `${prefix}ClusterDistributionChart`
+            : "clusterDistributionChart"
         );
         if (ctx) {
           // 기존 차트가 있으면 제거
@@ -348,10 +950,13 @@ class ViewModeManager {
   }
 
   initializeBrowserCADViewer() {
-    const uploadBtn = document.getElementById("browserUploadCADBtn");
-    const selectBtn = document.getElementById("browserSelectCADFileBtn");
-    const fileInput = document.getElementById("browserCadFileInput");
-    const dropzone = document.getElementById("browserCadDropzone");
+    // Browser 모드 CAD 뷰어 표준 ID 사용 초기화
+    console.log("🏗️ Browser Mode CAD 뷰어 초기화...");
+
+    const uploadBtn = document.getElementById("uploadCADBtn");
+    const selectBtn = document.getElementById("selectCADFileBtn");
+    const fileInput = document.getElementById("cadFileInput");
+    const dropzone = document.getElementById("cadDropzone");
 
     if (uploadBtn) {
       uploadBtn.addEventListener("click", () => {
@@ -367,7 +972,7 @@ class ViewModeManager {
 
     if (fileInput) {
       fileInput.addEventListener("change", (e) => {
-        this.handleCADFileUpload(e.target.files[0], "browser");
+        this.handleCADFileUpload(e.target.files[0], "");
       });
     }
 
@@ -384,7 +989,7 @@ class ViewModeManager {
       dropzone.addEventListener("drop", (e) => {
         e.preventDefault();
         dropzone.classList.remove("drag-over");
-        this.handleCADFileUpload(e.dataTransfer.files[0], "browser");
+        this.handleCADFileUpload(e.dataTransfer.files[0], "");
       });
     }
   }
@@ -392,17 +997,50 @@ class ViewModeManager {
   async handleCADFileUpload(file, prefix = "") {
     if (!file) return;
 
-    console.log(`${prefix} 모드 CAD 파일 업로드:`, file.name);
+    console.log(`CAD 파일 업로드:`, file.name);
 
-    const uploadArea = document.getElementById(`${prefix}CadUploadArea`);
-    const viewer = document.getElementById(`${prefix}CadViewer`);
+    // 표준 ID 사용 (prefix가 빈 문자열이므로)
+    const uploadArea = document.getElementById("cadUploadArea");
+    const viewer = document.getElementById("cadViewer");
+    const progressDiv = document.getElementById("cadUploadProgress");
+    const progressFill = document.getElementById("cadProgressFill");
+    const progressText = document.getElementById("cadProgressText");
+    const resultDiv = document.getElementById("cadAnalysisResult");
 
+    // 업로드 영역 숨기고 뷰어 표시
     if (uploadArea) uploadArea.style.display = "none";
     if (viewer) viewer.style.display = "block";
 
+    // 진행률 표시 시작
+    if (progressDiv) {
+      progressDiv.style.display = "block";
+      progressFill.style.width = "0%";
+      progressText.textContent = "파일 업로드 중...";
+    }
+
+    // 업로드 진행률 시뮬레이션
+    let progress = 0;
+    const progressInterval = setInterval(() => {
+      progress += Math.random() * 20;
+      if (progress > 90) progress = 90;
+
+      if (progressFill) progressFill.style.width = `${progress}%`;
+      if (progressText)
+        progressText.textContent = `업로드 중... ${Math.round(progress)}%`;
+    }, 200);
+
     // CAD 파일 분석 시뮬레이션
     setTimeout(() => {
-      const canvas = document.getElementById(`${prefix}WarehouseCanvas`);
+      // 진행률 완료
+      clearInterval(progressInterval);
+      if (progressFill) progressFill.style.width = "100%";
+      if (progressText) progressText.textContent = "분석 완료!";
+
+      setTimeout(() => {
+        if (progressDiv) progressDiv.style.display = "none";
+      }, 1500);
+
+      const canvas = document.getElementById("warehouseCanvas");
       if (canvas) {
         const ctx = canvas.getContext("2d");
         ctx.fillStyle = "#f3f4f6";
@@ -421,63 +1059,466 @@ class ViewModeManager {
           canvas.height / 2 + 30
         );
       }
-    }, 1000);
+
+      // 분석 결과 표시
+      if (resultDiv) {
+        resultDiv.style.display = "block";
+        resultDiv.innerHTML = `
+          <div class="alert alert-success">
+            <h5><i class="fas fa-check-circle"></i> CAD 파일 분석 완료</h5>
+            <p><strong>파일명:</strong> ${file.name}</p>
+            <p><strong>크기:</strong> ${(file.size / 1024 / 1024).toFixed(
+              2
+            )} MB</p>
+            <p><strong>감지된 레이어:</strong> 5개</p>
+            <p><strong>렉 영역:</strong> 12개 감지</p>
+          </div>
+        `;
+      }
+
+      // 레이어 및 줌 버튼 활성화
+      const toggleBtn = document.getElementById("toggleLayersBtn");
+      const zoomBtn = document.getElementById("zoomFitBtn");
+      if (toggleBtn) toggleBtn.disabled = false;
+      if (zoomBtn) zoomBtn.disabled = false;
+
+      console.log("✅ Browser Mode CAD 파일 분석 완료");
+    }, 2000);
   }
 
   initializeBrowserAIAnalysis() {
-    const demandBtn = document.getElementById("browserDemandPredictBtn");
-    const clusterBtn = document.getElementById("browserClusterAnalysisBtn");
-    const anomalyBtn = document.getElementById("browserAnomalyDetectionBtn");
-    const resultsDiv = document.getElementById("browserMlResults");
+    // Browser 모드 고급 AI 분석 초기화
+    console.log("🤖 Browser Mode 고급 AI 분석 초기화...");
 
-    if (demandBtn) {
-      demandBtn.addEventListener("click", async () => {
-        if (resultsDiv) {
-          resultsDiv.innerHTML =
-            '<i class="fas fa-spinner fa-spin"></i> 수요 예측 분석 중...';
-        }
+    // 표준 ID 사용
+    const demandBtn = document.getElementById("demandPredictBtn");
+    const clusterBtn = document.getElementById("clusterAnalysisBtn");
+    const anomalyBtn = document.getElementById("anomalyDetectionBtn");
+    const optimizationBtn = document.getElementById("optimizationBtn");
+    const resultsDiv = document.getElementById("mlResults");
 
-        setTimeout(() => {
-          if (resultsDiv) {
-            resultsDiv.innerHTML = `
-              <div class="ai-result">
-                <h5>수요 예측 결과</h5>
-                <p>다음 주 예상 입고량: <strong>1,250개</strong></p>
-                <p>권장 재고 수준: <strong>85%</strong></p>
+    // 공통 이벤트 핸들러
+    [demandBtn, clusterBtn, anomalyBtn, optimizationBtn].forEach((btn) => {
+      if (btn) {
+        btn.addEventListener("click", (e) => {
+          const analysisType = e.target.closest("button").dataset.analysis;
+          this.runAdvancedAnalysis(analysisType);
+        });
+      }
+    });
+
+    // 초기 상태 업데이트
+    this.updateAnalysisStatus();
+
+    console.log("✅ Browser Mode 고급 AI 분석 활성화됨");
+  }
+
+  async runAdvancedAnalysis(type) {
+    const resultsDiv = document.getElementById("mlResults");
+    const lastAnalysisTime = document.getElementById("lastAnalysisTime");
+    const confidenceScore = document.getElementById("confidenceScore");
+    const recommendedActions = document.getElementById("recommendedActions");
+    const actionsList = document.getElementById("actionsList");
+    const analysisHistory = document.getElementById("analysisHistory");
+
+    if (!resultsDiv) return;
+
+    // 로딩 상태 표시
+    resultsDiv.innerHTML = `
+      <div class="analysis-loading">
+        <div class="loading-spinner">
+          <i class="fas fa-cog fa-spin"></i>
+        </div>
+        <h4>${this.getAnalysisTitle(type)} 실행 중...</h4>
+        <p>AI 모델이 데이터를 분석하고 있습니다.</p>
+        <div class="progress-indicator">
+          <div class="progress-step active">데이터 수집</div>
+          <div class="progress-step">모델 실행</div>
+          <div class="progress-step">결과 생성</div>
+        </div>
+      </div>
+    `;
+
+    // 진행률 시뮬레이션
+    setTimeout(() => {
+      const steps = resultsDiv.querySelectorAll(".progress-step");
+      if (steps[1]) steps[1].classList.add("active");
+    }, 1000);
+
+    setTimeout(() => {
+      const steps = resultsDiv.querySelectorAll(".progress-step");
+      if (steps[2]) steps[2].classList.add("active");
+    }, 2000);
+
+    // 분석 결과 표시
+    setTimeout(() => {
+      const result = this.generateAnalysisResult(type);
+      resultsDiv.innerHTML = result.content;
+
+      // 상태 업데이트
+      if (lastAnalysisTime) {
+        lastAnalysisTime.textContent = new Date().toLocaleTimeString();
+      }
+
+      if (confidenceScore) {
+        confidenceScore.textContent = result.confidence;
+        confidenceScore.className = `status-value ${result.confidenceClass}`;
+      }
+
+      // 추천 액션 표시
+      if (result.actions && result.actions.length > 0) {
+        this.showRecommendedActions(result.actions);
+      }
+
+      // 히스토리 차트 업데이트
+      this.updateAnalysisHistory(type, result.confidence);
+    }, 3000);
+  }
+
+  getAnalysisTitle(type) {
+    const titles = {
+      demand: "수요 예측 분석",
+      cluster: "제품 클러스터링 분석",
+      anomaly: "이상 탐지 분석",
+      optimization: "운영 최적화 분석",
+    };
+    return titles[type] || "AI 분석";
+  }
+
+  generateAnalysisResult(type) {
+    const results = {
+      demand: {
+        content: `
+          <div class="analysis-result demand-analysis">
+            <div class="result-header">
+              <h4><i class="fas fa-chart-line"></i> 수요 예측 분석 결과</h4>
+              <span class="analysis-badge success">예측 완료</span>
+            </div>
+            
+            <div class="key-metrics">
+              <div class="metric-card">
+                <h5>다음 주 예상 입고량</h5>
+                <div class="metric-value">1,247 <span class="unit">개</span></div>
+                <div class="metric-change positive">+12.3% vs 이번 주</div>
               </div>
-            `;
-          }
-        }, 2000);
-      });
-    }
-
-    if (clusterBtn) {
-      clusterBtn.addEventListener("click", () => {
-        if (resultsDiv) {
-          resultsDiv.innerHTML = `
-            <div class="ai-result">
-              <h5>제품 클러스터링 결과</h5>
-              <p>총 6개 클러스터로 분류됨</p>
-              <p>고회전 제품: <strong>23개</strong></p>
+              <div class="metric-card">
+                <h5>권장 재고 수준</h5>
+                <div class="metric-value">87 <span class="unit">%</span></div>
+                <div class="metric-change neutral">최적 범위</div>
+              </div>
+              <div class="metric-card">
+                <h5>예상 회전율</h5>
+                <div class="metric-value">2.4 <span class="unit">배/월</span></div>
+                <div class="metric-change positive">+0.3 개선</div>
+              </div>
             </div>
-          `;
-        }
-      });
-    }
 
-    if (anomalyBtn) {
-      anomalyBtn.addEventListener("click", () => {
-        if (resultsDiv) {
-          resultsDiv.innerHTML = `
-            <div class="ai-result">
-              <h5>이상 탐지 결과</h5>
-              <p>정상 범위 내 운영 중</p>
-              <p>주의 필요 랙: <strong>C-001</strong></p>
+            <div class="prediction-details">
+              <h5>상세 예측</h5>
+              <div class="prediction-items">
+                <div class="prediction-item">
+                  <span class="product-category">면류/라면</span>
+                  <span class="prediction-value">345개</span>
+                  <span class="confidence">95%</span>
+                </div>
+                <div class="prediction-item">
+                  <span class="product-category">음료/음료수</span>
+                  <span class="prediction-value">287개</span>
+                  <span class="confidence">92%</span>
+                </div>
+                <div class="prediction-item">
+                  <span class="product-category">조미료/양념</span>
+                  <span class="prediction-value">198개</span>
+                  <span class="confidence">89%</span>
+                </div>
+              </div>
             </div>
-          `;
-        }
-      });
+          </div>
+        `,
+        confidence: "94.2%",
+        confidenceClass: "confidence-high",
+        actions: [
+          {
+            type: "warning",
+            text: "A랙 용량 확보 필요 (85% 포화)",
+            priority: "high",
+          },
+          {
+            type: "info",
+            text: "면류 제품 입고 일정 앞당기기 권장",
+            priority: "medium",
+          },
+          {
+            type: "success",
+            text: "전반적 재고 운영 효율성 양호",
+            priority: "low",
+          },
+        ],
+      },
+      cluster: {
+        content: `
+          <div class="analysis-result cluster-analysis">
+            <div class="result-header">
+              <h4><i class="fas fa-project-diagram"></i> 제품 클러스터링 분석 결과</h4>
+              <span class="analysis-badge success">분석 완료</span>
+            </div>
+
+            <div class="cluster-summary">
+              <div class="cluster-stats">
+                <div class="stat-item">
+                  <span class="stat-number">6</span>
+                  <span class="stat-label">클러스터</span>
+                </div>
+                <div class="stat-item">
+                  <span class="stat-number">89</span>
+                  <span class="stat-label">총 상품</span>
+                </div>
+                <div class="stat-item">
+                  <span class="stat-number">23</span>
+                  <span class="stat-label">고회전 상품</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="cluster-details">
+              <div class="cluster-item high-priority">
+                <div class="cluster-name">고회전-고수익 클러스터</div>
+                <div class="cluster-info">
+                  <span>23개 상품</span>
+                  <span>회전율: 3.2배/월</span>
+                  <span>우선 관리 필요</span>
+                </div>
+              </div>
+              <div class="cluster-item medium-priority">
+                <div class="cluster-name">안정적 수요 클러스터</div>
+                <div class="cluster-info">
+                  <span>34개 상품</span>
+                  <span>회전율: 1.8배/월</span>
+                  <span>현재 관리 유지</span>
+                </div>
+              </div>
+              <div class="cluster-item low-priority">
+                <div class="cluster-name">저회전 클러스터</div>
+                <div class="cluster-info">
+                  <span>12개 상품</span>
+                  <span>회전율: 0.9배/월</span>
+                  <span>재고 최적화 검토</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        `,
+        confidence: "91.7%",
+        confidenceClass: "confidence-high",
+        actions: [
+          {
+            type: "info",
+            text: "고회전 상품 별도 구역 배치 검토",
+            priority: "high",
+          },
+          {
+            type: "warning",
+            text: "저회전 상품 재고 수준 조정 필요",
+            priority: "medium",
+          },
+        ],
+      },
+      anomaly: {
+        content: `
+          <div class="analysis-result anomaly-analysis">
+            <div class="result-header">
+              <h4><i class="fas fa-shield-alt"></i> 이상 탐지 분석 결과</h4>
+              <span class="analysis-badge warning">주의 필요</span>
+            </div>
+
+            <div class="anomaly-overview">
+              <div class="anomaly-status">
+                <div class="status-indicator warning"></div>
+                <span>1개 이상 패턴 감지됨</span>
+              </div>
+            </div>
+
+            <div class="anomaly-details">
+              <div class="anomaly-item critical">
+                <div class="anomaly-header">
+                  <i class="fas fa-exclamation-triangle"></i>
+                  <span class="anomaly-title">C-001 랙 비정상 출고 패턴</span>
+                  <span class="severity critical">Critical</span>
+                </div>
+                <div class="anomaly-description">
+                  <p>지난 3일간 평균 대비 347% 높은 출고량 기록</p>
+                  <p>추정 원인: 대량 주문 또는 시스템 오류</p>
+                </div>
+                <div class="anomaly-actions">
+                  <button class="btn btn-sm btn-warning">상세 조사</button>
+                  <button class="btn btn-sm btn-outline-secondary">무시</button>
+                </div>
+              </div>
+
+              <div class="anomaly-item normal">
+                <div class="anomaly-header">
+                  <i class="fas fa-check-circle"></i>
+                  <span class="anomaly-title">전체 시스템 상태</span>
+                  <span class="severity normal">정상</span>
+                </div>
+                <div class="anomaly-description">
+                  <p>나머지 랙들은 정상 범위 내 운영 중</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        `,
+        confidence: "88.9%",
+        confidenceClass: "confidence-medium",
+        actions: [
+          {
+            type: "error",
+            text: "C-001 랙 긴급 점검 필요",
+            priority: "critical",
+          },
+          {
+            type: "warning",
+            text: "대량 출고 승인 프로세스 강화 검토",
+            priority: "high",
+          },
+        ],
+      },
+      optimization: {
+        content: `
+          <div class="analysis-result optimization-analysis">
+            <div class="result-header">
+              <h4><i class="fas fa-cogs"></i> 운영 최적화 분석 결과</h4>
+              <span class="analysis-badge success">최적화 완료</span>
+            </div>
+
+            <div class="optimization-summary">
+              <div class="efficiency-score">
+                <div class="score-circle">
+                  <span class="score">87</span>
+                  <span class="score-label">효율성 점수</span>
+                </div>
+                <div class="score-improvement">
+                  <span class="improvement-value">+5점</span>
+                  <span class="improvement-period">지난 달 대비</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="optimization-recommendations">
+              <h5>최적화 권장사항</h5>
+              
+              <div class="recommendation-item high-impact">
+                <div class="recommendation-header">
+                  <span class="impact-badge high">높은 효과</span>
+                  <span class="recommendation-title">랙 배치 최적화</span>
+                </div>
+                <div class="recommendation-details">
+                  <p>고회전 상품을 입구 근처 A, B랙으로 이동</p>
+                  <p>예상 효율성 향상: 12-15%</p>
+                </div>
+              </div>
+
+              <div class="recommendation-item medium-impact">
+                <div class="recommendation-header">
+                  <span class="impact-badge medium">중간 효과</span>
+                  <span class="recommendation-title">입고 스케줄 조정</span>
+                </div>
+                <div class="recommendation-details">
+                  <p>오전 8-10시 대신 오후 2-4시 입고 권장</p>
+                  <p>예상 효율성 향상: 7-9%</p>
+                </div>
+              </div>
+
+              <div class="recommendation-item low-impact">
+                <div class="recommendation-header">
+                  <span class="impact-badge low">낮은 효과</span>
+                  <span class="recommendation-title">재고 임계점 조정</span>
+                </div>
+                <div class="recommendation-details">
+                  <p>안전 재고 수준을 15%에서 12%로 조정</p>
+                  <p>예상 효율성 향상: 3-5%</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        `,
+        confidence: "92.8%",
+        confidenceClass: "confidence-high",
+        actions: [
+          {
+            type: "success",
+            text: "랙 배치 최적화 계획 수립 권장",
+            priority: "high",
+          },
+          {
+            type: "info",
+            text: "입고 스케줄 변경 테스트 진행",
+            priority: "medium",
+          },
+          { type: "info", text: "재고 정책 검토 및 조정", priority: "low" },
+        ],
+      },
+    };
+
+    return results[type] || results["demand"];
+  }
+
+  showRecommendedActions(actions) {
+    const recommendedActions = document.getElementById("recommendedActions");
+    const actionsList = document.getElementById("actionsList");
+
+    if (!recommendedActions || !actionsList) return;
+
+    actionsList.innerHTML = actions
+      .map(
+        (action) => `
+      <div class="action-item ${action.type} priority-${action.priority}">
+        <div class="action-icon">
+          <i class="fas ${this.getActionIcon(action.type)}"></i>
+        </div>
+        <div class="action-content">
+          <span class="action-text">${action.text}</span>
+          <span class="action-priority">${action.priority}</span>
+        </div>
+        <div class="action-buttons">
+          <button class="btn btn-sm btn-outline-primary">실행</button>
+          <button class="btn btn-sm btn-outline-secondary">나중에</button>
+        </div>
+      </div>
+    `
+      )
+      .join("");
+
+    recommendedActions.style.display = "block";
+  }
+
+  getActionIcon(type) {
+    const icons = {
+      error: "fa-exclamation-circle",
+      warning: "fa-exclamation-triangle",
+      info: "fa-info-circle",
+      success: "fa-check-circle",
+    };
+    return icons[type] || "fa-info-circle";
+  }
+
+  updateAnalysisStatus() {
+    const lastAnalysisTime = document.getElementById("lastAnalysisTime");
+    const currentModel = document.getElementById("currentModel");
+    const confidenceScore = document.getElementById("confidenceScore");
+
+    if (lastAnalysisTime) {
+      lastAnalysisTime.textContent = "시스템 대기 중";
     }
+  }
+
+  updateAnalysisHistory(type, confidence) {
+    const analysisHistory = document.getElementById("analysisHistory");
+    if (!analysisHistory) return;
+
+    // 히스토리 차트 간단 구현 (실제로는 Chart.js 사용)
+    analysisHistory.style.display = "block";
+    console.log(`Analysis history updated: ${type} - ${confidence}`);
   }
 
   saveSettings() {
