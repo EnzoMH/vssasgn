@@ -1,44 +1,34 @@
-# Web Framework
 fastapi
 uvicorn[standard]
 pydantic
 
-# Data Processing
 pandas
 numpy
 openpyxl
 
-# Machine Learning
 scikit-learn
 xgboost
 joblib
 
-# Data Visualization
 matplotlib
 seaborn
 
-# AI/LLM Services
 google-generativeai
 openai
 
-# Vector Database & Embeddings
 chromadb
 sentence-transformers
 
-# File Processing
 python-multipart
 PyMuPDF
 Pillow
 opencv-python
 ezdxf
 
-# Environment & Utils
 python-dotenv
 
-# Web & Async
 httpx
 aiofiles
 
-# Additional Dependencies
 typing-extensions
 
