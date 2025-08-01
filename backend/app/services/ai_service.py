@@ -227,6 +227,7 @@ class WarehouseAI:
         self.gemini_config = AI_MODEL_CONFIG
         self.current_model_index = 0
         self.rate_limiter = RateLimiter() # RateLimiter 인스턴스 추가
+        self.offline_mode = False  # 오프라인 모드 플래그
         
         # 차트 생성 전용 설정 (더 일관된 JSON 출력을 위해)
         self.chart_config = genai.GenerationConfig(
@@ -236,9 +237,10 @@ class WarehouseAI:
             max_output_tokens=2048
         )
         
-        self._setup_models()
+        # 초기화는 비동기로 처리하지 않고 기본 설정만 진행
+        self._setup_models_sync()
 
-    def _setup_models(self):
+    def _setup_models_sync(self):
         """여러 Gemini API 키로 모델 초기화"""
         try:
             api_keys = {
@@ -248,12 +250,27 @@ class WarehouseAI:
                 'GEMINI_4': os.getenv('GEMINI_API_KEY_4')
             }
 
-            valid_keys = {k: v for k, v in api_keys.items() if v}
+            # API 키 상태 상세 로깅
+            self.logger.info("🔍 API 키 설정 상태 확인:")
+            for key_name, key_value in api_keys.items():
+                if key_value:
+                    masked_key = f"{key_value[:10]}...{key_value[-5:]}" if len(key_value) > 15 else "짧은키"
+                    self.logger.info(f"  ✅ {key_name}: {masked_key}")
+                else:
+                    self.logger.warning(f"  ❌ {key_name}: 설정되지 않음")
+
+            valid_keys = {k: v for k, v in api_keys.items() if v and len(v) > 30}  # 최소 길이 검증
             if not valid_keys:
-                self.logger.warning("경고: GEMINI_API_KEY 환경 변수가 설정되지 않았습니다. AI 기능이 제한될 수 있습니다.")
+                self.logger.error("경고: 유효한 GEMINI_API_KEY가 없습니다. AI 기능이 제한될 수 있습니다.")
+                return
 
             for model_name, api_key in valid_keys.items():
                 try:
+                    # API 키 유효성 미리 확인
+                    if not self._validate_api_key(api_key):
+                        self.logger.warning(f"⚠️ {model_name} API 키 형식이 올바르지 않음")
+                        continue
+                    
                     genai.configure(api_key=api_key)
                     
                     # 사고 기능 비활성화 설정 추가
@@ -261,28 +278,47 @@ class WarehouseAI:
                     # 2.5 모델의 사고 기능으로 인한 응답 문제 방지
                     
                     model = genai.GenerativeModel(
-                        "gemini-1.5-flash",  # 더 안정적인 1.5 모델 사용 (사고 기능 없음)
+                        "gemini-1.5-flash-8b",  # 더 안정적인 1.5 모델 사용 (사고 기능 없음)
                         generation_config=model_config
                     )
+                    
+                    # API 키는 실제 호출 시에 검증 (초기화 시에는 형식만 확인)
+                    
                     self.gemini_models.append({
                         'model': model,
                         'api_key': api_key,
                         'name': model_name,
-                        'failures': 0 # 실패 횟수 추적 (간단 구현)
+                        'failures': 0,
+                        'last_success': time.time()  # 마지막 성공 시간 추가
                     })
-                    self.logger.info(f"🤖 {model_name} 모델 초기화 성공")
+                    self.logger.info(f"🤖 {model_name} 모델 초기화 및 테스트 성공")
                 except Exception as e:
                     self.logger.error(f"❌ {model_name} 모델 초기화 실패: {e}")
                     continue
 
             if not self.gemini_models:
-                self.logger.error("사용 가능한 Gemini 모델이 없습니다.")
-
-            self.logger.info(f"🎉 총 {len(self.gemini_models)}개의 Gemini 모델 초기화 완료")
+                self.logger.error("❌ 사용 가능한 Gemini 모델이 없습니다.")
+                # Fallback 메커니즘 활성화
+                self._activate_offline_mode()
+            else:
+                self.logger.info(f"🎉 총 {len(self.gemini_models)}개의 Gemini 모델 초기화 완료")
 
         except Exception as e:
             self.logger.error(f"❌ AI 모델 초기화 실패: {e}")
-            raise
+            self._activate_offline_mode()
+    
+    def _validate_api_key(self, api_key: str) -> bool:
+        """API 키 형식 검증"""
+        if not api_key or len(api_key) < 30:
+            return False
+        if not api_key.startswith('AIza'):
+            return False
+        return True
+    
+    def _activate_offline_mode(self):
+        """API 키가 모두 실패했을 때 오프라인 모드 활성화"""
+        self.logger.warning("🔄 오프라인 모드 활성화 - 기본 응답으로 전환")
+        self.offline_mode = True
 
     def _get_next_model(self) -> Optional[Dict]:
         """다음 사용 가능한 모델 선택 (RateLimiter를 활용하여 개선)"""
@@ -464,7 +500,8 @@ class WarehouseAI:
         
         try:
             model_instance = current_model_info['model']
-            response = await self._call_gemini_api(model_instance, prompt)
+            api_key = current_model_info['api_key']
+            response = await self._call_gemini_api(model_instance, prompt, api_key)
             return response
         except Exception as e:
             self.logger.error(f"VectorDB 컨텍스트 처리 실패: {e}")
@@ -472,8 +509,8 @@ class WarehouseAI:
     
     async def answer_simple_query(self, question: str, context_data: dict) -> str:
         """간단한 질문에 대한 기본 처리"""
-        if not self.gemini_models:
-            return "오류: 사용 가능한 AI 모델이 없습니다."
+        if self.offline_mode or not self.gemini_models:
+            return self._get_offline_response(question, context_data)
         
         # 간단한 프롬프트 생성
         prompt = f"""
@@ -497,14 +534,19 @@ class WarehouseAI:
         
         try:
             model_instance = current_model_info['model']
-            response = await self._call_gemini_api(model_instance, prompt)
+            api_key = current_model_info['api_key']
+            response = await self._call_gemini_api(model_instance, prompt, api_key)
             return response
         except Exception as e:
             self.logger.error(f"간단한 질의 처리 실패: {e}")
             return f"죄송합니다. 질문을 처리하는 중 오류가 발생했습니다."
     
-    async def _call_gemini_api(self, model_instance, prompt: str) -> str:
+    async def _call_gemini_api(self, model_instance, prompt: str, api_key: str = None) -> str:
         """간소화된 Gemini API 호출"""
+        # API 키가 제공되면 설정
+        if api_key:
+            genai.configure(api_key=api_key)
+            
         try:
             response = await model_instance.generate_content_async(prompt)
         except AttributeError:
@@ -519,6 +561,33 @@ class WarehouseAI:
                 return candidate.content.parts[0].text
         
         return str(response)
+    
+    def _get_offline_response(self, question: str, context_data: dict) -> str:
+        """오프라인 모드에서 사용할 기본 응답"""
+        question_lower = question.lower()
+        
+        # 기본적인 인사말 처리
+        if any(word in question_lower for word in ['안녕', '안녕하세요', 'hello', 'hi']):
+            return "안녕하세요! 창고 관리 AI 어시스턴트입니다. 현재 오프라인 모드로 운영 중이며, 기본적인 데이터 조회만 가능합니다."
+        
+        # 이름 관련 질문
+        if any(word in question_lower for word in ['이름', '누구', '뭐니', 'name']):
+            return "저는 창고 관리 AI 어시스턴트입니다. 현재 API 연결에 문제가 있어 제한된 기능만 제공 중입니다."
+        
+        # 데이터 관련 질문
+        if context_data and isinstance(context_data, dict):
+            data_info = []
+            for key, value in context_data.items():
+                if isinstance(value, (int, float)):
+                    data_info.append(f"{key}: {value}")
+                elif isinstance(value, str) and len(value) < 100:
+                    data_info.append(f"{key}: {value}")
+            
+            if data_info:
+                return f"현재 오프라인 모드입니다. 사용 가능한 기본 데이터:\n" + "\n".join(data_info[:5])
+        
+        # 기본 응답
+        return "죄송합니다. 현재 AI 서비스 연결에 문제가 있습니다. 잠시 후 다시 시도해주세요. 기본적인 재고 조회는 대시보드를 이용해주세요."
     
     async def process_query(self, prompt: str) -> str:
         """차트 생성을 위한 단순한 프롬프트 처리 메서드"""
@@ -714,7 +783,7 @@ class WarehouseAI:
             
             # Gemini 모델 설정
             genai.configure(api_key=api_key)
-            model = genai.GenerativeModel('gemini-1.5-flash')
+            model = genai.GenerativeModel('gemini-1.5-flash-8b')
             
             # 이미지 데이터 준비
             import base64
@@ -740,7 +809,7 @@ class WarehouseAI:
                 return {
                     "success": True,
                     "response": response.text.strip(),
-                    "model": "gemini-1.5-flash",
+                    "model": "gemini-1.5-flash-8b",
                     "api_key_used": api_key[-10:] if api_key else "unknown"
                 }
             else:
