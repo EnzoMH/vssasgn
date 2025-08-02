@@ -150,19 +150,29 @@ async def train_demand_predictor():
     
     logger.info("수요 예측 모델 학습 시작...")
     try:
-        # TODO: 실제 데이터 전처리 및 피처 엔지니어링 필요
-        # 여기서는 임시 데이터로 대체
-        # 실제로는 data_service.inbound_data와 outbound_data를 결합하여 피처를 만들어야 합니다.
-
-        # 예시: 과거 N일간의 출고량을 피처로, 다음날 출고량을 예측
-        # 편의상 현재는 임의의 데이터 생성
-        dummy_data = {
-            'feature1': [10, 12, 15, 13, 16, 18, 20],
-            'feature2': [5, 6, 7, 6, 8, 9, 10],
-            'target': [11, 14, 16, 14, 17, 19, 22] # 다음날 출고량
-        }
-        X = pd.DataFrame(dummy_data).drop(columns=['target'])
-        y = pd.Series(dummy_data['target'])
+        # 실제 데이터 전처리 및 피처 엔지니어링
+        # inbound_data와 outbound_data를 결합
+        combined_data = pd.merge(
+            data_service.inbound_data,
+            data_service.outbound_data,
+            on=['Date', 'ProductCode'],
+            how='outer',
+            suffixes=('_in', '_out')
+        ).fillna(0)
+        
+        # 피처 엔지니어링: 과거 7일 출고량 평균, 이전 날 입고량 등
+        combined_data = combined_data.sort_values(['ProductCode', 'Date'])
+        combined_data['feature1'] = combined_data.groupby('ProductCode')['PalleteQty_out'].rolling(window=7, min_periods=1).mean().reset_index(0, drop=True)
+        combined_data['feature2'] = combined_data.groupby('ProductCode')['PalleteQty_in'].shift(1).fillna(0)
+        combined_data['target'] = combined_data.groupby('ProductCode')['PalleteQty_out'].shift(-1).fillna(0)
+        
+        # NaN 제거 및 학습 데이터 준비
+        combined_data = combined_data.dropna(subset=['target'])
+        X = combined_data[['feature1', 'feature2']]
+        y = combined_data['target']
+        
+        if X.empty or y.empty:
+            raise ValueError("학습 데이터가 부족합니다.")
         
         demand_predictor.train(X, y)
         model_trained["demand_predictor"] = True
@@ -543,9 +553,6 @@ async def upload_data(file: UploadFile = File(...)):
         else: # .xlsx or .xls
             df = pd.read_excel(data_io)
         
-        # TODO: 업로드된 데이터 처리 및 저장 로직 구현
-        # 예: data_service에 데이터 추가 또는 특정 위치에 저장
-        # 여기서는 단순히 로드하고 성공 메시지를 반환합니다.
         logger.info(f"Uploaded file: {file.filename}, rows: {len(df)}")
 
         # 데이터 업로드 후 data_service에 반영하고 모델 재학습 (선택 사항)

@@ -933,6 +933,9 @@ document.addEventListener("DOMContentLoaded", async () => {
   // AI 분석 버튼 기능 초기화
   initializeAIAnalysisButtons();
 
+  // Tab Mode AI 분석 초기화
+  initializeTabModeAIAnalysis();
+
   console.log(
     "🎉 Smart Warehouse Management System이 성공적으로 로드되었습니다!"
   );
@@ -962,9 +965,6 @@ window.addEventListener("beforeunload", () => {
       }
     });
   }
-
-  // Tab Mode AI 분석 초기화
-  initializeTabModeAIAnalysis();
 });
 
 // Tab Mode AI 분석 초기화 함수
