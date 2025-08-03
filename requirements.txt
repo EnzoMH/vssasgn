@@ -32,3 +32,5 @@ aiofiles
 
 typing-extensions
 
+langchain
+langchain-community
