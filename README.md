@@ -258,25 +258,11 @@ vss_asgnM/
 │   │       ├── mlClustering.js       # 🧠 ML 클러스터링 UI
 │   │       └── cadViewer.js          # 🏗️ CAD 뷰어 (신규)
 │   └── requirements.txt              # 📦 Python 패키지 (50+ 라이브러리)
-├── legacy/                           # 📚 참고 문서
-│   └── VSS_입사테스트과제_AI.pdf     # 원본 과제 문서
 ├── .gitignore                        # 🚫 Git 제외 설정
 ├── .env.example                      # 🔑 환경 변수 템플릿
 ├── main.py                           # 🚀 서버 실행 진입점
 └── README.md                         # 📖 프로젝트 문서 (본 파일)
 
-# 📂 .gitignore로 제외된 파일들 (로컬 전용)
-├── rawdata/                          # 📄 원본 데이터 (실제 창고 데이터)
-│   ├── 입고데이터_20250101~07.xlsx   # 1주일 입고 기록
-│   ├── 출고데이터_20250101~07.xlsx   # 1주일 출고 기록
-│   ├── 상품데이터.xlsx               # 상품 마스터 + 랙 정보
-│   ├── InboundData_*.csv             # CSV 버전 입고 데이터
-│   ├── OutboundData_*.csv            # CSV 버전 출고 데이터
-│   └── product_data.csv              # CSV 버전 상품 데이터
-├── chromadb_storage/                 # 🔍 벡터 DB 저장소 (2,900+ 문서)
-├── cad_uploads/                      # 🏗️ CAD 파일 업로드 폴더
-├── .env                              # 🔐 환경 변수 (4개 API 키)
-└── *.json                            # 📊 분석 결과 캐시 파일들
 ```
 
 ## 🚀 빠른 시작
@@ -294,7 +280,7 @@ Google Gemini API 키
 **1. 프로젝트 설정:**
 
 ```bash
-git clone [repository-url]
+git clone https://github.com/EnzoMH/vssasgn
 cd vss_asgnM
 ```
 
@@ -411,22 +397,6 @@ DELETE /api/cad/cleanup/{file_id}    # 임시 파일 정리
 ├── API 키 4개 로드밸런싱 → 99.9% 가용성
 ├── 지수 백오프 → 장애 시 자동 복구
 └── 스마트 라우팅 → 평균 응답시간 40% 단축
-```
-
-### 🚀 확장성 & 안정성
-
-```
-엔터프라이즈급 안정성:
-├── 📊 데이터: 무제한 CSV/Excel 파일 지원
-├── 🔍 벡터 DB: ChromaDB 분산 확장 가능
-├── 🤖 AI: 4개 API 키 + 오프라인 모드
-├── 🧠 ML: 모델 캐싱 + 점진적 학습
-└── 🏗️ CAD: 50MB 파일 + 병렬 처리
-
-장애 복구 시나리오:
-API 전체 장애 → 오프라인 모드 (기본 통계 제공)
-벡터 DB 장애 → 직접 계산 모드
-데이터 손상 → 기본 더미 데이터 제공
 ```
 
 ### 🔒 보안 & Rate Limiting
