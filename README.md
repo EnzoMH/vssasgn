@@ -1,6 +1,6 @@
-# 🏢 VSS 창고 관리 시스템 - AI 고도화 버전
+# 🏢 VSS 창고 관리 시스템
 
-## 🏗️ 고도화된 시스템 아키텍처
+## 🏗️ 시스템 아키텍처
 
 ```mermaid
 graph TD
@@ -36,11 +36,11 @@ graph TD
 
 ## 🚀 프로젝트 개요
 
-**차세대 지능형 창고 관리 플랫폼**으로, SELF-RAG 기반 AI 챗봇, 멀티모달 데이터 처리, 실시간 분석 등을 통합한 엔터프라이즈급 솔루션입니다. 할루시네이션 방지와 고급 벡터 검색을 통해 정확하고 신뢰할 수 있는 창고 운영 인사이트를 제공합니다.
+창고 관리 데이터 분석을 위한 웹 기반 시스템입니다. FastAPI 백엔드와 Chart.js 프론트엔드로 구성되어 있으며, Gemini API를 활용한 AI 챗봇, ChromaDB 벡터 검색, 머신러닝 기반 데이터 분석 기능을 제공합니다.
 
-## 🎯 핵심 혁신 기능
+## 🎯 주요 기능
 
-### 1. 🧠 SELF-RAG AI 시스템 (고도화)
+### 1. 🧠 AI 챗봇 시스템
 
 ```
 SELF-RAG 5단계 처리:
@@ -80,67 +80,66 @@ SELF-RAG 5단계 처리:
 "재고 최적화 전략은?" → Tools + Vector + ML 통합 처리
 ```
 
-### 3. 🏗️ 고급 CAD 처리 시스템
+### 3. 🏗️ CAD 파일 처리 (미테스트)
 
 ```
-멀티모달 CAD 분석:
+CAD 처리 로직 (구현됨, 미검증):
 ┌─────────────────────────────────────────────────────────┐
-│ DWG/DXF 파일 → ezdxf 파싱 → 이미지 변환                │
+│ DWG/DXF 파일 업로드 → ezdxf 라이브러리 파싱             │
 │ ↓                                                      │
-│ Gemini Vision API → 창고 레이아웃 해석                  │
+│ 이미지 변환 → Gemini Vision API 분석                    │
 │ ↓                                                      │
-│ JSON 구조화 → 웹 시각화 → 실시간 인터랙션               │
+│ JSON 형태 결과 반환                                     │
 └─────────────────────────────────────────────────────────┘
 
-자동 추출 정보:
-├── 랙 위치 및 용량 (A, B, C랙 등)
-├── 통로 너비 및 방향
-├── 출입구 위치
-└── 전체 창고 치수
+⚠️ 현재 상태:
+├── ✅ 업로드/파싱 로직 구현 완료
+├── ✅ API 엔드포인트 구현 완료
+├── ❌ 실제 CAD 파일 테스트 미완료
+└── ❌ 실제 동작 검증 필요
 ```
 
-### 4. 📊 LOI 기반 재고 최적화
+### 4. 📊 재고 최적화 지표
 
 ```
-LOI (Level of Inventory) 지표:
-├── 📈 재고 수준 모니터링 (총 재고, 평균, 분산)
-├── 🔄 재고 커버리지 (현재 재고로 몇일 운영 가능)
-├── 🛡️ 안전재고 비율 (20% 기준)
-├── ✅ 재고 정확도 (이론값 vs 실제값, ±10% 허용)
-├── ⚠️ 소진 위험도 (고/중/저 위험 제품 분류)
-└── ⚖️ 분포 균형도 (랙별 재고 분산 분석)
+LOI (Level of Inventory) 서비스:
+├── 📈 기본 재고 통계 (총량, 평균)
+├── 🔄 재고 회전율 계산
+├── ⚠️ 재고 부족 위험 감지
+└── 📊 랙별 재고 분포 분석
 
-전체 LOI 점수: 0-100점 (가중평균)
-├── 안전재고: 25% 가중치
-├── 정확도: 25% 가중치
-├── 커버리지: 20% 가중치
-├── 위험도: 20% 가중치
-└── 균형도: 10% 가중치
+구현 상태:
+├── ✅ 기본 통계 계산 로직
+├── ✅ API 엔드포인트 구현
+├── 🔍 복합 지표 계산 (검증 필요)
+└── 🔍 실제 비즈니스 로직 검증 필요
 ```
 
-### 5. 🤖 토큰 버킷 기반 AI 관리
+### 5. 🤖 API 관리 시스템
 
 ```
-고급 API 관리:
-├── 4개 Gemini API 키 로드밸런싱
-├── RPM: 2,000 requests/minute
-├── TPM: 4,000,000 tokens/minute
-├── 지수 백오프 실패 복구
-└── 토큰 버킷 알고리즘 기반 스로틀링
+Gemini API 관리:
+├── 최대 4개 API 키 설정 가능
+├── 기본 Rate Limiting 구현
+├── API 키 순환 사용
+└── 기본적인 오류 처리
 
-장애 복구:
-API 1 실패 → API 2 시도 → API 3 시도 → 오프라인 모드
+구현 상태:
+├── ✅ 다중 API 키 지원
+├── ✅ 기본 Rate Limiter 구현
+├── ✅ 순차적 API 키 시도
+└── 🔍 고급 로드밸런싱은 기본 수준
 ```
 
-## 🔧 고도화된 기술 스택
+## 🔧 기술 스택
 
 ### 🧠 AI & Machine Learning
 
-- **고급 RAG**: LangChain + SELF-RAG (할루시네이션 방지)
-- **멀티 API**: 4개 Gemini API 키 로드밸런싱 + 토큰 버킷
+- **RAG 시스템**: LangChain + ChromaDB
+- **API 관리**: 다중 Gemini API 키 지원
 - **Vector DB**: ChromaDB + Korean SentenceTransformers (`jhgan/ko-sroberta-multitask`)
 - **ML Models**: XGBoost, K-Means, Isolation Forest
-- **Vision AI**: Gemini Vision API (CAD 분석)
+- **Vision AI**: Gemini Vision API (CAD 처리용, 미테스트)
 
 ### ⚡ Backend Architecture
 
@@ -165,88 +164,83 @@ API 1 실패 → API 2 시도 → API 3 시도 → 오프라인 모드
 - **Embeddings**: 한국어 특화 임베딩 (ko-sroberta)
 - **Caching**: ML 모델 + 추론 결과 캐시
 
-## 🏆 기술적 혁신 포인트
+## 🏆 기술적 구현 포인트
 
-### 1. 🔬 SELF-RAG 기반 사실성 보장
-
-```python
-# 할루시네이션 방지 메커니즘
-class CritiqueResult:
-    relevance_score: float      # 관련성 점수 (0.0~1.0)
-    confidence_score: float     # 신뢰도 점수 (0.0~1.0)
-    missing_info: List[str]     # 부족한 정보 탐지
-    hallucination_risk: float  # 할루시네이션 위험도
-    needs_additional_search: bool # 재검색 필요성
-
-# 5단계 검증 프로세스
-Retrieve → Critique → Re-search → Generate → Self-Reflect
-```
-
-### 2. ⚡ 토큰 버킷 기반 스마트 로드밸런싱
+### 1. 🔬 RAG 기반 문서 검색
 
 ```python
-# 고급 Rate Limiter
-class TokenBucket:
-    capacity: int = 2000        # RPM 제한
-    tokens: float               # 현재 토큰 수
-    refill_rate: float         # 초당 보충률
-
-# API 키 선택 알고리즘
-best_key = rate_limiter.get_best_available_key(
-    api_keys, estimated_tokens
-)
-# 사용률이 낮고 토큰이 많은 키 자동 선택
+# ChromaDB + LangChain 통합
+class VectorDBService:
+    def search_documents(self, query: str, limit: int = 5):
+        # 한국어 임베딩으로 의미적 검색
+        results = self.collection.query(
+            query_texts=[query],
+            n_results=limit
+        )
+        return results
 ```
 
-### 3. 🧩 멀티모달 처리 아키텍처
+### 2. ⚡ 다중 API 키 관리
+
+```python
+# 기본 Rate Limiter 구현
+class RateLimiter:
+    def __init__(self, api_keys: List[str]):
+        self.api_keys = api_keys
+        self.current_index = 0
+
+    def get_next_key(self):
+        # 순환 방식으로 API 키 선택
+        key = self.api_keys[self.current_index]
+        self.current_index = (self.current_index + 1) % len(self.api_keys)
+        return key
+```
+
+### 3. 🧩 데이터 처리 파이프라인
 
 ```
-데이터 타입별 특화 처리:
+파일 형식별 처리:
 ┌─────────────────────────────────────────────────────────┐
-│ 📄 텍스트  → 벡터 임베딩 + 의미적 검색                 │
-│ 📊 구조화  → Pandas 집계 + 실시간 계산                │
-│ 🎨 이미지  → Gemini Vision + 레이아웃 해석            │
-│ 📐 CAD     → ezdxf 파싱 + 웹 변환                     │
+│ 📄 CSV/Excel → Pandas 로딩 + 정규화                    │
+│ 📊 JSON      → 직접 파싱 + 구조화                      │
+│ 🎨 이미지     → 미구현 (Gemini Vision 로직만 존재)     │
+│ 📐 CAD       → 미테스트 (ezdxf 로직만 존재)            │
 └─────────────────────────────────────────────────────────┘
 ```
 
-### 4. 🎯 지능형 응답 정제 시스템
+### 4. 🎯 질문 분류 시스템
 
 ```python
-# 질문 복잡도별 자동 분기
-def _determine_processing_mode(question):
-    if simple_datetime_pattern(question):
-        return "datetime_only"      # 즉시 답변
-    elif complex_analysis_pattern(question):
-        return "hybrid_enhanced"    # SELF-RAG 적용
+# 기본적인 질문 분류
+def classify_question(question: str):
+    if any(keyword in question for keyword in ['날짜', '시간']):
+        return "datetime"
+    elif any(keyword in question for keyword in ['차트', '그래프']):
+        return "visualization"
     else:
-        return "simple_stats"       # 경량 처리
-
-# 응답 후처리 (기술적 정보 제거, 사용자 친화적 변환)
-cleaned = self._remove_unnecessary_emojis(response)
-cleaned = self._clean_technical_info(cleaned, is_simple_question)
+        return "general"
 ```
 
-## 📁 고도화된 프로젝트 구조
+## 📁 프로젝트 구조
 
 ```
 vss_asgnM/
-├── backend/                          # 🏗️ FastAPI 백엔드 (고도화)
+├── backend/                          # 🏗️ FastAPI 백엔드
 │   ├── app/
 │   │   ├── models/                   # 🧠 ML 모델
 │   │   │   └── ml_models.py          # XGBoost, K-Means, Isolation Forest
 │   │   ├── services/                 # ⚙️ 핵심 서비스 (7개)
-│   │   │   ├── ai_service.py         # 🤖 멀티 Gemini API + 토큰 버킷
-│   │   │   ├── langchain_service.py  # 🧠 SELF-RAG + LangChain Tools (신규)
-│   │   │   ├── data_service.py       # 📊 다형식 데이터 로딩 + 실시간 KPI
-│   │   │   ├── vector_db_service.py  # 🔍 ChromaDB + 한국어 임베딩
-│   │   │   ├── cad_service.py        # 🏗️ DWG/DXF → 웹 변환 (신규)
-│   │   │   ├── loi_service.py        # 📍 재고 최적화 지표 (신규)
-│   │   │   └── data_analysis_service.py # 📈 ML 기반 분석
+│   │   │   ├── ai_service.py         # 🤖 Gemini API 관리
+│   │   │   ├── langchain_service.py  # 🧠 LangChain 통합 서비스
+│   │   │   ├── data_service.py       # 📊 데이터 로딩 및 KPI 계산
+│   │   │   ├── vector_db_service.py  # 🔍 ChromaDB 벡터 검색
+│   │   │   ├── cad_service.py        # 🏗️ CAD 파일 처리 (미테스트)
+│   │   │   ├── loi_service.py        # 📍 재고 지표 계산
+│   │   │   └── data_analysis_service.py # 📈 ML 분석
 │   │   ├── utils/
-│   │   │   └── ai_chat.py            # 💬 하이브리드 챗봇 로직
+│   │   │   └── ai_chat.py            # 💬 AI 챗봇 로직
 │   │   └── main.py                   # 🚀 FastAPI 앱 (1,405 lines)
-│   ├── static/                       # 🎨 프론트엔드 (반응형)
+│   ├── static/                       # 🎨 프론트엔드
 │   │   ├── index.html                # 📱 메인 대시보드 (Tab 시스템)
 │   │   ├── css/
 │   │   │   ├── style.css             # 🎨 메인 스타일시트
@@ -361,42 +355,42 @@ GET  /api/ml/anomaly-detection       # Isolation Forest 이상 탐지
 POST /api/ml/demand-forecast         # XGBoost 수요 예측
 ```
 
-### 🏗️ CAD & Vision APIs (완전 구현)
+### 🏗️ CAD APIs (미테스트)
 
 ```bash
-# CAD 파일 처리
+# CAD 파일 처리 (로직만 구현)
 POST /api/cad/upload                 # DWG/DXF 파일 업로드
-POST /api/cad/analyze                # AI Vision 기반 레이아웃 분석
-GET  /api/cad/layout/{file_id}       # 파싱된 창고 레이아웃 JSON
+POST /api/cad/analyze                # AI Vision 분석 (미검증)
+GET  /api/cad/layout/{file_id}       # 레이아웃 JSON 반환 (미검증)
 DELETE /api/cad/cleanup/{file_id}    # 임시 파일 정리
 
-# 지원 형식: .dwg, .dxf (50MB 제한)
-# 처리 방식: ezdxf 파싱 → Gemini Vision → JSON 구조화
+# 지원 형식: .dwg, .dxf (이론상)
+# 처리 방식: ezdxf 파싱 → Gemini Vision → JSON (미테스트)
 ```
 
-> **✨ CAD 기능 현황**:
+> **⚠️ CAD 기능 현황**:
 >
-> - ✅ **완전 구현**: DWG/DXF → 웹 변환 파이프라인
-> - ✅ **AI 분석**: Gemini Vision API 기반 레이아웃 해석
-> - ✅ **자동 변환**: 이미지 변환 + JSON 구조화
-> - 🔍 **테스트 준비**: 실제 CAD 파일 테스트 가능
+> - ✅ **API 구현**: 엔드포인트 로직 구현 완료
+> - ✅ **라이브러리**: ezdxf 통합 코드 작성
+> - ❌ **실제 테스트**: CAD 파일 테스트 미수행
+> - ❌ **동작 검증**: 실제 동작 여부 불확실
 
-## 📈 고도화된 성능 특성
+## 📈 성능 특성
 
-### ⚡ 응답 시간 (최적화됨)
+### ⚡ 응답 시간 (추정치)
 
 ```
-처리 방식별 성능:
-├── 🚀 간단한 질문: ~50ms (날짜, 기본 통계)
-├── 🔍 벡터 검색: ~300ms (SELF-RAG 최적화)
-├── 🧠 복합 분석: ~800ms (Tools + Vector + AI)
-├── 🏗️ CAD 분석: ~2-5초 (Vision API 포함)
-└── 🤖 ML 클러스터링: ~1-2초 (캐시 활용)
+기능별 응답 시간:
+├── 📊 기본 데이터 조회: ~100-500ms
+├── 🔍 벡터 검색: ~500ms-2초
+├── 🤖 AI 챗봇: ~1-3초 (Gemini API 의존)
+├── 🧠 ML 분석: ~2-10초 (데이터 크기에 따라)
+└── 🏗️ CAD 분석: 미측정 (미테스트)
 
-토큰 버킷 효과:
-├── API 키 4개 로드밸런싱 → 99.9% 가용성
-├── 지수 백오프 → 장애 시 자동 복구
-└── 스마트 라우팅 → 평균 응답시간 40% 단축
+시스템 특성:
+├── 다중 API 키로 Rate Limit 분산
+├── 기본적인 오류 복구
+└── 실제 성능 벤치마크 미수행
 ```
 
 ### 🔒 보안 & Rate Limiting
@@ -487,38 +481,38 @@ Primary API → Backup API → Cache → Offline Mode → Static Response
 • 멀티모달 처리로 CAD/이미지 분석 가능
 ```
 
-### 🎯 **최종 달성 지표**
+### 🎯 **구현 현황**
 
-| **영역**           | **목표** | **달성**         | **초과 달성** |
-| ------------------ | -------- | ---------------- | ------------- |
-| 🤖 **AI 정확도**   | 80%      | **94%**          | ✅ +14%       |
-| ⚡ **응답 속도**   | <1초     | **<0.5초**       | ✅ 50% 개선   |
-| 🔍 **벡터 검색**   | 1,000개  | **2,900개**      | ✅ 290%       |
-| 🛡️ **가용성**      | 95%      | **99.9%**        | ✅ +4.9%      |
-| 📊 **기능 완성도** | MVP      | **Enterprise급** | ✅ 초과 달성  |
+| **영역**           | **상태**              | **비고**                |
+| ------------------ | --------------------- | ----------------------- |
+| 🤖 **AI 챗봇**     | ✅ 기본 기능 구현     | Gemini API 연동 완료    |
+| ⚡ **응답 속도**   | 🔍 미측정             | 실제 성능 테스트 필요   |
+| 🔍 **벡터 검색**   | ✅ ChromaDB 연동 완료 | 약 2,900개 문서 인덱싱  |
+| 🛡️ **가용성**      | 🔍 미측정             | 다중 API 키 지원        |
+| 📊 **기능 완성도** | ✅ MVP 수준 달성      | 일부 고급 기능 미테스트 |
 
-## 💡 핵심 특장점
+## 💡 주요 특징
 
-### 🧠 **차세대 AI 기술 적용**
+### 🧠 **AI 기술 활용**
 
-- **SELF-RAG**: 5단계 자체 검증으로 할루시네이션 99% 방지
-- **토큰 버킷**: 4개 API 키 로드밸런싱으로 99.9% 가용성
-- **멀티모달**: 텍스트/이미지/CAD/구조화 데이터 통합 처리
-- **지능형 라우팅**: 질문 복잡도 자동 판단으로 40% 속도 개선
+- **RAG 시스템**: LangChain + ChromaDB 기반 문서 검색
+- **다중 API**: 최대 4개 Gemini API 키 지원으로 안정성 향상
+- **벡터 검색**: 한국어 특화 임베딩 모델 사용
+- **ML 분석**: XGBoost, K-Means 등 기본 머신러닝 모델 적용
 
-### 🎯 **엔터프라이즈급 안정성**
+### 🎯 **시스템 안정성**
 
-- **무중단 서비스**: 5층 Fallback 구조 (API → Cache → Offline)
-- **실시간 처리**: 2,900+ 문서 벡터 검색 < 300ms
-- **확장성**: ChromaDB 분산 + 무제한 파일 처리
-- **정확성**: 실제 rawdata 기반 100% 정확한 KPI
+- **API 관리**: 다중 키 순환 사용으로 Rate Limit 분산
+- **데이터 처리**: 실제 창고 데이터 기반 분석
+- **확장성**: 파일 기반 데이터 처리로 확장 가능
+- **오류 처리**: 기본적인 Fallback 메커니즘
 
-### 🚀 **혁신적 사용자 경험**
+### 🚀 **사용자 인터페이스**
 
-- **자연어 질의**: "주요 공급사는?" → 구체적 답변 + 차트 자동 생성
-- **원클릭 분석**: 버튼 클릭 → ML 분석 → 인사이트 제공
-- **실시간 대화**: 타이핑 효과 + 즉시 응답
-- **반응형 디자인**: 모바일/태블릿/데스크톱 최적화
+- **자연어 질의**: AI 챗봇을 통한 데이터 조회
+- **차트 생성**: Chart.js 기반 시각화
+- **탭 인터페이스**: 다양한 기능별 화면 구성
+- **반응형 디자인**: 웹 기반 접근성
 
 ## 🔧 개발 환경 설정
 
@@ -553,19 +547,19 @@ chromadb_storage/                         # 벡터 DB (2,900+ 문서)
 cad_uploads/                              # CAD 파일 업로드
 ```
 
-### **🏗️ CAD 파일 테스트**
+### **🏗️ CAD 파일 처리 (미완성)**
 
 ```bash
-# ✅ 완전 구현된 CAD 처리 시스템
-지원 형식: .dwg, .dxf (최대 50MB)
-처리 방식: ezdxf 파싱 → Gemini Vision → JSON 구조화
+# ⚠️ CAD 처리 현황 (로직만 구현, 미테스트)
+지원 형식: .dwg, .dxf (이론상)
+처리 로직: ezdxf 파싱 → Gemini Vision API → JSON 반환
 
-# 테스트 방법:
-1. http://localhost:8000 접속
-2. "CAD 뷰어" 탭 클릭
-3. DWG/DXF 파일 업로드
-4. AI가 자동으로 창고 레이아웃 분석
-5. 웹에서 실시간 시각화
+# 현재 상태:
+✅ 업로드 API 엔드포인트 구현
+✅ ezdxf 라이브러리 통합 로직
+❌ 실제 CAD 파일 테스트 미수행
+❌ 웹 시각화 부분 미검증
+⚠️ 실제 동작 여부 불확실
 ```
 
 ## 🔧 문제 해결 가이드
@@ -627,14 +621,14 @@ pip install sentence-transformers
 - **AI**: SELF-RAG + Gemini API (4키) + 토큰 버킷
 - **Frontend**: Chart.js + 반응형 UI + 실시간 통신
 
-**📊 최종 성과**:
+**📊 구현 성과**:
 
-- **AI 정확도**: 94% (목표 80% 대비 +14%)
-- **응답 속도**: <0.5초 (목표 1초 대비 50% 개선)
-- **가용성**: 99.9% (목표 95% 대비 +4.9%)
-- **벡터 검색**: 2,900개 문서 (목표 1,000개 대비 290%)
+- **AI 챗봇**: Gemini API 연동으로 기본 질의응답 기능 구현
+- **벡터 검색**: ChromaDB 기반으로 약 2,900개 문서 인덱싱 완료
+- **데이터 분석**: 실제 창고 데이터 기반 KPI 계산 및 차트 생성
+- **ML 모델**: XGBoost, K-Means 등 기본 머신러닝 기능 구현
 
-**🎯 버전**: Enterprise v2.0 (MVP 초과 달성)  
-**🏢 용도**: VSS 입사테스트 과제용 차세대 스마트 창고 관리 시스템
+**🎯 버전**: MVP v1.0  
+**🏢 용도**: VSS 입사테스트 과제용 창고 관리 시스템
 
-**✨ 혁신 포인트**: _SELF-RAG + 멀티모달 AI + 엔터프라이즈급 안정성_
+**✨ 핵심 기능**: _AI 챗봇 + 벡터 검색 + 데이터 시각화 + ML 분석_
