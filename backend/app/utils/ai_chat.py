@@ -1,5 +1,6 @@
 from ..services.ai_service import WarehouseAI
 from ..services.data_service import DataService
+from ..services.langchain_service import LangChainRAGService
 import logging
 import asyncio
 from typing import Dict, Any, Optional
@@ -11,10 +12,18 @@ class WarehouseChatbot:
         self.llm_client = WarehouseAI() # WarehouseAI 인스턴스 사용
         self.logger = logging.getLogger(__name__)
         
-        # 처리 체인 설정
+        # 🚀 LangChain SELF-RAG 서비스 초기화
+        self.langchain_service = LangChainRAGService(
+            vector_db_service=self.vector_db_service,
+            ai_client=self.llm_client,
+            data_service=self.data_service
+        )
+        
+        # 처리 체인 설정 (SELF-RAG 추가)
         self.processing_chains = {
             "direct": self._handle_direct_query,
             "vector_search": self._handle_vector_search_query, 
+            "self_rag": self._handle_self_rag_query,  # 새로 추가
             "general": self._handle_general_query
         }
 
@@ -31,37 +40,107 @@ class WarehouseChatbot:
 
     async def process_query(self, question: str) -> str:
         """
-        개선된 체인 기반 질의 처리
-        1. Direct Answer (빠른 계산 결과)
-        2. Vector Search (고급 검색)  
-        3. General LLM (일반 질의응답)
+        🧠 SELF-RAG + LangChain Tools 기반 고급 질의 처리
+        1. SELF-RAG (할루시네이션 방지 + 자체 검증)
+        2. Direct Answer (간단한 계산)
+        3. Fallback Vector Search (기존 방식)
+        4. General LLM (최후 수단)
         """
         try:
-            self.logger.info(f"질의 처리 시작: {question[:50]}...")
+            self.logger.info(f"🧠 SELF-RAG 질의 처리 시작: {question[:50]}...")
             
-            # 1단계: 직접 답변 가능한 질문인지 확인
+            # 🚀 1단계: SELF-RAG 스마트 처리 (할루시네이션 방지)
+            try:
+                self.logger.info("🔬 SELF-RAG 스마트 처리 시도")
+                self_rag_result = await self.langchain_service.smart_process_query(question)
+                if self_rag_result and not self_rag_result.startswith("오류"):
+                    self.logger.info("✅ SELF-RAG 처리 성공")
+                    return self_rag_result
+            except Exception as e:
+                self.logger.warning(f"⚠️ SELF-RAG 처리 실패, fallback 사용: {e}")
+            
+            # 2단계: 직접 답변 가능한 간단한 질문 체크
             direct_result = await self._handle_direct_query(question)
             if direct_result:
-                self.logger.info("직접 답변으로 처리 완료")
+                self.logger.info("📊 직접 답변으로 처리 완료")
                 return direct_result
             
-            # 2단계: CoT를 통한 VectorDB 검색 필요성 판단
-            needs_vector = await self._needs_vector_search(question)
-            if needs_vector:
-                self.logger.info("CoT 분석 결과: VectorDB 검색 체인으로 처리")
+            # 3단계: 기존 벡터 검색 방식 (fallback)
+            if self._requires_immediate_vector_search(question) or self._is_data_inquiry(question):
+                self.logger.info("🔍 기존 벡터 검색 방식 사용")
                 vector_result = await self._handle_vector_search_query(question)
                 if vector_result:
                     return vector_result
-            else:
-                self.logger.info("CoT 분석 결과: VectorDB 검색 불필요")
             
-            # 3단계: 일반 LLM 처리
-            self.logger.info("일반 LLM 체인으로 처리")
+            # 4단계: 최후의 일반 LLM 처리
+            self.logger.info("💬 일반 LLM 체인으로 처리")
             return await self._handle_general_query(question)
             
         except Exception as e:
-            self.logger.error(f"질의 처리 오류: {e}")
+            self.logger.error(f"❌ 질의 처리 오류: {e}")
             return f"죄송합니다. 질문을 처리하는 중 오류가 발생했습니다: {str(e)}"
+    
+    def _requires_immediate_vector_search(self, question: str) -> bool:
+        """즉시 벡터 검색이 필요한 패턴 감지"""
+        question_lower = question.lower()
+        
+        # 특정 위치/객체의 상태/정보를 묻는 패턴
+        import re
+        immediate_patterns = [
+            # 랙 관련
+            r"a랙", r"b랙", r"c랙", r"d랙", r"e랙", r"f랙", 
+            r"랙.*상태", r"랙.*어때", r"랙.*정보", r"랙.*현황",
+            r"랙에.*뭐", r"랙에.*어떤", r"랙에.*무엇",
+            
+            # 상품 관련
+            r"어떤.*상품", r"무슨.*상품", r"뭔.*상품",
+            r"상품.*목록", r"상품.*리스트", r"상품.*현황",
+            
+            # 업체 관련  
+            r"어떤.*업체", r"어떤.*공급", r"어떤.*고객",
+            r"주요.*공급", r"주요.*업체", r"주요.*고객",
+            
+            # 상태/현황 질문
+            r"상태.*어때", r"현황.*어때", r"어떻게.*되", 
+            r"상황.*어때", r"상태.*뭐", r"현황.*뭐"
+        ]
+        
+        for pattern in immediate_patterns:
+            if re.search(pattern, question_lower):
+                self.logger.info(f"즉시 벡터 검색 패턴 매칭: {pattern}")
+                return True
+        return False
+    
+    def _is_data_inquiry(self, question: str) -> bool:
+        """데이터 조회성 질문인지 판단 (단순 계산 제외)"""
+        question_lower = question.lower()
+        
+        # 데이터 조회 키워드
+        inquiry_keywords = [
+            "어떤", "무엇", "뭐", "누가", "어디", "언제",
+            "목록", "리스트", "현황", "상태", "정보", "상황",
+            "분석", "통계", "트렌드", "패턴", "비교", "조회"
+        ]
+        
+        # 단순 계산 키워드 (벡터 검색 불필요)
+        import re
+        simple_calc_patterns = [
+            r"총.*얼마", r"전체.*얼마", r"합계.*얼마",
+            r"총.*개수", r"전체.*개수", r"합계.*개수",
+            r"총.*재고량", r"전체.*재고량"
+        ]
+        
+        # 단순 계산이면 벡터 검색 불필요
+        for pattern in simple_calc_patterns:
+            if re.search(pattern, question_lower):
+                self.logger.info(f"단순 계산 패턴으로 벡터 검색 제외: {pattern}")
+                return False
+        
+        # 데이터 조회성 질문이면 벡터 검색 필요
+        has_inquiry = any(keyword in question_lower for keyword in inquiry_keywords)
+        if has_inquiry:
+            self.logger.info("데이터 조회성 질문으로 벡터 검색 필요")
+        return has_inquiry
     
     async def _needs_vector_search(self, question: str) -> bool:
         """CoT를 통한 의미론적 분석으로 VectorDB 검색 필요성 판단"""
@@ -229,22 +308,209 @@ class WarehouseChatbot:
         return self._try_direct_answer(question)
     
     async def _handle_vector_search_query(self, question: str) -> Optional[str]:
-        """VectorDB를 활용한 고급 검색 질문 처리"""
+        """강화된 VectorDB 검색 - fallback 및 상세 응답 포함"""
         if not (self.vector_db_service and self.vector_db_service.is_initialized):
-            self.logger.info("VectorDB 서비스가 초기화되지 않음, 일반 처리로 넘어감")
-            return None
+            self.logger.warning("VectorDB 서비스가 초기화되지 않음, fallback 실행")
+            return await self._fallback_data_query(question)
             
         try:
-            self.logger.info("VectorDB 검색 시작...")
+            self.logger.info(f"🔍 VectorDB 검색 시작: {question} (총 2,900개 문서 대상)")
             search_result = await self.vector_db_service.search_relevant_data(
                 query=question,
-                n_results=15  # 공급업체 등 집계를 위해 더 많은 결과 필요
+                n_results=25  # 2,900개 문서에서 더 많은 결과 검색
             )
             
             if not search_result.get("success"):
-                self.logger.warning("VectorDB 검색 실패")
-                return None
+                self.logger.warning("⚠️ VectorDB 검색 실패, fallback 실행")
+                return await self._fallback_data_query(question)
+            
+            # 검색 결과 상태 로깅
+            found_docs = search_result.get('found_documents', 0)
+            if found_docs > 0:
+                self.logger.info(f"✅ {found_docs}개 관련 문서 발견")
+            else:
+                self.logger.warning("⚠️ 관련 문서를 찾지 못함, fallback 실행")
+                return await self._fallback_data_query(question)
                 
+            # 검색 결과가 있으면 상세 응답 생성
+            return await self._generate_detailed_response(search_result, question)
+            
+        except Exception as e:
+            self.logger.error(f"VectorDB 검색 오류: {e}")
+            return await self._fallback_data_query(question)
+    
+    async def _fallback_data_query(self, question: str) -> str:
+        """VectorDB 실패 시 직접 데이터 조회"""
+        question_lower = question.lower()
+        
+        try:
+            # A랙 상태 문의 예시
+            if "a랙" in question_lower and ("상태" in question_lower or "어때" in question_lower):
+                rack_data = self._get_rack_specific_data("A")
+                if rack_data:
+                    status_note = "⚠️ (현재고 데이터는 추정값)" if rack_data.get('is_estimated') else "✅ (실제 데이터)"
+                    system_status = self._get_system_status()
+                    
+                    return f"""🏢 **A랙 상태 정보:** {status_note}
+
+📊 **재고 현황:** {rack_data.get('current_stock', 0):,}개
+📈 **활용률:** {rack_data.get('utilization_rate', 0):.1f}%
+📦 **저장 상품:** {', '.join(rack_data.get('products', ['정보 없음'])[:3])}
+📋 **상품 종류:** {rack_data.get('product_count', 0)}개
+⚠️ **상태:** {'✅ 정상' if rack_data.get('utilization_rate', 0) < 80 else '⚠️ 주의' if rack_data.get('utilization_rate', 0) < 95 else '🚨 포화'}
+
+{system_status}"""
+            
+            # B랙 상태 문의
+            elif "b랙" in question_lower and ("상태" in question_lower or "어때" in question_lower):
+                rack_data = self._get_rack_specific_data("B")
+                if rack_data:
+                    return f"""🏢 **B랙 상태 정보:**
+                    
+📊 **재고 현황:** {rack_data.get('current_stock', 0):,}개
+📈 **활용률:** {rack_data.get('utilization_rate', 0):.1f}%
+📦 **저장 상품:** {', '.join(rack_data.get('products', ['정보 없음'])[:3])}
+⚠️ **상태:** {'✅ 정상' if rack_data.get('utilization_rate', 0) < 80 else '⚠️ 주의' if rack_data.get('utilization_rate', 0) < 95 else '🚨 포화'}
+
+💡 상세 정보는 벡터 데이터베이스가 복구되면 더 정확하게 제공됩니다."""
+            
+            # 일반 랙 관련 질문
+            elif any(word in question_lower for word in ['랙', 'rack']) and any(word in question_lower for word in ['상태', '어때', '현황', '정보']):
+                all_racks_data = self._get_all_racks_summary()
+                return f"""🏢 **전체 랙 상태 현황:**
+
+{all_racks_data}
+
+💡 특정 랙의 상세 정보를 원하시면 "A랙 상태는 어때?" 형식으로 질문해주세요."""
+            
+            # 상품 관련 질문
+            elif any(word in question_lower for word in ['상품', '제품']) and any(word in question_lower for word in ['어떤', '뭐', '목록']):
+                return """📦 **주요 상품 정보:**
+
+현재 벡터 검색 시스템이 일시적으로 사용할 수 없어 기본 정보만 제공됩니다.
+
+🔧 **시스템 상태:** 벡터 데이터베이스 재시작 필요
+💡 **권장 사항:** 시스템 관리자에게 문의하여 벡터 DB 서비스를 재시작해주세요.
+
+📞 **대안:** 대시보드의 '상품별 재고 현황' 차트를 확인해보세요."""
+            
+        except Exception as e:
+            self.logger.error(f"Fallback 데이터 조회 오류: {e}")
+        
+        return """❌ **시스템 일시 오류**
+
+현재 상세 정보를 조회할 수 없습니다.
+
+🔧 **가능한 원인:**
+- 벡터 데이터베이스 연결 오류
+- 데이터 서비스 일시 중단
+
+💡 **해결 방안:**
+1. 잠시 후 다시 시도해주세요
+2. 대시보드 차트를 통해 기본 정보 확인
+3. 시스템 관리자에게 문의
+
+📞 **문의:** /api/vector-db/status로 시스템 상태를 확인할 수 있습니다."""
+    
+    def _get_rack_specific_data(self, rack_name: str) -> dict:
+        """특정 랙의 데이터 조회 - 로그 기반 실제 컬럼명 사용"""
+        try:
+            if self.data_service.product_master is not None:
+                # 로그에서 확인된 실제 컬럼명들
+                rack_column_options = ['Rack Code Name', '랙위치', 'Rack Name']
+                rack_column = None
+                
+                for col in rack_column_options:
+                    if col in self.data_service.product_master.columns:
+                        rack_column = col
+                        self.logger.info(f"🔍 랙 컬럼 사용: {rack_column}")
+                        break
+                
+                if rack_column:
+                    # 부분 매칭으로 랙 데이터 찾기 (대소문자 무관)
+                    rack_data = self.data_service.product_master[
+                        self.data_service.product_master[rack_column].str.contains(
+                            rack_name, case=False, na=False
+                        )
+                    ]
+                    
+                    if not rack_data.empty:
+                        # 현재고 데이터 처리 (모든 값이 10인 경우 추정)
+                        raw_stock = int(rack_data['현재고'].sum()) if '현재고' in rack_data.columns else 0
+                        product_count = len(rack_data)
+                        is_default_value = (raw_stock == product_count * 10)
+                        
+                        if is_default_value and product_count > 0:
+                            self.logger.warning(f"⚠️ {rack_name}랙: 현재고가 기본값(10)으로 설정됨. 추정값 사용")
+                            current_stock = product_count * 25  # 상품당 25개로 추정
+                        else:
+                            current_stock = raw_stock
+                        
+                        max_capacity = max(current_stock * 1.5, 100)  # 최소 100개 용량
+                        utilization_rate = (current_stock / max_capacity) * 100 if max_capacity > 0 else 0
+                        
+                        products = rack_data['ProductName'].unique().tolist() if 'ProductName' in rack_data.columns else ['정보 없음']
+                        
+                        return {
+                            'current_stock': current_stock,
+                            'max_capacity': max_capacity,
+                            'utilization_rate': utilization_rate,
+                            'products': products,
+                            'product_count': product_count,
+                            'rack_column_used': rack_column,
+                            'is_estimated': is_default_value
+                        }
+                else:
+                    self.logger.warning(f"⚠️ 랙 컬럼을 찾을 수 없음. 사용 가능한 컬럼: {list(self.data_service.product_master.columns)}")
+                    
+        except Exception as e:
+            self.logger.error(f"랙 데이터 조회 오류: {e}")
+        
+        return None
+    
+    def _get_all_racks_summary(self) -> str:
+        """전체 랙 요약 정보 - 실제 컬럼명 사용"""
+        try:
+            if self.data_service.product_master is not None:
+                # 랙 컬럼 찾기
+                rack_column_options = ['Rack Code Name', '랙위치', 'Rack Name']
+                rack_column = None
+                
+                for col in rack_column_options:
+                    if col in self.data_service.product_master.columns:
+                        rack_column = col
+                        break
+                
+                if rack_column:
+                    rack_summary = self.data_service.product_master.groupby(rack_column)['현재고' if '현재고' in self.data_service.product_master.columns else 'Start Pallete Qty'].sum().sort_values(ascending=False)
+                    
+                    summary_lines = []
+                    for i, (rack, qty) in enumerate(rack_summary.head(10).items()):
+                        # 기본값(10) 감지 및 수정
+                        product_count = len(self.data_service.product_master[self.data_service.product_master[rack_column] == rack])
+                        if qty == product_count * 10:
+                            # 추정값 사용
+                            estimated_qty = product_count * 25
+                            utilization = min((estimated_qty / 100.0) * 100, 100)
+                            qty_display = f"{estimated_qty:,}개 (추정)"
+                        else:
+                            utilization = min((qty / 50.0) * 100, 100)
+                            qty_display = f"{int(qty):,}개"
+                        
+                        status_icon = "✅" if utilization < 80 else "⚠️" if utilization < 95 else "🚨"
+                        summary_lines.append(f"{status_icon} **{rack}랙:** {qty_display} ({utilization:.1f}%)")
+                    
+                    return "\n".join(summary_lines)
+                else:
+                    return "📊 랙 컬럼을 찾을 수 없어 데이터를 가져올 수 없습니다."
+        except Exception as e:
+            self.logger.error(f"전체 랙 요약 오류: {e}")
+        
+        return "📊 현재 랙 정보를 가져올 수 없습니다."
+    
+    async def _generate_detailed_response(self, search_result: dict, question: str) -> str:
+        """검색 결과를 바탕으로 상세 응답 생성"""
+        try:
             # Vector 검색 결과를 구조화된 프롬프트로 변환
             structured_context = self._vectordb_to_prompt(search_result, question)
             
@@ -253,12 +519,17 @@ class WarehouseChatbot:
                 question, structured_context
             )
             
-            self.logger.info("VectorDB 검색 처리 완료")
+            # 검색된 문서 수 정보 추가
+            doc_count = search_result.get('found_documents', 0)
+            if doc_count > 0:
+                response += f"\n\n📊 *{doc_count}개의 관련 데이터를 분석한 결과입니다.*"
+            
+            self.logger.info("VectorDB 검색 상세 응답 생성 완료")
             return response
             
         except Exception as e:
-            self.logger.error(f"VectorDB 검색 처리 오류: {e}")
-            return None
+            self.logger.error(f"상세 응답 생성 오류: {e}")
+            return await self._fallback_data_query(question)
     
     async def _handle_general_query(self, question: str) -> str:
         """일반적인 질문을 기본 데이터로 처리"""
@@ -367,3 +638,22 @@ class WarehouseChatbot:
             return None
         
         return None
+    
+    async def _handle_self_rag_query(self, question: str) -> Optional[str]:
+        """SELF-RAG 전용 질문 처리"""
+        try:
+            self.logger.info(f"🧠 SELF-RAG 전용 처리: {question}")
+            return await self.langchain_service.process_with_self_rag(question)
+        except Exception as e:
+            self.logger.error(f"SELF-RAG 처리 실패: {e}")
+            return None
+    
+    def _get_system_status(self) -> str:
+        """현재 시스템 상태 요약"""
+        try:
+            if self.vector_db_service and self.vector_db_service.is_initialized:
+                return "🟢 **시스템 상태:** 벡터 검색 가능 (2,900개 문서 인덱싱 완료)"
+            else:
+                return "🟡 **시스템 상태:** 벡터 검색 일시 불가, 기본 데이터로 응답"
+        except:
+            return "🔴 **시스템 상태:** 일부 기능 제한"

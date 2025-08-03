@@ -281,7 +281,7 @@ class WarehouseAI:
                     # 2.5 모델의 사고 기능으로 인한 응답 문제 방지
                     
                     model = genai.GenerativeModel(
-                        "gemini-1.5-flash-8b",  # 더 안정적인 1.5 모델 사용 (사고 기능 없음)
+                        "gemini-2.0-flash",  # 더 안정적인 1.5 모델 사용 (사고 기능 없음)
                         generation_config=model_config
                     )
                     
