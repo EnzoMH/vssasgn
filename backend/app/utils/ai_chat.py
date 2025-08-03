@@ -6,17 +6,21 @@ import asyncio
 from typing import Dict, Any, Optional
 
 class WarehouseChatbot:
-    def __init__(self, data_service=None, vector_db_service=None):
+    def __init__(self, data_service=None, vector_db_service=None, 
+                 demand_predictor=None, product_clusterer=None, anomaly_detector=None):
         self.data_service = data_service or DataService()
         self.vector_db_service = vector_db_service
         self.llm_client = WarehouseAI() # WarehouseAI 인스턴스 사용
         self.logger = logging.getLogger(__name__)
         
-        # 🚀 LangChain SELF-RAG 서비스 초기화
+        # 🚀 LangChain SELF-RAG 서비스 초기화 (ML 모델들 포함)
         self.langchain_service = LangChainRAGService(
             vector_db_service=self.vector_db_service,
             ai_client=self.llm_client,
-            data_service=self.data_service
+            data_service=self.data_service,
+            demand_predictor=demand_predictor,
+            product_clusterer=product_clusterer,
+            anomaly_detector=anomaly_detector
         )
         
         # 처리 체인 설정 (SELF-RAG 추가)
@@ -673,10 +677,7 @@ class WarehouseChatbot:
                 question, structured_context
             )
             
-            # 검색된 문서 수 정보 추가
-            doc_count = search_result.get('found_documents', 0)
-            if doc_count > 0:
-                response += f"\n\n📊 *{doc_count}개의 관련 데이터를 분석한 결과입니다.*"
+            # 검색된 문서 수 정보는 더 이상 표시하지 않음 (사용자 요청)
             
             self.logger.info("VectorDB 검색 상세 응답 생성 완료")
             return response
@@ -765,42 +766,21 @@ class WarehouseChatbot:
                 product_count = unified_stats["total_products"]
                 calculation_method = unified_stats["calculation_method"]
                 
-                return f"""🏢 **총 재고량은 {total_inventory:,}개입니다.**
-
-📊 **통합 계산 결과:**
-- **전체 제품 수:** {product_count}개
-- **계산 방식:** {calculation_method}
-- **데이터 일관성:** ✅ 확보됨
-
-💡 이 수치는 모든 시스템에서 동일하게 사용되는 통합 계산 결과입니다."""
+                return f"총 재고량은 {total_inventory:,}개입니다. 전체 제품 수는 {product_count}개입니다."
             
             # 입고량 질문 (통합 계산 기반)
             if any(word in question_lower for word in ['입고량', '입고 현황', '오늘 입고']):
                 total_inbound = unified_stats["total_inbound_qty"]
                 daily_inbound = unified_stats["daily_inbound_avg"]
                 
-                return f"""📦 **총 입고량은 {total_inbound:,}개입니다.**
-
-📊 **입고 정보:**
-- **7일 총 입고량:** {total_inbound:,}개
-- **일평균 입고량:** {daily_inbound:,}개
-- **데이터 일관성:** ✅ 확보됨
-
-💡 상세한 입고 트렌드는 '일별 입출고 트렌드' 차트를 확인해보세요."""
+                return f"총 입고량은 {total_inbound:,}개입니다. 일평균 입고량은 {daily_inbound:,}개입니다."
             
             # 출고량 질문 (통합 계산 기반)
             elif any(word in question_lower for word in ['출고량', '출고 현황', '오늘 출고']):
                 total_outbound = unified_stats["total_outbound_qty"]
                 daily_outbound = unified_stats["daily_outbound_avg"]
                 
-                return f"""🚚 **총 출고량은 {total_outbound:,}개입니다.**
-
-📊 **출고 정보:**
-- **7일 총 출고량:** {total_outbound:,}개
-- **일평균 출고량:** {daily_outbound:,}개
-- **데이터 일관성:** ✅ 확보됨
-
-💡 상세한 출고 트렌드는 '일별 입출고 트렌드' 차트를 확인해보세요."""
+                return f"총 출고량은 {total_outbound:,}개입니다. 일평균 출고량은 {daily_outbound:,}개입니다."
             
             # 랙 관련 질문 (통합 계산 기반)
             elif any(word in question_lower for word in ['랙', 'rack', 'a랙', 'b랙', 'c랙']):
@@ -814,18 +794,9 @@ class WarehouseChatbot:
                     for rack, qty in sorted_racks[:5]:
                         rack_info.append(f"• {rack}랙: {int(qty):,}개")
                     
-                    return f"""🏢 **랙별 재고 현황 (상위 5개):**
-
-{chr(10).join(rack_info)}
-
-📊 **전체 랙 정보:**
-- **총 랙 수:** {len(rack_distribution)}개
-- **사용된 컬럼:** {rack_column}
-- **데이터 일관성:** ✅ 확보됨
-
-💡 특정 랙의 상세 정보를 원하시면 랙 이름을 말씀해주세요."""
+                    return f"랙별 재고 현황 (상위 5개):\n{chr(10).join(rack_info)}\n\n총 랙 수: {len(rack_distribution)}개"
                 else:
-                    return "🏢 랙 정보를 찾을 수 없습니다."
+                    return "랙 정보를 찾을 수 없습니다."
             
         except Exception as e:
             print(f"직접 답변 계산 오류: {e}")
@@ -1215,26 +1186,9 @@ class WarehouseChatbot:
                     
                     data_quality = "✅ 통합 계산 기반" if found_method == 'unified_calculation' else "⚠️ 레거시 방식"
                     
-                    return f"""🏢 **{rack_name} 재고 현황:** {data_quality}
-
-📊 **현재 재고량:** {current_stock:,}개
-📈 **활용률:** {utilization_rate:.1f}%
-📦 **저장 상품:** {top_products}
-📋 **상품 종류:** {product_count}개
-⚠️ **상태:** {status}
-
-💡 **데이터 출처:** 통합 계산 메서드를 통해 모든 시스템에서 일관된 수치를 제공합니다."""
+                    return f"{rack_name} 재고 현황: 현재 재고량 {current_stock:,}개, 활용률 {utilization_rate:.1f}%, 저장 상품 {top_products}, 상품 종류 {product_count}개"
                 else:
-                    return f"""❌ **{rack_letter}랙 정보를 찾을 수 없습니다.**
-
-🔍 **확인된 문제:**
-- 해당 랙이 존재하지 않거나
-- 데이터 로딩 중 오류 발생
-
-💡 **해결 방법:**
-1. 랙 이름을 다시 확인해주세요 (A~Z)
-2. '전체 랙 현황'을 먼저 확인해보세요
-3. 잠시 후 다시 시도해주세요"""
+                    return f"{rack_letter}랙 정보를 찾을 수 없습니다. 랙 이름을 다시 확인해주세요."
             
             # 일반 랙 관련 질문은 기존 fallback으로 처리
             else:

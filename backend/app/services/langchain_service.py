@@ -50,11 +50,20 @@ class CritiqueResult:
 class LangChainRAGService:
     """LangChain Tools + SELF-RAG 서비스"""
     
-    def __init__(self, vector_db_service=None, ai_client=None, data_service=None):
+    def __init__(self, vector_db_service=None, ai_client=None, data_service=None, 
+                 demand_predictor=None, product_clusterer=None, anomaly_detector=None):
         self.vector_db_service = vector_db_service
         self.ai_client = ai_client
         self.data_service = data_service
         self.logger = logging.getLogger(__name__)
+        
+        # 🤖 ML 모델들 주입
+        self.ml_models = {
+            'demand_predictor': demand_predictor,
+            'product_clusterer': product_clusterer,
+            'anomaly_detector': anomaly_detector
+        }
+        self.logger.info(f"🤖 ML 모델 주입 완료: {[k for k, v in self.ml_models.items() if v is not None]}")
         
         # 현재 날짜/시간 캐시 (할루시네이션 방지용)
         self.current_datetime = datetime.datetime.now()
@@ -137,6 +146,22 @@ class LangChainRAGService:
                 name="get_date_specific_data",
                 description="특정 날짜의 입출고 데이터를 분석합니다. (2025-01-01 ~ 2025-01-07)",
                 func=self._get_date_specific_data
+            ),
+            # 🤖 ML Tools 추가
+            Tool(
+                name="ml_demand_prediction",
+                description="수요 예측 및 트렌드 분석을 수행합니다. 미래 출고량, 판매 전망 등.",
+                func=self._tool_ml_prediction
+            ),
+            Tool(
+                name="ml_anomaly_detection",
+                description="이상 패턴 및 위험 요소를 감지합니다. 비정상적인 입출고 패턴 등.",
+                func=self._tool_ml_anomaly
+            ),
+            Tool(
+                name="ml_product_clustering",
+                description="상품 분류 및 클러스터 분석을 수행합니다. 유사한 상품 그룹화 등.",
+                func=self._tool_ml_clustering
             )
         ]
         
@@ -656,8 +681,129 @@ class LangChainRAGService:
         else:
             return "✅ 검증 통과: 문제 없음"
     
-    def determine_optimal_mode(self, question: str) -> RAGMode:
-        """🎯 질문에 최적화된 처리 모드 결정 (개선된 로직)"""
+    async def _classify_ml_intent(self, question: str) -> Dict[str, Any]:
+        """🤖 AI 기반 ML 의도 분류"""
+        try:
+            classification_prompt = f"""질문을 4가지 중 하나로 분류:
+
+1. PREDICTION: 예측, 수요, 미래, 전망
+2. ANOMALY: 이상, 문제, 비정상
+3. CLUSTERING: 분류, 그룹, 카테고리
+4. DATA: 현재 조회, 목록
+
+질문: {question}
+
+JSON 형식으로만 답변:
+{{"category": "분류결과", "confidence": 0.8}}"""
+            
+            # AI 서비스 호출
+            self.logger.info(f"🤖 [ML_CLASSIFICATION] AI에게 분류 요청: '{question[:30]}...'")
+            response = await self.ai_client.answer_simple_query(
+                classification_prompt, 
+                {"classification_task": True}
+            )
+            self.logger.info(f"🤖 [ML_CLASSIFICATION] AI 응답 원문: '{response[:100]}...'")  
+            
+            # JSON 파싱
+            import json
+            json_start = response.find('{')
+            json_end = response.rfind('}') + 1
+            
+            if json_start >= 0 and json_end > json_start:
+                json_str = response[json_start:json_end]
+                result = json.loads(json_str)
+                
+                # 신뢰도 검증
+                confidence = result.get('confidence', 0.5)
+                category = result.get('category', 'DATA')
+                
+                self.logger.info(f"🎯 [ML_CLASSIFICATION] {question[:30]}... → {category} (신뢰도: {confidence})")
+                
+                return {
+                    "category": category,
+                    "confidence": confidence,
+                    "reasoning": result.get("reasoning", "AI 분류"),
+                    "needs_ml": category in ["PREDICTION", "ANOMALY", "CLUSTERING"]
+                }
+            else:
+                raise ValueError("JSON 파싱 실패")
+                
+        except Exception as e:
+            self.logger.warning(f"⚠️ [ML_CLASSIFICATION] AI 분류 실패: {e}, fallback 사용")
+            return self._fallback_keyword_classification(question)
+
+    def _fallback_keyword_classification(self, question: str) -> Dict[str, Any]:
+        """🔧 키워드 기반 fallback 분류 (강화된 버전)"""
+        question_lower = question.lower()
+        
+        # 예측 관련 키워드
+        prediction_keywords = [
+            '예측', '예상', '미래', '내일', '다음', '수요', '전망', '트렌드',
+            '늘어날', '증가', '감소', '변화', '어떨까', '될까', '예측해'
+        ]
+        
+        # 이상 탐지 키워드  
+        anomaly_keywords = [
+            '이상', '문제', '비정상', '위험', '오류', '잘못', '이슈',
+            '패턴', '문제가', '위험한', '비정상적', '이상한'
+        ]
+        
+        # 클러스터링 키워드
+        clustering_keywords = [
+            '분류', '그룹', '카테고리', '비슷', '유사', '묶어', '분석',
+            '클러스터', '그룹핑', '카테고리별', '분류해'
+        ]
+        
+        # 키워드 매칭 점수 계산
+        prediction_score = sum(1 for kw in prediction_keywords if kw in question_lower)
+        anomaly_score = sum(1 for kw in anomaly_keywords if kw in question_lower)
+        clustering_score = sum(1 for kw in clustering_keywords if kw in question_lower)
+        
+        # 최고 점수 결정
+        scores = {
+            'PREDICTION': prediction_score,
+            'ANOMALY': anomaly_score, 
+            'CLUSTERING': clustering_score
+        }
+        
+        max_category = max(scores, key=scores.get)
+        max_score = scores[max_category]
+        
+        if max_score > 0:
+            confidence = min(0.8, 0.5 + (max_score * 0.1))  # 최대 0.8
+            self.logger.info(f"🔧 [FALLBACK] {question[:30]}... → {max_category} (키워드 {max_score}개)")
+            return {
+                "category": max_category,
+                "confidence": confidence,
+                "reasoning": f"키워드 매칭: {max_score}개",
+                "needs_ml": True
+            }
+        else:
+            # 일반 데이터 조회로 분류
+            return {
+                "category": "DATA",
+                "confidence": 0.3,
+                "reasoning": "키워드 매칭 없음",
+                "needs_ml": False
+            }
+
+    async def determine_optimal_mode(self, question: str) -> RAGMode:
+        """🎯 질문에 최적화된 처리 모드 결정 (AI 기반 ML 분류 통합)"""
+        
+        self.logger.info(f"📊 [MODE_DECISION] 모드 결정 시작: '{question[:50]}...'")
+        
+        # 🚀 AI 기반 ML 분류 먼저 시도
+        ml_classification = await self._classify_ml_intent(question)
+        
+        self.logger.info(f"🤖 [MODE_DECISION] ML 분류 결과: {ml_classification}")
+        
+        if ml_classification["needs_ml"] and ml_classification["confidence"] > 0.7:
+            self.logger.info(f"✅ [MODE_DECISION] TOOL_ENHANCED 모드 선택: {ml_classification['category']} (신뢰도: {ml_classification['confidence']})")
+            return RAGMode.TOOL_ENHANCED
+        elif ml_classification["needs_ml"]:
+            self.logger.info(f"⚠️ [MODE_DECISION] ML 필요하지만 신뢰도 낮음: {ml_classification['confidence']} < 0.7, 기존 로직 사용")
+        
+        # 기존 로직 (fallback)
         question_lower = question.lower()
         
         # 🚀 단순 통계 질문 - SIMPLE 모드
@@ -1031,12 +1177,9 @@ class LangChainRAGService:
         # 검증 정보 추가
         final_response = response
         
-        if issues:
-            final_response += f"\n\n🔍 **자체 검증:**\n⚠️ {', '.join(issues)}"
+        # 자체 검증 메시지 제거 (사용자 요청에 따라 간소화)
         
-        # 항상 데이터 출처 명시
-        final_response += f"\n\n📊 *{retrieval.total_found}개의 관련 데이터를 분석한 결과입니다.*"
-        final_response += f"\n🕐 *현재 시각: {self.current_datetime.strftime('%Y년 %m월 %d일 %H시 %M분')}*"
+        # 현재 시각 정보 제거 (사용자 요청에 따라 메타데이터 간소화)
         
         return final_response
     
@@ -1431,7 +1574,7 @@ class LangChainRAGService:
                     response_parts.append(f"{i}. {doc[:150]}...")
         
         response_parts.append("")
-        response_parts.append(f"🕐 현재 시각: {self.current_datetime.strftime('%Y년 %m월 %d일 %H시 %M분')}")
+        # 현재 시각 정보 제거 (사용자 요청)
         
         return "\n".join(response_parts)
     
@@ -1855,3 +1998,77 @@ class LangChainRAGService:
         text = re.sub(r'또한\s*더불어\s*', '', text)
         
         return text.strip()
+    
+    # ==================== ML Tools 구현 ====================
+    
+    def _tool_ml_prediction(self, query: str) -> str:
+        """🔮 수요 예측 도구"""
+        if not self.ml_models.get('demand_predictor'):
+            return "🔮 수요 예측 모델이 준비되지 않았습니다. 모델을 먼저 학습해주세요."
+        
+        try:
+            self.logger.info(f"🔮 [ML_PREDICTION] 수요 예측 시작: {query[:50]}...")
+            
+            # TODO: 실제 ML 모델 호출 로직 구현
+            # 현재는 개발 중 메시지 반환
+            return f"""🔮 **수요 예측 결과:**
+
+📊 **질문:** {query}
+
+📈 **예측 분석:**
+• 현재 수요 예측 모델이 개발 중입니다
+• 향후 업데이트에서 실제 예측 기능을 제공할 예정입니다
+
+⚠️ **현재 상태:** 개발 중인 기능입니다. 기본 데이터 분석은 다른 질문으로 문의해주세요."""
+            
+        except Exception as e:
+            self.logger.error(f"❌ [ML_PREDICTION] 수요 예측 오류: {e}")
+            return f"🔮 수요 예측 중 오류가 발생했습니다: {e}"
+    
+    def _tool_ml_anomaly(self, query: str) -> str:
+        """⚠️ 이상 탐지 도구"""
+        if not self.ml_models.get('anomaly_detector'):
+            return "⚠️ 이상 탐지 모델이 준비되지 않았습니다. 모델을 먼저 학습해주세요."
+        
+        try:
+            self.logger.info(f"⚠️ [ML_ANOMALY] 이상 탐지 시작: {query[:50]}...")
+            
+            # TODO: 실제 ML 모델 호출 로직 구현
+            # 현재는 개발 중 메시지 반환
+            return f"""⚠️ **이상 탐지 결과:**
+
+📊 **질문:** {query}
+
+🔍 **이상 패턴 분석:**
+• 현재 이상 탐지 모델이 개발 중입니다
+• 향후 업데이트에서 실제 이상 탐지 기능을 제공할 예정입니다
+
+⚠️ **현재 상태:** 개발 중인 기능입니다. 기본 데이터 분석은 다른 질문으로 문의해주세요."""
+            
+        except Exception as e:
+            self.logger.error(f"❌ [ML_ANOMALY] 이상 탐지 오류: {e}")
+            return f"⚠️ 이상 탐지 중 오류가 발생했습니다: {e}"
+    
+    def _tool_ml_clustering(self, query: str) -> str:
+        """🎯 클러스터링 도구"""
+        if not self.ml_models.get('product_clusterer'):
+            return "🎯 클러스터링 모델이 준비되지 않았습니다. 모델을 먼저 학습해주세요."
+        
+        try:
+            self.logger.info(f"🎯 [ML_CLUSTERING] 클러스터링 시작: {query[:50]}...")
+            
+            # TODO: 실제 ML 모델 호출 로직 구현
+            # 현재는 개발 중 메시지 반환
+            return f"""🎯 **클러스터링 결과:**
+
+📊 **질문:** {query}
+
+🔗 **상품 분류 분석:**
+• 현재 클러스터링 모델이 개발 중입니다
+• 향후 업데이트에서 실제 상품 그룹화 기능을 제공할 예정입니다
+
+⚠️ **현재 상태:** 개발 중인 기능입니다. 기본 데이터 분석은 다른 질문으로 문의해주세요."""
+            
+        except Exception as e:
+            self.logger.error(f"❌ [ML_CLUSTERING] 클러스터링 오류: {e}")
+            return f"🎯 클러스터링 중 오류가 발생했습니다: {e}"

@@ -192,7 +192,13 @@ ai_service = WarehouseAI() # AI 서비스 인스턴스 추가
 vector_db_service = VectorDBService(data_service=data_service) # 벡터 DB 서비스 추가
 cad_service = CADService(ai_service=ai_service) # CAD 서비스 추가
 loi_service = LOIService(data_service=data_service) # LOI 서비스 추가
-chatbot = WarehouseChatbot(data_service=data_service, vector_db_service=vector_db_service) # 서비스 주입
+chatbot = WarehouseChatbot(
+    data_service=data_service, 
+    vector_db_service=vector_db_service,
+    demand_predictor=demand_predictor,
+    product_clusterer=product_clusterer,
+    anomaly_detector=anomaly_detector
+) # 서비스 및 ML 모델 주입
 
 # ML 모델 학습 상태
 model_trained = {"demand_predictor": False, "product_clusterer": False, "anomaly_detector": False} # anomaly_detector 상태 추가
