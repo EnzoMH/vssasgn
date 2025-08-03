@@ -104,13 +104,39 @@ class LangChainRAGService:
             ),
             Tool(
                 name="calculate_warehouse_statistics",
-                description="창고 통계를 계산합니다. 총 재고량, 입출고량 등.",
+                description="창고 통계를 계산합니다. 총 재고량, 입출고량 등. (통합 계산 기반)",
                 func=self._calculate_warehouse_statistics
             ),
             Tool(
                 name="validate_information",
                 description="제공된 정보의 정확성을 검증합니다.",
                 func=self._validate_information
+            ),
+            # 🆕 새로운 Tool들 추가
+            Tool(
+                name="get_rack_specific_info",
+                description="특정 랙(A~Z)의 상세 정보를 조회합니다. 재고량, 활용률, 저장 상품 등.",
+                func=self._get_rack_specific_info
+            ),
+            Tool(
+                name="analyze_inventory_trends",
+                description="재고 트렌드를 분석합니다. 입출고 패턴, 일별 변화 등.",
+                func=self._analyze_inventory_trends
+            ),
+            Tool(
+                name="get_low_stock_alerts",
+                description="재고 부족 상품과 위험 상품을 분석합니다.",
+                func=self._get_low_stock_alerts
+            ),
+            Tool(
+                name="calculate_rack_utilization",
+                description="랙별 활용률과 전체 창고 효율성을 계산합니다.",
+                func=self._calculate_rack_utilization
+            ),
+            Tool(
+                name="get_date_specific_data",
+                description="특정 날짜의 입출고 데이터를 분석합니다. (2025-01-01 ~ 2025-01-07)",
+                func=self._get_date_specific_data
             )
         ]
         
@@ -221,11 +247,29 @@ class LangChainRAGService:
         return "\n".join(formatted_result)
     
     def _calculate_warehouse_statistics(self, query: str) -> str:
-        """창고 통계 계산"""
+        """창고 통계 계산 - 통합 계산 기반으로 개선"""
         if not self.data_service:
             return "❌ 데이터 서비스가 초기화되지 않음"
         
         try:
+            # 🔄 통합 계산 메서드 사용
+            if hasattr(self.data_service, 'get_unified_inventory_stats'):
+                unified_stats = self.data_service.get_unified_inventory_stats()
+                
+                if "error" not in unified_stats:
+                    return f"""📊 창고 통계 (통합 계산 기반, 2025년 1월 1일-7일):
+- 총 재고량: {unified_stats.get('total_inventory', 0):,}개
+- 상품 종류: {unified_stats.get('total_products', 0)}개
+- 총 입고량: {unified_stats.get('total_inbound_qty', 0):,}개
+- 총 출고량: {unified_stats.get('total_outbound_qty', 0):,}개
+- 일평균 입고: {unified_stats.get('daily_inbound_avg', 0):,}개
+- 일평균 출고: {unified_stats.get('daily_outbound_avg', 0):,}개
+- 활성 랙 수: {len(unified_stats.get('rack_distribution', {})):,}개
+- 계산 방식: {unified_stats.get('calculation_method', 'unknown')}
+
+⚠️ 주의: 이 데이터는 과거 7일간의 기록이며, 모든 시스템에서 동일한 수치를 제공합니다."""
+            
+            # Fallback: 기존 방식
             stats = {}
             
             # 총 재고량
@@ -246,16 +290,345 @@ class LangChainRAGService:
                     stats['total_outbound'] = int(self.data_service.outbound_data['PalleteQty'].sum())
                     stats['outbound_records'] = len(self.data_service.outbound_data)
             
-            return f"""📊 창고 통계 (2025년 1월 1일-7일 데이터):
+            return f"""📊 창고 통계 (레거시 계산, 2025년 1월 1일-7일):
 - 총 재고량: {stats.get('total_inventory', 0):,}개
 - 상품 종류: {stats.get('product_count', 0)}개
 - 총 입고량: {stats.get('total_inbound', 0):,}개 ({stats.get('inbound_records', 0)}건)
 - 총 출고량: {stats.get('total_outbound', 0):,}개 ({stats.get('outbound_records', 0)}건)
 
-⚠️ 주의: 이 데이터는 과거 7일간의 기록입니다."""
+⚠️ 주의: 이 데이터는 과거 7일간의 기록입니다. (레거시 계산 방식 사용)"""
             
         except Exception as e:
             return f"❌ 통계 계산 오류: {str(e)}"
+    
+    def _get_rack_specific_info(self, query: str) -> str:
+        """🏢 특정 랙의 상세 정보 조회"""
+        if not self.data_service or not hasattr(self.data_service, 'get_unified_inventory_stats'):
+            return "❌ 데이터 서비스가 초기화되지 않음"
+        
+        try:
+            # 쿼리에서 랙 이름 추출
+            import re
+            rack_match = re.search(r'([A-Za-z])랙?', query)
+            if not rack_match:
+                rack_match = re.search(r'rack[_\s]*([A-Za-z])', query, re.IGNORECASE)
+            
+            if not rack_match:
+                return "❌ 랙 이름을 찾을 수 없습니다. 예: A랙, B랙, C랙"
+            
+            rack_letter = rack_match.group(1).upper()
+            
+            # 통합 계산에서 랙 정보 가져오기
+            unified_stats = self.data_service.get_unified_inventory_stats()
+            
+            if "error" in unified_stats:
+                return f"❌ 통합 계산 실패: {unified_stats['error']}"
+            
+            rack_distribution = unified_stats.get("rack_distribution", {})
+            
+            # 랙 이름 매칭
+            target_rack = None
+            for rack_name in rack_distribution.keys():
+                if rack_letter in rack_name.upper():
+                    target_rack = rack_name
+                    break
+            
+            if not target_rack:
+                return f"❌ {rack_letter}랙 정보를 찾을 수 없습니다.\n사용 가능한 랙: {list(rack_distribution.keys())}"
+            
+            current_stock = rack_distribution[target_rack]
+            avg_capacity = 50  # 랙당 평균 용량
+            utilization = (current_stock / avg_capacity) * 100
+            
+            status = "✅ 정상" if utilization < 80 else "⚠️ 주의" if utilization < 95 else "🚨 포화"
+            
+            return f"""🏢 {target_rack} 상세 정보:
+- 현재 재고량: {int(current_stock):,}개
+- 최대 용량: {avg_capacity}개
+- 활용률: {utilization:.1f}%
+- 상태: {status}
+- 데이터 소스: 통합 계산 (일관성 보장)
+
+⚠️ 주의: 2025년 1월 1일-7일 데이터 기준"""
+            
+        except Exception as e:
+            return f"❌ 랙 정보 조회 오류: {str(e)}"
+    
+    def _analyze_inventory_trends(self, query: str) -> str:
+        """📈 재고 트렌드 분석"""
+        if not self.data_service:
+            return "❌ 데이터 서비스가 초기화되지 않음"
+        
+        try:
+            # 통합 계산 데이터 활용
+            unified_stats = self.data_service.get_unified_inventory_stats()
+            
+            if "error" in unified_stats:
+                return f"❌ 통합 계산 실패: {unified_stats['error']}"
+            
+            # 일별 트렌드 데이터 시도
+            trend_data = None
+            if hasattr(self.data_service, 'get_daily_trends_summary'):
+                try:
+                    trend_data = self.data_service.get_daily_trends_summary()
+                except Exception as e:
+                    self.logger.warning(f"일별 트렌드 조회 실패: {e}")
+            
+            total_inbound = unified_stats.get('total_inbound_qty', 0)
+            total_outbound = unified_stats.get('total_outbound_qty', 0)
+            daily_inbound = unified_stats.get('daily_inbound_avg', 0)
+            daily_outbound = unified_stats.get('daily_outbound_avg', 0)
+            
+            # 트렌드 분석
+            net_flow = total_inbound - total_outbound
+            daily_net = daily_inbound - daily_outbound
+            
+            trend_direction = "📈 증가" if daily_net > 0 else "📉 감소" if daily_net < 0 else "➡️ 균형"
+            
+            return f"""📈 재고 트렌드 분석 (2025년 1월 1일-7일):
+
+📊 **전체 흐름:**
+- 총 입고량: {total_inbound:,}개
+- 총 출고량: {total_outbound:,}개
+- 순 증감: {net_flow:,}개
+
+📅 **일별 평균:**
+- 일평균 입고: {daily_inbound:,}개
+- 일평균 출고: {daily_outbound:,}개
+- 일평균 순증감: {daily_net:,}개
+
+🎯 **트렌드 방향:** {trend_direction}
+
+💡 **해석:**
+- {"재고가 지속적으로 증가하는 추세" if daily_net > 0 else "재고가 지속적으로 감소하는 추세" if daily_net < 0 else "입출고가 균형을 이루고 있음"}
+
+⚠️ 주의: 과거 7일간의 데이터 기반 분석"""
+            
+        except Exception as e:
+            return f"❌ 트렌드 분석 오류: {str(e)}"
+    
+    def _get_low_stock_alerts(self, query: str) -> str:
+        """⚠️ 재고 부족 경고 분석"""
+        if not self.data_service:
+            return "❌ 데이터 서비스가 초기화되지 않음"
+        
+        try:
+            # 제품별 재고 데이터 분석
+            if not hasattr(self.data_service, 'product_master') or self.data_service.product_master is None:
+                return "❌ 상품 마스터 데이터가 없습니다"
+            
+            df = self.data_service.product_master
+            stock_column = '현재고' if '현재고' in df.columns else 'Start Pallete Qty'
+            
+            if stock_column not in df.columns:
+                return "❌ 재고 데이터를 찾을 수 없습니다"
+            
+            # 임계값 설정
+            critical_threshold = 10  # 긴급 재고 부족
+            warning_threshold = 20   # 주의 필요
+            
+            # 분류
+            critical_products = df[df[stock_column] <= critical_threshold]
+            warning_products = df[(df[stock_column] > critical_threshold) & (df[stock_column] <= warning_threshold)]
+            
+            result = f"""⚠️ 재고 부족 경고 분석:
+
+🚨 **긴급 재고 부족** ({critical_threshold}개 이하):
+- 대상 상품: {len(critical_products)}개"""
+            
+            if len(critical_products) > 0:
+                for _, product in critical_products.head(5).iterrows():
+                    product_name = product.get('ProductName', '이름 없음')
+                    stock = product.get(stock_column, 0)
+                    result += f"\n  • {product_name}: {int(stock)}개"
+                
+                if len(critical_products) > 5:
+                    result += f"\n  • 외 {len(critical_products) - 5}개 상품"
+            
+            result += f"""
+
+⚠️ **주의 재고** ({warning_threshold}개 이하):
+- 대상 상품: {len(warning_products)}개"""
+            
+            if len(warning_products) > 0:
+                for _, product in warning_products.head(3).iterrows():
+                    product_name = product.get('ProductName', '이름 없음')
+                    stock = product.get(stock_column, 0)
+                    result += f"\n  • {product_name}: {int(stock)}개"
+                
+                if len(warning_products) > 3:
+                    result += f"\n  • 외 {len(warning_products) - 3}개 상품"
+            
+            # 전체 요약
+            total_products = len(df)
+            at_risk_products = len(critical_products) + len(warning_products)
+            risk_percentage = (at_risk_products / total_products) * 100 if total_products > 0 else 0
+            
+            result += f"""
+
+📊 **전체 요약:**
+- 전체 상품 수: {total_products}개
+- 위험 상품 수: {at_risk_products}개 ({risk_percentage:.1f}%)
+- 안전 상품 수: {total_products - at_risk_products}개
+
+💡 **권장사항:**
+- 긴급 재고 부족 상품은 즉시 발주 필요
+- 주의 재고 상품은 1-2일 내 발주 검토
+
+⚠️ 주의: 2025년 1월 데이터 기준"""
+            
+            return result
+            
+        except Exception as e:
+            return f"❌ 재고 부족 분석 오류: {str(e)}"
+    
+    def _calculate_rack_utilization(self, query: str) -> str:
+        """🏗️ 랙 활용률 계산"""
+        if not self.data_service:
+            return "❌ 데이터 서비스가 초기화되지 않음"
+        
+        try:
+            # 통합 계산에서 랙 활용률 가져오기
+            if hasattr(self.data_service, 'calculate_rack_utilization'):
+                rack_util = self.data_service.calculate_rack_utilization()
+                
+                if not rack_util:
+                    return "❌ 랙 활용률 데이터를 가져올 수 없습니다"
+                
+                result = "🏗️ 랙 활용률 분석:\n\n"
+                
+                # 활용률 순으로 정렬
+                sorted_racks = sorted(rack_util.items(), key=lambda x: x[1].get('utilization_rate', 0), reverse=True)
+                
+                high_util_count = 0
+                normal_util_count = 0
+                low_util_count = 0
+                
+                for rack_name, rack_info in sorted_racks:
+                    current_stock = rack_info.get('current_stock', 0)
+                    max_capacity = rack_info.get('max_capacity', 50)
+                    utilization_rate = rack_info.get('utilization_rate', 0)
+                    
+                    if utilization_rate >= 95:
+                        status_icon = "🚨"
+                        high_util_count += 1
+                    elif utilization_rate >= 80:
+                        status_icon = "⚠️"
+                        normal_util_count += 1
+                    else:
+                        status_icon = "✅"
+                        low_util_count += 1
+                    
+                    result += f"{status_icon} **{rack_name}**: {current_stock}개/{max_capacity}개 ({utilization_rate:.1f}%)\n"
+                
+                # 전체 요약
+                total_racks = len(rack_util)
+                avg_utilization = sum(r.get('utilization_rate', 0) for r in rack_util.values()) / total_racks if total_racks > 0 else 0
+                
+                result += f"""
+📊 **전체 요약:**
+- 총 랙 수: {total_racks}개
+- 평균 활용률: {avg_utilization:.1f}%
+- 포화 상태 (95%+): {high_util_count}개
+- 주의 상태 (80-95%): {normal_util_count}개  
+- 여유 상태 (80% 미만): {low_util_count}개
+
+💡 **효율성 분석:**
+- {"창고 공간이 효율적으로 활용되고 있음" if avg_utilization > 70 else "창고 공간 활용도가 낮음 - 재배치 검토 필요" if avg_utilization < 50 else "보통 수준의 활용률"}
+
+⚠️ 주의: 통합 계산 기반 데이터"""
+                
+                return result
+            else:
+                return "❌ 랙 활용률 계산 기능이 없습니다"
+                
+        except Exception as e:
+            return f"❌ 랙 활용률 계산 오류: {str(e)}"
+    
+    def _get_date_specific_data(self, query: str) -> str:
+        """📅 특정 날짜 데이터 분석"""
+        if not self.data_service:
+            return "❌ 데이터 서비스가 초기화되지 않음"
+        
+        try:
+            # 쿼리에서 날짜 추출
+            import re
+            date_patterns = [
+                r'2025[.-]01[.-](\d{1,2})',
+                r'1월\s*(\d{1,2})일?',
+                r'(\d{1,2})일',
+                r'01[.-](\d{1,2})'
+            ]
+            
+            target_day = None
+            for pattern in date_patterns:
+                match = re.search(pattern, query)
+                if match:
+                    target_day = int(match.group(1))
+                    break
+            
+            if not target_day or target_day < 1 or target_day > 7:
+                return """❌ 유효한 날짜를 찾을 수 없습니다.
+
+사용 가능한 날짜: 2025년 1월 1일 ~ 7일
+예시: "1월 3일", "2025-01-05", "6일" 등"""
+            
+            target_date = f"2025-01-{target_day:02d}"
+            display_date = f"2025년 1월 {target_day}일"
+            
+            result = f"📅 {display_date} 데이터 분석:\n\n"
+            
+            # 입고 데이터 분석
+            inbound_count = 0
+            inbound_qty = 0
+            if hasattr(self.data_service, 'inbound_data') and self.data_service.inbound_data is not None:
+                df = self.data_service.inbound_data
+                if 'Date' in df.columns:
+                    # 날짜 필터링
+                    date_matches = df['Date'].astype(str).str.contains(f"2025.01.{target_day:02d}|2025-01-{target_day:02d}|01/{target_day:02d}/2025", na=False)
+                    day_data = df[date_matches]
+                    inbound_count = len(day_data)
+                    if 'PalleteQty' in day_data.columns:
+                        inbound_qty = day_data['PalleteQty'].sum()
+            
+            # 출고 데이터 분석
+            outbound_count = 0
+            outbound_qty = 0
+            if hasattr(self.data_service, 'outbound_data') and self.data_service.outbound_data is not None:
+                df = self.data_service.outbound_data
+                if 'Date' in df.columns:
+                    date_matches = df['Date'].astype(str).str.contains(f"2025.01.{target_day:02d}|2025-01-{target_day:02d}|01/{target_day:02d}/2025", na=False)
+                    day_data = df[date_matches]
+                    outbound_count = len(day_data)
+                    if 'PalleteQty' in day_data.columns:
+                        outbound_qty = day_data['PalleteQty'].sum()
+            
+            net_qty = inbound_qty - outbound_qty
+            net_direction = "📈 증가" if net_qty > 0 else "📉 감소" if net_qty < 0 else "➡️ 균형"
+            
+            result += f"""📦 **입고 현황:**
+- 입고 건수: {inbound_count}건
+- 입고 수량: {int(inbound_qty):,}개
+
+🚚 **출고 현황:**
+- 출고 건수: {outbound_count}건
+- 출고 수량: {int(outbound_qty):,}개
+
+📊 **일일 요약:**
+- 순 증감: {int(net_qty):,}개
+- 트렌드: {net_direction}
+- 총 거래: {inbound_count + outbound_count}건
+
+💡 **분석:**
+- {"활발한 입출고 활동" if (inbound_count + outbound_count) > 10 else "보통 수준의 활동" if (inbound_count + outbound_count) > 5 else "낮은 수준의 활동"}
+- {"재고 증가일" if net_qty > 0 else "재고 감소일" if net_qty < 0 else "입출고 균형일"}
+
+⚠️ 주의: {display_date} 과거 데이터 기준"""
+            
+            return result
+            
+        except Exception as e:
+            return f"❌ 날짜별 데이터 분석 오류: {str(e)}"
     
     def _validate_information(self, information: str) -> str:
         """정보 검증"""
@@ -283,38 +656,176 @@ class LangChainRAGService:
         else:
             return "✅ 검증 통과: 문제 없음"
     
+    def determine_optimal_mode(self, question: str) -> RAGMode:
+        """🎯 질문에 최적화된 처리 모드 결정 (개선된 로직)"""
+        question_lower = question.lower()
+        
+        # 🚀 단순 통계 질문 - SIMPLE 모드
+        simple_patterns = [
+            "총 재고", "전체 재고", "총 입고", "총 출고",
+            "몇 개", "얼마나", "총합", "전체 개수"
+        ]
+        
+        # 🏢 랙 관련 질문 - TOOL_ENHANCED 모드
+        rack_patterns = [
+            "랙", "rack", "a랙", "b랙", "c랙", "활용률", "랙별"
+        ]
+        
+        # 📅 날짜 관련 질문 - TOOL_ENHANCED 모드  
+        date_patterns = [
+            "1월", "날짜", "언제", "2025", "일별", "매일"
+        ]
+        
+        # ⚠️ 재고 부족/위험 - TOOL_ENHANCED 모드
+        alert_patterns = [
+            "부족", "위험", "낮은", "적은", "경고", "부족한"
+        ]
+        
+        # 📊 트렌드/분석 - TOOL_ENHANCED 모드
+        analysis_patterns = [
+            "분석", "트렌드", "경향", "패턴", "변화", "추세"
+        ]
+        
+        # 🔍 복잡한 질문/비교 - SELF_RAG 모드
+        complex_patterns = [
+            "비교", "어떤 차이", "왜", "어떻게", "원인", "이유",
+            "가장 좋은", "최적의", "추천", "제안"
+        ]
+        
+        # 패턴 매칭으로 모드 결정
+        if any(pattern in question_lower for pattern in simple_patterns):
+            self.logger.info(f"🎯 [MODE_DECISION] SIMPLE 모드 선택: 단순 통계 질문")
+            return RAGMode.SIMPLE
+        
+        elif any(pattern in question_lower for pattern in (rack_patterns + date_patterns + alert_patterns + analysis_patterns)):
+            self.logger.info(f"🎯 [MODE_DECISION] TOOL_ENHANCED 모드 선택: 전문 도구 필요")
+            return RAGMode.TOOL_ENHANCED
+        
+        elif any(pattern in question_lower for pattern in complex_patterns):
+            self.logger.info(f"🎯 [MODE_DECISION] SELF_RAG 모드 선택: 복잡한 분석 필요")
+            return RAGMode.SELF_RAG
+        
+        # 기본값: 질문 길이로 판단
+        elif len(question.split()) > 10:
+            self.logger.info(f"🎯 [MODE_DECISION] SELF_RAG 모드 선택: 긴 질문 (단어 수: {len(question.split())})")
+            return RAGMode.SELF_RAG
+        
+        else:
+            self.logger.info(f"🎯 [MODE_DECISION] TOOL_ENHANCED 모드 선택: 기본값")
+            return RAGMode.TOOL_ENHANCED
+
+    async def process_with_adaptive_mode(self, question: str) -> str:
+        """🎯 적응형 모드로 질문 처리 (개선된 진입점)"""
+        # 최적 모드 결정
+        optimal_mode = self.determine_optimal_mode(question)
+        
+        self.logger.info(f"🧠 [ADAPTIVE] 적응형 처리 시작: '{question}'")
+        self.logger.info(f"🎯 [ADAPTIVE] 선택된 모드: {optimal_mode.value}")
+        
+        if optimal_mode == RAGMode.SIMPLE:
+            return await self.process_simple_query(question)
+        elif optimal_mode == RAGMode.TOOL_ENHANCED:
+            return await self.process_with_tools(question)
+        else:
+            return await self.process_with_self_rag(question, optimal_mode)
+    
+    async def process_simple_query(self, question: str) -> str:
+        """⚡ 단순 질문 빠른 처리"""
+        self.logger.info(f"⚡ [SIMPLE] 단순 질문 처리: '{question}'")
+        
+        try:
+            # 직접 통계 계산으로 빠른 응답
+            if "총 재고" in question.lower() or "전체 재고" in question.lower():
+                stats = self._calculate_warehouse_statistics(question)
+                return f"📊 **창고 통계 조회 결과:**\n\n{stats}"
+            
+            # 기본 벡터 검색
+            if self.vector_db_service:
+                result = await self.vector_db_service.search_relevant_data(question, n_results=5)
+                if result.get("success") and result.get("documents"):
+                    return f"📋 **간단 조회 결과:**\n{result['documents'][0]}"
+            
+            return "❌ 빠른 조회 결과를 찾을 수 없습니다."
+            
+        except Exception as e:
+            self.logger.error(f"❌ [SIMPLE] 단순 처리 오류: {e}")
+            return f"죄송합니다. 단순 조회 중 오류가 발생했습니다: {str(e)}"
+    
+    async def process_with_tools(self, question: str) -> str:
+        """🔧 LangChain Tools 활용 처리"""
+        self.logger.info(f"🔧 [TOOLS] 도구 기반 처리: '{question}'")
+        
+        try:
+            # 적절한 도구 선택 및 실행
+            if "랙" in question.lower():
+                result = self._get_rack_specific_info(question)
+                
+            elif any(word in question.lower() for word in ["부족", "위험", "낮은"]):
+                result = self._get_low_stock_alerts(question)
+                
+            elif any(word in question.lower() for word in ["트렌드", "분석", "패턴"]):
+                result = self._analyze_inventory_trends(question)
+                
+            elif any(word in question.lower() for word in ["활용률", "효율"]):
+                result = self._calculate_rack_utilization(question)
+                
+            elif any(word in question.lower() for word in ["1월", "날짜", "일별"]):
+                result = self._get_date_specific_data(question)
+                
+            else:
+                # 기본 통계 계산
+                result = self._calculate_warehouse_statistics(question)
+            
+            return f"🔧 **전문 도구 분석 결과:**\n\n{result}"
+            
+        except Exception as e:
+            self.logger.error(f"❌ [TOOLS] 도구 기반 처리 오류: {e}")
+            return f"죄송합니다. 전문 도구 처리 중 오류가 발생했습니다: {str(e)}"
+
     async def process_with_self_rag(self, question: str, mode: RAGMode = RAGMode.SELF_RAG) -> str:
-        """SELF-RAG 프로세스로 질문 처리"""
-        self.logger.info(f"🧠 SELF-RAG 처리 시작: {question[:50]}...")
+        """SELF-RAG 프로세스로 질문 처리 (기존 방식 유지)"""
+        self.logger.info(f"🧠 [SELF_RAG] SELF-RAG 처리 시작: '{question}'")
+        self.logger.info(f"🎯 [SELF_RAG] 처리 모드: {mode.value}")
         
         try:
             # 1단계: Retrieve (검색)
+            self.logger.info("🔍 [SELF_RAG_STEP1] 문서 검색 단계")
             retrieval_result = await self._retrieve_documents(question)
+            self.logger.info(f"📊 [SELF_RAG_RETRIEVE] 검색 결과: {retrieval_result.total_found}개 문서, 품질: {retrieval_result.search_quality:.2f}")
             
             # 2단계: Critique (비평/검증)
+            self.logger.info("🔬 [SELF_RAG_STEP2] 검색 결과 검증 단계")
             critique_result = await self._critique_retrieval(question, retrieval_result)
+            self.logger.info(f"📋 [SELF_RAG_CRITIQUE] 검증 결과 - 관련성: {critique_result.relevance_score:.2f}, 신뢰도: {critique_result.confidence_score:.2f}, 추가검색필요: {critique_result.needs_additional_search}")
             
             # 3단계: 추가 검색 필요성 판단
             if critique_result.needs_additional_search and retrieval_result.total_found > 0:
-                self.logger.info("🔄 추가 검색 필요 - 재시도")
+                self.logger.info("🔄 [SELF_RAG_STEP3] 추가 검색 필요 - 재시도")
                 enhanced_query = await self._enhance_query(question, critique_result.missing_info)
+                self.logger.info(f"📝 [SELF_RAG_ENHANCE] 강화된 쿼리: '{enhanced_query}'")
                 retrieval_result = await self._retrieve_documents(enhanced_query)
                 critique_result = await self._critique_retrieval(enhanced_query, retrieval_result)
+                self.logger.info(f"📊 [SELF_RAG_RECHECK] 재검색 결과: {retrieval_result.total_found}개 문서, 신뢰도: {critique_result.confidence_score:.2f}")
             
             # 4단계: Generate (답변 생성)
+            self.logger.info("💭 [SELF_RAG_STEP4] 답변 생성 단계")
             if critique_result.confidence_score >= self.critique_threshold:
+                self.logger.info(f"✅ [SELF_RAG_GENERATE] 검증된 응답 생성 (신뢰도: {critique_result.confidence_score:.2f} >= {self.critique_threshold})")
                 response = await self._generate_verified_response(question, retrieval_result, critique_result)
             else:
+                self.logger.info(f"⚠️ [SELF_RAG_GENERATE] 주의 응답 생성 (신뢰도: {critique_result.confidence_score:.2f} < {self.critique_threshold})")
                 response = await self._generate_cautious_response(question, retrieval_result, critique_result)
             
             # 5단계: Self-Reflect (자체 검증)
+            self.logger.info("🔍 [SELF_RAG_STEP5] 자체 검증 단계")
             final_response = await self._self_reflect_response(question, response, retrieval_result)
             
-            self.logger.info("✅ SELF-RAG 처리 완료")
+            self.logger.info("✅ [SELF_RAG_SUCCESS] SELF-RAG 처리 완료")
+            self.logger.info(f"🎯 [SELF_RAG_OUTPUT] 최종 응답: '{final_response[:200]}...'")
             return final_response
             
         except Exception as e:
-            self.logger.error(f"❌ SELF-RAG 처리 실패: {e}")
+            self.logger.error(f"❌ [SELF_RAG_ERROR] SELF-RAG 처리 실패: {e}")
             return f"죄송합니다. 고급 검증 처리 중 오류가 발생했습니다: {str(e)}"
     
     async def _retrieve_documents(self, query: str) -> RetrievalResult:
@@ -585,39 +1096,49 @@ class LangChainRAGService:
     
     async def smart_process_query(self, question: str) -> str:
         """🧠 하이브리드 접근법: Tools + 벡터 검색 + AI 통합 답변"""
+        self.logger.info(f"🚀 [LANGCHAIN] 스마트 처리 시작: '{question}'")
         question_lower = question.lower()
         
         try:
-            self.logger.info(f"🔬 하이브리드 처리 시작: {question[:50]}...")
-            
             # 🚀 1단계: Tools로 기본 정보 수집 (항상 실행)
+            self.logger.info("🔧 [LANGCHAIN_TOOLS] Tool 컨텍스트 수집 시작")
             tools_context = await self._collect_tools_context(question)
+            self.logger.info(f"🔧 [LANGCHAIN_TOOLS] Tool 컨텍스트 수집 완료: {list(tools_context.keys()) if tools_context else 'None'}")
             
             # 🚀 2단계: 질문 유형에 따른 추가 처리 결정
             processing_mode = self._determine_processing_mode(question_lower)
+            self.logger.info(f"🧠 [LANGCHAIN_MODE] 처리 모드 결정: {processing_mode}")
             
             if processing_mode == "datetime_only":
                 # 단순 날짜/시간 질문 → Tools 결과만 반환
-                self.logger.info("📅 날짜/시간 전용 처리")
+                self.logger.info("📅 [LANGCHAIN_DATETIME] 날짜/시간 전용 처리")
                 raw_response = tools_context.get("datetime_info", "날짜 정보를 가져올 수 없습니다.")
-                return self._clean_response(raw_response, question, is_simple_question=True)
+                result = self._clean_response(raw_response, question, is_simple_question=True)
+                self.logger.info(f"✅ [LANGCHAIN_SUCCESS] 날짜/시간 처리 완료: '{result[:100]}...'")
+                return result
             
             elif processing_mode == "hybrid_enhanced":
                 # 복합 질문 → Tools + 벡터 검색 + AI 통합
-                self.logger.info("🔍 하이브리드 강화 처리")
-                return await self._process_hybrid_enhanced(question, tools_context)
+                self.logger.info("🔍 [LANGCHAIN_HYBRID] 하이브리드 강화 처리")
+                result = await self._process_hybrid_enhanced(question, tools_context)
+                self.logger.info(f"✅ [LANGCHAIN_SUCCESS] 하이브리드 처리 완료: '{result[:100]}...'")
+                return result
             
             elif processing_mode == "simple_stats":
                 # 간단한 통계 → Tools + 기본 AI
-                self.logger.info("📊 간단 통계 처리")
+                self.logger.info("📊 [LANGCHAIN_STATS] 간단 통계 처리")
                 raw_response = await self._process_simple_with_context(question, tools_context)
-                return self._clean_response(raw_response, question, is_simple_question=True)
+                result = self._clean_response(raw_response, question, is_simple_question=True)
+                self.logger.info(f"✅ [LANGCHAIN_SUCCESS] 통계 처리 완료: '{result[:100]}...'")
+                return result
             
             else:
                 # 기본 하이브리드 처리
-                self.logger.info("🔄 기본 하이브리드 처리")
+                self.logger.info("🔄 [LANGCHAIN_DEFAULT] 기본 하이브리드 처리")
                 raw_response = await self._process_hybrid_enhanced(question, tools_context)
-                return self._clean_response(raw_response, question, is_simple_question=False)
+                result = self._clean_response(raw_response, question, is_simple_question=False)
+                self.logger.info(f"✅ [LANGCHAIN_SUCCESS] 기본 처리 완료: '{result[:100]}...'")
+                return result
                 
         except Exception as e:
             self.logger.error(f"하이브리드 처리 실패: {e}")

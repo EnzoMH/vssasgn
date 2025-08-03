@@ -16,15 +16,19 @@ class APIClient {
     }
   }
 
-  static async post(endpoint, data) {
+  static async post(endpoint, data, options = {}) {
     try {
-      const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+      // 기본 fetch 옵션 설정
+      const fetchOptions = {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify(data),
-      });
+        ...options, // AbortController signal, timeout 등 추가 옵션 지원
+      };
+
+      const response = await fetch(`${API_BASE_URL}${endpoint}`, fetchOptions);
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }

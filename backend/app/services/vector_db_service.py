@@ -75,7 +75,7 @@ class VectorDBService:
             self.is_initialized = False
     
     async def index_warehouse_data(self, force_rebuild=False):
-        """창고 데이터를 벡터 데이터베이스에 인덱싱"""
+        """창고 데이터를 벡터 데이터베이스에 인덱싱 (강제 리빌드 지원)"""
         if not self.is_initialized or not self.data_service:
             self.logger.warning("⚠️ VectorDB 또는 DataService가 초기화되지 않았습니다.")
             return False
@@ -87,16 +87,33 @@ class VectorDBService:
             self.logger.info(f"📊 출고 데이터: {len(self.data_service.outbound_data) if self.data_service.outbound_data is not None else 0}개")
             self.logger.info(f"📊 제품 데이터: {len(self.data_service.product_master) if self.data_service.product_master is not None else 0}개")
             
+            # 📅 날짜 범위 상세 확인
+            if not self.data_service.inbound_data.empty and 'Date' in self.data_service.inbound_data.columns:
+                import pandas as pd
+                dates = pd.to_datetime(self.data_service.inbound_data['Date'], errors='coerce').dropna()
+                unique_dates = sorted(dates.dt.strftime('%Y-%m-%d').unique())
+                self.logger.info(f"📅 [VECTOR_INDEX] 입고 데이터 날짜: {unique_dates}")
+            
+            if not self.data_service.outbound_data.empty and 'Date' in self.data_service.outbound_data.columns:
+                import pandas as pd
+                dates = pd.to_datetime(self.data_service.outbound_data['Date'], errors='coerce').dropna()
+                unique_dates = sorted(dates.dt.strftime('%Y-%m-%d').unique())
+                self.logger.info(f"📅 [VECTOR_INDEX] 출고 데이터 날짜: {unique_dates}")
+            
             # 기존 데이터 확인
             existing_count = self.collection.count()
-            if existing_count > 0 and not force_rebuild:
+            
+            # 🔥 강제 리빌드 모드: 데이터 일관성 확보
+            if force_rebuild or existing_count == 0:
+                if existing_count > 0:
+                    self.logger.info(f"🔄 강제 리빌드 모드: 기존 {existing_count}개 문서 삭제")
+                    self.collection.delete(where={})
+                    self.logger.info("🗑️ 기존 벡터 데이터 완전 삭제")
+                else:
+                    self.logger.info("🆕 초기 인덱싱 시작")
+            else:
                 self.logger.info(f"✅ 기존 벡터 데이터 사용: {existing_count}개 문서")
                 return True
-            
-            if force_rebuild and existing_count > 0:
-                # 기존 데이터 삭제
-                self.collection.delete(where={})
-                self.logger.info("🗑️ 기존 벡터 데이터 삭제")
             
             documents = []
             metadatas = []
@@ -255,7 +272,7 @@ class VectorDBService:
         return documents, metadatas, ids
     
     def _process_product_data(self):
-        """상품 마스터 데이터를 문서화"""
+        """상품 마스터 데이터를 문서화 (실제 컬럼명 기반 개선)"""
         documents = []
         metadatas = []
         ids = []
@@ -264,51 +281,92 @@ class VectorDBService:
         self.logger.info(f"📋 제품 데이터 처리 시작: {len(df)}개 행")
         self.logger.info(f"📋 제품 데이터 컬럼: {list(df.columns)}")
         
+        # 🔧 실제 컬럼명 매핑 (로그에서 확인된 실제 컬럼명 사용)
+        rack_column_options = ['랙위치', 'Rack Name', 'Rack Code Name']
+        rack_column = None
+        for col in rack_column_options:
+            if col in df.columns:
+                rack_column = col
+                self.logger.info(f"🔍 랙 정보 컬럼 사용: {rack_column}")
+                break
+        
+        if not rack_column:
+            self.logger.warning(f"⚠️ 랙 정보 컬럼을 찾을 수 없음. 사용 가능한 컬럼: {list(df.columns)}")
+            rack_column = '랙위치'  # 기본값
+        
         for idx, row in df.iterrows():
             try:
-                # 자연어 문서 생성 (실제 컬럼명 사용)
+                # 🏷️ 실제 랙 정보 추출
+                rack_info = str(row.get(rack_column, '알 수 없음'))
+                product_name = str(row.get('ProductName', '알 수 없음'))
+                product_code = str(row.get('상품코드', row.get('ProductCode', '알 수 없음')))
+                current_stock = row.get('현재고', row.get('Start Pallete Qty', 0))
+                unit = str(row.get('Unit', '개'))
+                
+                # 📝 자연어 문서 생성 (랙 정보 강화)
                 doc = f"""
-                상품 정보: {row.get('ProductName', '알 수 없음')} (코드: {row.get('ProductCode', '알 수 없음')})
-                현재 재고량: {row.get('현재고', row.get('Start Pallete Qty', 0))} {row.get('Unit', '개')}, 
-                저장위치: {row.get('Rack Name', '알 수 없음')} 랙,
+                상품명: {product_name} (상품코드: {product_code})
+                현재 재고량: {current_stock} {unit}
+                저장 위치: {rack_info}랙
                 시작 재고량: {row.get('Start Pallete Qty', 0)}
+                랙 위치 정보: {rack_info}랙에 저장된 {product_name} 상품
                 """
                 
-                # 메타데이터 (현재고 컬럼이 없으면 시작 재고량 사용)
-                current_stock = row.get('현재고', row.get('Start Pallete Qty', 0))
-                
+                # 📊 메타데이터 (실제 컬럼명 기반)
                 metadata = {
                     "type": "product",
-                    "product_code": str(row.get('ProductCode', '')),
-                    "product_name": str(row.get('ProductName', '')),
-                    "current_stock": float(current_stock),
-                    "unit": str(row.get('Unit', '')),
-                    "rack_name": str(row.get('Rack Name', '')),
+                    "product_code": product_code,
+                    "product_name": product_name,
+                    "current_stock": float(current_stock) if current_stock else 0.0,
+                    "unit": unit,
+                    "rack_name": rack_info,
+                    "rack_location": rack_info,  # 검색용 추가 필드
                     "start_qty": float(row.get('Start Pallete Qty', 0)),
-                    "row_index": int(idx)
+                    "row_index": int(idx),
+                    "rack_column_used": rack_column  # 디버깅용
                 }
                 
                 documents.append(doc.strip())
                 metadatas.append(metadata)
                 ids.append(f"product_{idx}")
                 
+                # 🔍 디버깅: 처음 5개 항목 로그
+                if idx < 5:
+                    self.logger.info(f"📦 상품 {idx}: {product_name} → {rack_info}랙 ({current_stock} {unit})")
+                
             except Exception as e:
                 self.logger.warning(f"⚠️ 제품 데이터 행 {idx} 처리 실패: {e}")
                 continue
         
+        # 📊 랙별 통계 생성
+        rack_stats = {}
+        for meta in metadatas:
+            rack = meta['rack_name']
+            if rack not in rack_stats:
+                rack_stats[rack] = {'count': 0, 'total_stock': 0}
+            rack_stats[rack]['count'] += 1
+            rack_stats[rack]['total_stock'] += meta['current_stock']
+        
         self.logger.info(f"✅ 제품 데이터 처리 완료: {len(documents)}개 문서 생성")
+        self.logger.info(f"📊 랙별 통계: {dict(sorted(rack_stats.items()))}")
         return documents, metadatas, ids
     
     async def search_relevant_data(self, query: str, n_results: int = 20) -> Dict[str, Any]:
         """사용자 쿼리와 관련된 데이터 검색"""
+        self.logger.info(f"🔍 [VECTOR_SEARCH] 검색 시작: '{query}' (최대 {n_results}개)")
+        
         if not self.is_initialized:
+            self.logger.error("❌ [VECTOR_ERROR] 벡터 데이터베이스가 초기화되지 않았습니다")
             return {"error": "벡터 데이터베이스가 초기화되지 않았습니다."}
         
         try:
             # 쿼리 임베딩
+            self.logger.info("🔄 [VECTOR_EMBEDDING] 쿼리 임베딩 생성")
             query_embedding = self.encoder.encode([query]).tolist()[0]
+            self.logger.info(f"📊 [VECTOR_EMBEDDING] 임베딩 차원: {len(query_embedding)}")
             
             # 유사한 문서 검색
+            self.logger.info(f"🔍 [VECTOR_QUERY] ChromaDB 검색 수행 (n_results={n_results})")
             results = self.collection.query(
                 query_embeddings=[query_embedding],
                 n_results=n_results,
@@ -316,6 +374,7 @@ class VectorDBService:
             )
             
             if not results['documents'] or not results['documents'][0]:
+                self.logger.warning("⚠️ [VECTOR_EMPTY] 관련 데이터를 찾을 수 없습니다")
                 return {"error": "관련 데이터를 찾을 수 없습니다."}
             
             # 검색 결과 정리
@@ -323,8 +382,18 @@ class VectorDBService:
             metadatas = results['metadatas'][0]
             distances = results['distances'][0]
             
+            self.logger.info(f"✅ [VECTOR_SUCCESS] 검색 완료: {len(documents)}개 문서 발견")
+            self.logger.info(f"📊 [VECTOR_STATS] 평균 거리: {sum(distances)/len(distances):.3f}" if distances else "📊 [VECTOR_STATS] 거리 정보 없음")
+            
             # 메타데이터에서 실제 차트 데이터 추출
+            self.logger.info("📈 [VECTOR_CHART] 차트 데이터 추출 시도")
             chart_data = self._extract_chart_data_from_metadata(metadatas, query)
+            self.logger.info(f"📈 [VECTOR_CHART] 차트 데이터 추출 결과: {bool(chart_data)}")
+            
+            # 메타데이터 요약
+            self.logger.info("📋 [VECTOR_META] 메타데이터 요약 생성")
+            metadata_summary = self._summarize_metadata(metadatas)
+            self.logger.info(f"📋 [VECTOR_META] 메타데이터 요약: {list(metadata_summary.keys()) if metadata_summary else 'None'}")
             
             return {
                 "success": True,
@@ -332,11 +401,11 @@ class VectorDBService:
                 "found_documents": len(documents),
                 "documents": documents[:5],  # 상위 5개 문서만 반환
                 "chart_data": chart_data,
-                "metadata_summary": self._summarize_metadata(metadatas)
+                "metadata_summary": metadata_summary
             }
             
         except Exception as e:
-            self.logger.error(f"❌ 벡터 검색 실패: {str(e)}")
+            self.logger.error(f"❌ [VECTOR_ERROR] 벡터 검색 실패: {str(e)}")
             return {"error": f"검색 중 오류 발생: {str(e)}"}
     
     def _extract_chart_data_from_metadata(self, metadatas: List[Dict], query: str) -> Dict[str, Any]:

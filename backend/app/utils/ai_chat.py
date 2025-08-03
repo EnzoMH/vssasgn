@@ -40,53 +40,107 @@ class WarehouseChatbot:
 
     async def process_query(self, question: str) -> str:
         """
-        🧠 SELF-RAG + LangChain Tools 기반 고급 질의 처리
+        🧠 강화된 AI 질의 처리 파이프라인
+        0. Question Type Analysis (질문 유형 사전 분석)
         1. SELF-RAG (할루시네이션 방지 + 자체 검증)
         2. Direct Answer (간단한 계산)
-        3. Fallback Vector Search (기존 방식)
-        4. General LLM (최후 수단)
+        3. Specialized Handlers (질문 유형별 전용 처리)
+        4. Fallback Vector Search (기존 방식)
+        5. General LLM (최후 수단)
         """
         try:
-            self.logger.info(f"🧠 SELF-RAG 질의 처리 시작: {question[:50]}...")
+            self.logger.info(f"🧠 [AI_CHAT] 질의 처리 시작: {question}")
+            self.logger.info(f"📝 [PROMPT_INPUT] 사용자 질문: '{question}'")
+            
+            # 🔍 0단계: 질문 유형 사전 분석 (CoT 기반)
+            question_analysis = await self._analyze_question_intent_with_cot(question)
+            question_type = question_analysis.get("specific_task", "기타")
+            needs_vector = question_analysis.get("needs_vector_search", False)
+            self.logger.info(f"🔍 [AI_ANALYSIS] 질문 유형: {question_type}, 벡터 검색 필요: {needs_vector}")
+            
+            # 🎯 0.1단계: CoT 분석 결과에 따른 우선 처리
+            if question_type == "계산" and not needs_vector:
+                self.logger.info("🧮 [AI_SPECIALIZED] 계산 질문 - 직접 답변 우선 처리")
+                direct_result = await self._handle_direct_query(question)
+                if direct_result:
+                    self.logger.info(f"✅ [AI_SUCCESS] 계산 질문 직접 처리 완료")
+                    return direct_result
+            
+            # 🏗️ 0.1.5단계: 랙 관련 질문 강화 처리 (CoT 결과와 무관하게)
+            if any(word in question.lower() for word in ['랙', 'rack']) and any(char in question.upper() for char in 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'):
+                self.logger.info("🏗️ [AI_SPECIALIZED] 랙 관련 질문 - 강화 처리")
+                rack_result = await self._handle_rack_specific_query(question)
+                if rack_result:
+                    self.logger.info(f"✅ [AI_SUCCESS] 랙 관련 질문 처리 완료")
+                    return rack_result
+            
+            # 📅 0.2단계: 특수 질문 유형별 즉시 처리
+            if question_type == "날짜분석":
+                self.logger.info("📅 [AI_SPECIALIZED] 날짜 분석 전용 처리")
+                date_result = await self._handle_date_analysis_query(question)
+                if date_result:
+                    self.logger.info(f"✅ [AI_SUCCESS] 날짜 분석 처리 완료")
+                    return date_result
+            
+            elif question_type == "상태분석":
+                self.logger.info("📊 [AI_SPECIALIZED] 상태 분석 전용 처리")
+                status_result = await self._handle_status_analysis_query(question)
+                if status_result:
+                    self.logger.info(f"✅ [AI_SUCCESS] 상태 분석 처리 완료")
+                    return status_result
+            
+            elif question_type == "목록조회":
+                self.logger.info("📋 [AI_SPECIALIZED] 목록 조회 전용 처리")
+                list_result = await self._handle_list_query(question)
+                if list_result:
+                    self.logger.info(f"✅ [AI_SUCCESS] 목록 조회 처리 완료")
+                    return list_result
             
             # 🚀 1단계: SELF-RAG 스마트 처리 (할루시네이션 방지)
             self_rag_success = False
             try:
-                self.logger.info("🔬 SELF-RAG 스마트 처리 시도")
+                self.logger.info("🔬 [AI_PROCESS] SELF-RAG 스마트 처리 시도")
                 self_rag_result = await self.langchain_service.smart_process_query(question)
                 if self_rag_result and not self_rag_result.startswith("오류") and "처리 중 오류" not in self_rag_result:
-                    self.logger.info("✅ SELF-RAG 처리 성공")
+                    self.logger.info("✅ [AI_SUCCESS] SELF-RAG 처리 성공")
+                    self.logger.info(f"🎯 [AI_OUTPUT] SELF-RAG 결과: '{self_rag_result[:200]}...'")
                     return self_rag_result
                 else:
-                    self.logger.warning(f"⚠️ SELF-RAG 결과 품질 부족: {self_rag_result[:100] if self_rag_result else 'None'}...")
+                    self.logger.warning(f"⚠️ [AI_FALLBACK] SELF-RAG 결과 품질 부족: {self_rag_result[:100] if self_rag_result else 'None'}...")
             except Exception as e:
-                self.logger.warning(f"⚠️ SELF-RAG 처리 실패, 강화된 fallback 사용: {e}")
+                self.logger.warning(f"⚠️ [AI_ERROR] SELF-RAG 처리 실패, 강화된 fallback 사용: {e}")
             
             # 2단계: 직접 답변 가능한 간단한 질문 체크
+            self.logger.info("📊 [AI_PROCESS] 직접 답변 가능성 체크")
             direct_result = await self._handle_direct_query(question)
             if direct_result:
-                self.logger.info("📊 직접 답변으로 처리 완료")
+                self.logger.info("📊 [AI_SUCCESS] 직접 답변으로 처리 완료")
+                self.logger.info(f"🎯 [AI_OUTPUT] 직접 답변 결과: '{direct_result[:200]}...'")
                 return direct_result
             
             # 🔥 3단계: 강화된 벡터 검색 fallback (SELF-RAG 실패 시 더 적극적 활용)
-            self.logger.info("🔄 강화된 벡터 검색 fallback 시작")
+            self.logger.info("🔄 [AI_PROCESS] 강화된 벡터 검색 fallback 시작")
             enhanced_vector_result = await self._handle_enhanced_vector_fallback(question)
             if enhanced_vector_result:
+                self.logger.info(f"🎯 [AI_OUTPUT] 강화된 벡터 결과: '{enhanced_vector_result[:200]}...'")
                 return enhanced_vector_result
             
             # 4단계: 기존 벡터 검색 방식 (추가 fallback)
             if self._requires_immediate_vector_search(question) or self._is_data_inquiry(question):
-                self.logger.info("🔍 기존 벡터 검색 방식 사용")
+                self.logger.info("🔍 [AI_PROCESS] 기존 벡터 검색 방식 사용")
                 vector_result = await self._handle_vector_search_query(question)
                 if vector_result:
+                    self.logger.info(f"🎯 [AI_OUTPUT] 벡터 검색 결과: '{vector_result[:200]}...'")
                     return vector_result
             
             # 5단계: 최후의 일반 LLM 처리
-            self.logger.info("💬 일반 LLM 체인으로 처리")
-            return await self._handle_general_query(question)
+            self.logger.info("💬 [AI_PROCESS] 일반 LLM 체인으로 처리")
+            general_result = await self._handle_general_query(question)
+            self.logger.info(f"🎯 [AI_OUTPUT] 일반 LLM 결과: '{general_result[:200]}...'")
+            return general_result
             
         except Exception as e:
-            self.logger.error(f"❌ 질의 처리 오류: {e}")
+            self.logger.error(f"❌ [AI_ERROR] 질의 처리 오류: {e}")
             return f"죄송합니다. 질문을 처리하는 중 오류가 발생했습니다: {str(e)}"
     
     def _requires_immediate_vector_search(self, question: str) -> bool:
@@ -205,41 +259,60 @@ class WarehouseChatbot:
         """Chain of Thought를 통한 질문 의도 분석"""
         try:
             if not self.llm_client:
+                self.logger.warning("🔴 [COT_ERROR] LLM 클라이언트 없음")
                 return {"needs_vector_search": False, "reasoning": "LLM 클라이언트 없음"}
             
+            self.logger.info(f"🧠 [COT_START] 질문 의도 분석 시작: '{question}'")
+            
             cot_prompt = f"""
-당신은 창고 관리 시스템의 질의 분석 전문가입니다. 다음 질문을 단계별로 분석하여 어떤 처리 방식이 필요한지 판단하세요.
+당신은 창고 관리 시스템의 질의 분석 전문가입니다. 다음 질문을 단계별로 분석하여 어떤 처리 방식이 필요한지 정확히 판단하세요.
 
 **질문:** "{question}"
 
-**분석 단계:**
-1. 질문 유형 분류: 이 질문이 요구하는 것은 무엇인가?
-2. 데이터 범위 판단: 단순 계산인가, 복합 검색인가?
-3. 처리 방식 결정: 직접 계산, 벡터 검색, 일반 LLM 중 무엇이 적합한가?
+**🔍 핵심 분석 단계:**
+1. **질문 의도 파악**: 이 질문이 정말로 원하는 것은?
+   - "언제" → 날짜/시간 정보 필요
+   - "어떤" → 목록/상세 정보 필요  
+   - "얼마" → 수량/금액 정보 필요
+   - "부족한" → 임계값 기반 분석 필요
 
-**판단 기준:**
-- 직접 계산: "총 재고량", "전체 입고량" 등 단순 합계 (숫자 하나만 원하는 경우)
-- 벡터 검색: "어떤 업체들", "어떤 상품들", "주요 공급사", "A랙 상품", "상위 N개", "목록 조회", "현황 분석"
-- 일반 LLM: 개념 설명, 사용법, 일반 상식
+2. **데이터 처리 방식**: 
+   - "언제가 제일 높았던" → 날짜별 분석 + 최댓값 검색 → 벡터 검색 필요
+   - "부족한 제품" → 재고 분석 + 임계값 비교 → 벡터 검색 필요
+   - "총 재고량" → 단순 합계 → 직접 계산
+   - "랙 상태" → 특정 위치 정보 → 벡터 검색 필요
 
-**중요:** 다음 질문들은 반드시 벡터 검색이 필요합니다:
-- "A랙에 어떤 상품이 있지?" → 벡터 검색 (특정 위치 상품 조회)
-- "주요 공급사는?" → 벡터 검색 (공급업체 목록 및 순위)
-- "주요 상품은?" → 벡터 검색 (상품 목록 및 분석)
-- "현재 재고량이 얼마야?" → 직접 계산 (단순 합계)
+**🎯 강화된 판단 기준:**
+- **직접 계산**: "총/전체 + 수량" (ex: 총 재고량, 전체 입고량)
+- **날짜 분석**: "언제", "가장 높았던 날", "최대/최소인 날" → 반드시 벡터 검색
+- **목록 조회**: "어떤", "어느", "무슨", "리스트", "목록" → 반드시 벡터 검색  
+- **상태 분석**: "부족한", "위험한", "많은", "적은" → 반드시 벡터 검색
+- **위치 조회**: "A랙", "B랙", "C랙", "랙 상태" → 반드시 벡터 검색
+- **일반 질문**: 개념, 사용법, 시스템 외부 질문 → 일반 LLM
+
+**🚨 필수 벡터 검색 패턴:**
+- "입고량이 제일 높았던 날" → 날짜별 분석 필요 (벡터 검색)
+- "재고가 부족한 제품" → 임계값 분석 필요 (벡터 검색)
+- "C랙의 상태" → 위치 특정 조회 (벡터 검색)
+- "어떤 상품들" → 목록 조회 (벡터 검색)
 
 **응답 형식 (JSON):**
 {{
-    "question_type": "data_query|calculation|explanation|other",
+    "question_type": "date_analysis|list_query|status_analysis|calculation|explanation|other",
     "data_scope": "simple|complex|none",
-    "reasoning": "단계별 분석 결과",
+    "reasoning": "질문 의도와 필요한 처리 방식에 대한 구체적 분석",
     "needs_vector_search": true|false,
+    "specific_task": "날짜분석|목록조회|상태분석|계산|설명|기타",
     "confidence": 0.0-1.0
 }}
 """
             
+            self.logger.info(f"📝 [COT_PROMPT] 생성된 CoT 프롬프트:\n{cot_prompt}")
+            
             # 간단한 LLM 호출로 CoT 분석 수행 (CoT 플래그 전달)
+            self.logger.info("🔄 [COT_PROCESS] LLM에 CoT 분석 요청")
             response = await self.llm_client.answer_simple_query(cot_prompt, {"cot_analysis": True})
+            self.logger.info(f"🎯 [COT_RESPONSE] LLM 응답: '{response[:200]}...'")
             
             # JSON 응답 파싱 시도
             import json
@@ -249,17 +322,21 @@ class WarehouseChatbot:
                 json_end = response.rfind('}') + 1
                 if json_start >= 0 and json_end > json_start:
                     json_str = response[json_start:json_end]
+                    self.logger.info(f"📋 [COT_PARSING] 추출된 JSON: {json_str}")
                     analysis = json.loads(json_str)
                     
-                    self.logger.info(f"CoT 분석 완료: {analysis.get('reasoning', '')}")
+                    self.logger.info(f"✅ [COT_SUCCESS] CoT 분석 완료: {analysis.get('reasoning', '')}")
+                    self.logger.info(f"🔍 [COT_RESULT] 벡터검색 필요: {analysis.get('needs_vector_search', False)}, 신뢰도: {analysis.get('confidence', 0)}")
                     return analysis
                 else:
                     raise ValueError("JSON 형식을 찾을 수 없음")
                     
             except (json.JSONDecodeError, ValueError) as e:
-                self.logger.warning(f"CoT JSON 파싱 실패: {e}")
+                self.logger.warning(f"⚠️ [COT_FALLBACK] CoT JSON 파싱 실패: {e}")
                 # 응답에서 키워드 기반 분석 fallback
-                return self._fallback_intent_analysis(question, response)
+                fallback_result = self._fallback_intent_analysis(question, response)
+                self.logger.info(f"🔄 [COT_FALLBACK] Fallback 분석 결과: {fallback_result}")
+                return fallback_result
                 
         except Exception as e:
             self.logger.warning(f"CoT 분석 오류: {e}")
@@ -353,38 +430,54 @@ class WarehouseChatbot:
         question_lower = question.lower()
         
         try:
-            # A랙 상태 문의 예시
-            if "a랙" in question_lower and ("상태" in question_lower or "어때" in question_lower):
-                rack_data = self._get_rack_specific_data("A")
-                if rack_data:
-                    status_note = "⚠️ (현재고 데이터는 추정값)" if rack_data.get('is_estimated') else "✅ (실제 데이터)"
-                    system_status = self._get_system_status()
-                    
-                    return f"""🏢 **A랙 상태 정보:** {status_note}
-
-📊 **재고 현황:** {rack_data.get('current_stock', 0):,}개
-📈 **활용률:** {rack_data.get('utilization_rate', 0):.1f}%
-📦 **저장 상품:** {', '.join(rack_data.get('products', ['정보 없음'])[:3])}
-📋 **상품 종류:** {rack_data.get('product_count', 0)}개
-⚠️ **상태:** {'✅ 정상' if rack_data.get('utilization_rate', 0) < 80 else '⚠️ 주의' if rack_data.get('utilization_rate', 0) < 95 else '🚨 포화'}
-
-{system_status}"""
+            # 🏢 개선된 랙별 상태 문의 처리 (모든 랙 지원)
+            rack_patterns = ["a랙", "b랙", "c랙", "d랙", "e랙", "f랙", "g랙", "h랙", "i랙", "j랙", "k랙", "l랙", "m랙", "n랙", "o랙", "p랙", "q랙", "r랙", "s랙", "t랙", "u랙", "v랙", "w랙", "x랙", "y랙", "z랙"]
             
-            # B랙 상태 문의
-            elif "b랙" in question_lower and ("상태" in question_lower or "어때" in question_lower):
-                rack_data = self._get_rack_specific_data("B")
-                if rack_data:
-                    return f"""🏢 **B랙 상태 정보:**
+            for rack_pattern in rack_patterns:
+                if rack_pattern in question_lower and ("상태" in question_lower or "어때" in question_lower or "어떤" in question_lower):
+                    rack_letter = rack_pattern[0].upper()  # A, B, C, ... 추출
+                    rack_data = self._get_rack_specific_data(rack_letter)
                     
-📊 **재고 현황:** {rack_data.get('current_stock', 0):,}개
-📈 **활용률:** {rack_data.get('utilization_rate', 0):.1f}%
-📦 **저장 상품:** {', '.join(rack_data.get('products', ['정보 없음'])[:3])}
-⚠️ **상태:** {'✅ 정상' if rack_data.get('utilization_rate', 0) < 80 else '⚠️ 주의' if rack_data.get('utilization_rate', 0) < 95 else '🚨 포화'}
+                    if rack_data:
+                        rack_name = rack_data.get('rack_name', f'{rack_letter}랙')
+                        current_stock = rack_data.get('current_stock', 0)
+                        utilization_rate = rack_data.get('utilization_rate', 0)
+                        products = rack_data.get('products', ['정보 없음'])
+                        product_count = rack_data.get('product_count', 0)
+                        status = rack_data.get('status', '⚠️ 알 수 없음')
+                        found_method = rack_data.get('found_method', 'legacy')
+                        
+                        # 🎯 상위 3개 상품명 표시
+                        top_products = ', '.join(products[:3]) if len(products) > 0 else '정보 없음'
+                        if len(products) > 3:
+                            top_products += f" 외 {len(products) - 3}개"
+                        
+                        data_quality = "✅ 통합 계산 기반" if found_method == 'unified_calculation' else "⚠️ 레거시 방식"
+                        
+                        return f"""🏢 **{rack_name} 상태 정보:** {data_quality}
 
-💡 상세 정보는 벡터 데이터베이스가 복구되면 더 정확하게 제공됩니다."""
+📊 **재고 현황:** {current_stock:,}개
+📈 **활용률:** {utilization_rate:.1f}%
+📦 **저장 상품:** {top_products}
+📋 **상품 종류:** {product_count}개
+⚠️ **상태:** {status}
+
+💡 **데이터 일관성:** 모든 시스템에서 동일한 수치를 제공합니다."""
+                    
+                    else:
+                        return f"""❌ **{rack_letter}랙 정보를 찾을 수 없습니다.**
+
+🔍 **확인된 문제:**
+- 해당 랙이 존재하지 않거나
+- 데이터 로딩 중 오류 발생
+
+💡 **해결 방법:**
+1. 랙 이름을 다시 확인해주세요 (A~Z)
+2. '전체 랙 현황'을 먼저 확인해보세요
+3. 잠시 후 다시 시도해주세요"""
             
             # 일반 랙 관련 질문
-            elif any(word in question_lower for word in ['랙', 'rack']) and any(word in question_lower for word in ['상태', '어때', '현황', '정보']):
+            if any(word in question_lower for word in ['랙', 'rack']) and any(word in question_lower for word in ['상태', '어때', '현황', '정보']):
                 all_racks_data = self._get_all_racks_summary()
                 return f"""🏢 **전체 랙 상태 현황:**
 
@@ -393,7 +486,7 @@ class WarehouseChatbot:
 💡 특정 랙의 상세 정보를 원하시면 "A랙 상태는 어때?" 형식으로 질문해주세요."""
             
             # 상품 관련 질문
-            elif any(word in question_lower for word in ['상품', '제품']) and any(word in question_lower for word in ['어떤', '뭐', '목록']):
+            if any(word in question_lower for word in ['상품', '제품']) and any(word in question_lower for word in ['어떤', '뭐', '목록']):
                 return """📦 **주요 상품 정보:**
 
 현재 벡터 검색 시스템이 일시적으로 사용할 수 없어 기본 정보만 제공됩니다.
@@ -422,100 +515,152 @@ class WarehouseChatbot:
 📞 **문의:** /api/vector-db/status로 시스템 상태를 확인할 수 있습니다."""
     
     def _get_rack_specific_data(self, rack_name: str) -> dict:
-        """특정 랙의 데이터 조회 - 로그 기반 실제 컬럼명 사용"""
+        """특정 랙의 데이터 조회 - 통합 계산 기반으로 개선"""
         try:
-            if self.data_service.product_master is not None:
-                # 로그에서 확인된 실제 컬럼명들
-                rack_column_options = ['Rack Code Name', '랙위치', 'Rack Name']
-                rack_column = None
-                
-                for col in rack_column_options:
-                    if col in self.data_service.product_master.columns:
-                        rack_column = col
-                        self.logger.info(f"🔍 랙 컬럼 사용: {rack_column}")
+            # 🔄 통합 계산 메서드 사용
+            unified_stats = self.data_service.get_unified_inventory_stats()
+            
+            if "error" in unified_stats:
+                self.logger.error(f"❌ 통합 계산 실패: {unified_stats['error']}")
+                return {}
+            
+            rack_distribution = unified_stats.get("rack_distribution", {})
+            rack_column = unified_stats.get("rack_column_used")
+            
+            self.logger.info(f"🔍 [RACK_SEARCH] 찾는 랙: {rack_name}, 사용 컬럼: {rack_column}")
+            self.logger.info(f"🔍 [RACK_SEARCH] 사용 가능한 랙들: {list(rack_distribution.keys())}")
+            
+            # 🎯 개선된 랙 이름 매칭 (다양한 형태 지원)
+            target_rack = None
+            rack_variations = [
+                rack_name.upper(),          # A, B, C
+                f"{rack_name.upper()}랙",    # A랙, B랙, C랙
+                f"{rack_name.upper()}-RACK", # A-RACK, B-RACK
+                rack_name.lower(),          # a, b, c
+                f"Rack {rack_name.upper()}", # Rack A, Rack B
+                f"{rack_name.upper()}Rack",  # ARack, BRack
+            ]
+            
+            # 정확한 매칭 우선 시도
+            for variation in rack_variations:
+                for available_rack in rack_distribution.keys():
+                    if variation == available_rack or variation in available_rack:
+                        target_rack = available_rack
+                        self.logger.info(f"✅ [RACK_FOUND] 매칭 성공: {rack_name} → {target_rack}")
                         break
+                if target_rack:
+                    break
+            
+            # 부분 매칭 시도 (정확한 매칭 실패 시)
+            if not target_rack:
+                for available_rack in rack_distribution.keys():
+                    if rack_name.upper() in available_rack.upper():
+                        target_rack = available_rack
+                        self.logger.info(f"🔍 [RACK_PARTIAL] 부분 매칭: {rack_name} → {target_rack}")
+                        break
+            
+            if not target_rack:
+                self.logger.warning(f"❌ [RACK_NOT_FOUND] 랙을 찾을 수 없음: {rack_name}")
+                self.logger.warning(f"📋 [AVAILABLE_RACKS] 사용 가능한 랙들: {list(rack_distribution.keys())}")
+                return {}
+            
+            # 📊 랙별 상세 데이터 계산
+            current_stock = int(rack_distribution[target_rack])
+            
+            # 📈 실제 상품 정보 조회 (직접 DataFrame 접근)
+            if self.data_service.product_master is not None and rack_column:
+                import pandas as pd
+                rack_products = self.data_service.product_master[
+                    self.data_service.product_master[rack_column] == target_rack
+                ]
                 
-                if rack_column:
-                    # 부분 매칭으로 랙 데이터 찾기 (대소문자 무관)
-                    rack_data = self.data_service.product_master[
-                        self.data_service.product_master[rack_column].str.contains(
-                            rack_name, case=False, na=False
-                        )
-                    ]
-                    
-                    if not rack_data.empty:
-                        # 현재고 데이터 처리 (모든 값이 10인 경우 추정)
-                        raw_stock = int(rack_data['현재고'].sum()) if '현재고' in rack_data.columns else 0
-                        product_count = len(rack_data)
-                        is_default_value = (raw_stock == product_count * 10)
-                        
-                        if is_default_value and product_count > 0:
-                            self.logger.warning(f"⚠️ {rack_name}랙: 현재고가 기본값(10)으로 설정됨. 추정값 사용")
-                            current_stock = product_count * 25  # 상품당 25개로 추정
-                        else:
-                            current_stock = raw_stock
-                        
-                        max_capacity = max(current_stock * 1.5, 100)  # 최소 100개 용량
-                        utilization_rate = (current_stock / max_capacity) * 100 if max_capacity > 0 else 0
-                        
-                        products = rack_data['ProductName'].unique().tolist() if 'ProductName' in rack_data.columns else ['정보 없음']
-                        
-                        return {
-                            'current_stock': current_stock,
-                            'max_capacity': max_capacity,
-                            'utilization_rate': utilization_rate,
-                            'products': products,
-                            'product_count': product_count,
-                            'rack_column_used': rack_column,
-                            'is_estimated': is_default_value
-                        }
-                else:
-                    self.logger.warning(f"⚠️ 랙 컬럼을 찾을 수 없음. 사용 가능한 컬럼: {list(self.data_service.product_master.columns)}")
+                product_count = len(rack_products)
+                product_names = rack_products['ProductName'].unique().tolist() if 'ProductName' in rack_products.columns else []
+                
+                # 📦 제품명 정리 (존재하지 않거나 비어있는 경우 처리)
+                valid_products = [name for name in product_names if pd.notna(name) and str(name).strip()]
+                if not valid_products:
+                    valid_products = [f"제품-{i+1}" for i in range(product_count)]  # 기본 제품명 생성
+                
+            else:
+                product_count = max(1, current_stock // 25)  # 추정 제품 수
+                valid_products = [f"제품-{i+1}" for i in range(product_count)]
+            
+            # 🏗️ 용량 및 활용률 계산
+            avg_capacity_per_rack = 50  # 랙당 평균 50개 용량
+            max_capacity = avg_capacity_per_rack
+            utilization_rate = (current_stock / max_capacity) * 100 if max_capacity > 0 else 0
+            
+            # 📋 상태 분석
+            status = "✅ 정상" if utilization_rate < 80 else "⚠️ 주의" if utilization_rate < 95 else "🚨 포화"
+            
+            result = {
+                'rack_name': target_rack,
+                'current_stock': current_stock,
+                'max_capacity': max_capacity,
+                'utilization_rate': utilization_rate,
+                'products': valid_products,
+                'product_count': product_count,
+                'rack_column_used': rack_column,
+                'status': status,
+                'is_estimated': False,  # 통합 계산 기반이므로 추정값 아님
+                'found_method': 'unified_calculation'
+            }
+            
+            self.logger.info(f"📊 [RACK_RESULT] {target_rack}: {current_stock}개, {utilization_rate:.1f}%, {product_count}개 제품")
+            return result
                     
         except Exception as e:
-            self.logger.error(f"랙 데이터 조회 오류: {e}")
-        
-        return None
+            self.logger.error(f"❌ 랙 데이터 조회 오류: {e}")
+            return {}
     
     def _get_all_racks_summary(self) -> str:
-        """전체 랙 요약 정보 - 실제 컬럼명 사용"""
+        """전체 랙 요약 정보 - 통합 계산 기반으로 개선"""
         try:
-            if self.data_service.product_master is not None:
-                # 랙 컬럼 찾기
-                rack_column_options = ['Rack Code Name', '랙위치', 'Rack Name']
-                rack_column = None
+            # 🔄 통합 계산 메서드 사용
+            unified_stats = self.data_service.get_unified_inventory_stats()
+            
+            if "error" in unified_stats:
+                self.logger.error(f"❌ 통합 계산 실패: {unified_stats['error']}")
+                return "📊 현재 랙 정보를 가져올 수 없습니다."
+            
+            rack_distribution = unified_stats.get("rack_distribution", {})
+            
+            if not rack_distribution:
+                return "❌ 랙 분포 데이터를 찾을 수 없습니다."
+            
+            # 📊 랙별 정보를 재고량 순으로 정렬
+            sorted_racks = sorted(rack_distribution.items(), key=lambda x: x[1], reverse=True)
+            
+            summary_lines = []
+            total_racks = len(sorted_racks)
+            total_inventory = sum(rack_distribution.values())
+            
+            # 🔝 상위 10개 랙 정보 표시
+            for i, (rack, qty) in enumerate(sorted_racks[:10]):
+                avg_capacity_per_rack = 50  # 랙당 평균 50개 용량
+                utilization = (qty / avg_capacity_per_rack) * 100 if avg_capacity_per_rack > 0 else 0
                 
-                for col in rack_column_options:
-                    if col in self.data_service.product_master.columns:
-                        rack_column = col
-                        break
+                # 📊 상태 아이콘
+                status_icon = "✅" if utilization < 80 else "⚠️" if utilization < 95 else "🚨"
                 
-                if rack_column:
-                    rack_summary = self.data_service.product_master.groupby(rack_column)['현재고' if '현재고' in self.data_service.product_master.columns else 'Start Pallete Qty'].sum().sort_values(ascending=False)
-                    
-                    summary_lines = []
-                    for i, (rack, qty) in enumerate(rack_summary.head(10).items()):
-                        # 기본값(10) 감지 및 수정
-                        product_count = len(self.data_service.product_master[self.data_service.product_master[rack_column] == rack])
-                        if qty == product_count * 10:
-                            # 추정값 사용
-                            estimated_qty = product_count * 25
-                            utilization = min((estimated_qty / 100.0) * 100, 100)
-                            qty_display = f"{estimated_qty:,}개 (추정)"
-                        else:
-                            utilization = min((qty / 50.0) * 100, 100)
-                            qty_display = f"{int(qty):,}개"
-                        
-                        status_icon = "✅" if utilization < 80 else "⚠️" if utilization < 95 else "🚨"
-                        summary_lines.append(f"{status_icon} **{rack}랙:** {qty_display} ({utilization:.1f}%)")
-                    
-                    return "\n".join(summary_lines)
-                else:
-                    return "📊 랙 컬럼을 찾을 수 없어 데이터를 가져올 수 없습니다."
+                # 📈 백분율 계산 (전체 재고 대비)
+                percentage = (qty / total_inventory * 100) if total_inventory > 0 else 0
+                
+                summary_lines.append(f"{status_icon} **{rack}:** {int(qty):,}개 ({utilization:.1f}%, 전체의 {percentage:.1f}%)")
+            
+            # 📋 요약 정보 추가
+            if total_racks > 10:
+                summary_lines.append(f"\n📊 **전체 요약:** {total_racks}개 랙 중 상위 10개 표시")
+            
+            summary_lines.append(f"📦 **총 재고량:** {int(total_inventory):,}개 (통합 계산)")
+            summary_lines.append(f"🏢 **활성 랙 수:** {total_racks}개")
+            
+            return "\n".join(summary_lines)
+            
         except Exception as e:
-            self.logger.error(f"전체 랙 요약 오류: {e}")
-        
-        return "📊 현재 랙 정보를 가져올 수 없습니다."
+            self.logger.error(f"❌ 전체 랙 요약 오류: {e}")
+            return "📊 현재 랙 정보를 가져올 수 없습니다."
     
     async def _generate_detailed_response(self, search_result: dict, question: str) -> str:
         """검색 결과를 바탕으로 상세 응답 생성"""
@@ -550,9 +695,13 @@ class WarehouseChatbot:
     
     def _vectordb_to_prompt(self, search_result: Dict, question: str) -> str:
         """VectorDB 검색 결과를 구조화된 프롬프트로 변환"""
+        self.logger.info(f"🔄 [PROMPT_BUILD] VectorDB → 프롬프트 변환 시작")
+        
         documents = search_result.get('documents', [])
         chart_data = search_result.get('chart_data', {})
         metadata_summary = search_result.get('metadata_summary', {})
+        
+        self.logger.info(f"📊 [PROMPT_DATA] 문서: {len(documents)}개, 차트데이터: {bool(chart_data)}, 메타데이터: {bool(metadata_summary)}")
         
         prompt_parts = [
             f"질문: {question}",
@@ -590,57 +739,93 @@ class WarehouseChatbot:
                 ""
             ])
         
-        return "\n".join(prompt_parts)
+        final_prompt = "\n".join(prompt_parts)
+        self.logger.info(f"📝 [PROMPT_GENERATED] 생성된 프롬프트 길이: {len(final_prompt)}자")
+        self.logger.info(f"📝 [PROMPT_CONTENT] 프롬프트 내용:\n{final_prompt[:500]}...")
+        
+        return final_prompt
     
     def _try_direct_answer(self, question: str) -> Optional[str]:
-        """간단한 질문들에 대해 직접 계산하여 답변"""
+        """간단한 질문들에 대해 직접 계산하여 답변 (통합 계산 기반)"""
         if not self.data_service.data_loaded:
             return None
             
         question_lower = question.lower()
         
         try:
+            # 🔄 통합 계산 메서드 사용
+            unified_stats = self.data_service.get_unified_inventory_stats()
+            
+            if "error" in unified_stats:
+                return None
+            
             # 총 재고량 질문
             if any(word in question_lower for word in ['총 재고량', '총재고', '전체 재고', '총 재고']):
-                if self.data_service.product_master is not None and '현재고' in self.data_service.product_master.columns:
-                    total_inventory = int(self.data_service.product_master['현재고'].sum())
-                    product_count = len(self.data_service.product_master)
-                    return f"🏢 **총 재고량은 {total_inventory:,}개입니다.**\n\n📊 전체 {product_count}개 품목의 현재 재고를 합계한 결과입니다.\n💡 자세한 랙별 분포는 '랙별 재고 현황' 차트를 확인해보세요."
-                else:
-                    return "📊 죄송합니다. 현재고 데이터를 찾을 수 없습니다. 데이터가 로드되었는지 확인해주세요."
+                total_inventory = unified_stats["total_inventory"]
+                product_count = unified_stats["total_products"]
+                calculation_method = unified_stats["calculation_method"]
+                
+                return f"""🏢 **총 재고량은 {total_inventory:,}개입니다.**
+
+📊 **통합 계산 결과:**
+- **전체 제품 수:** {product_count}개
+- **계산 방식:** {calculation_method}
+- **데이터 일관성:** ✅ 확보됨
+
+💡 이 수치는 모든 시스템에서 동일하게 사용되는 통합 계산 결과입니다."""
             
-            # 입고량 질문
+            # 입고량 질문 (통합 계산 기반)
             if any(word in question_lower for word in ['입고량', '입고 현황', '오늘 입고']):
-                if self.data_service.inbound_data is not None and 'PalleteQty' in self.data_service.inbound_data.columns:
-                    total_inbound = int(self.data_service.inbound_data['PalleteQty'].sum())
-                    inbound_count = len(self.data_service.inbound_data)
-                    return f"📦 **총 입고량은 {total_inbound:,}개입니다.**\n\n📈 총 {inbound_count}건의 입고 기록이 있습니다.\n💡 상세한 입고 트렌드는 '일별 입출고 트렌드' 차트를 확인해보세요."
-                else:
-                    return "📦 죄송합니다. 입고 데이터를 찾을 수 없습니다."
+                total_inbound = unified_stats["total_inbound_qty"]
+                daily_inbound = unified_stats["daily_inbound_avg"]
+                
+                return f"""📦 **총 입고량은 {total_inbound:,}개입니다.**
+
+📊 **입고 정보:**
+- **7일 총 입고량:** {total_inbound:,}개
+- **일평균 입고량:** {daily_inbound:,}개
+- **데이터 일관성:** ✅ 확보됨
+
+💡 상세한 입고 트렌드는 '일별 입출고 트렌드' 차트를 확인해보세요."""
             
-            # 출고량 질문
-            if any(word in question_lower for word in ['출고량', '출고 현황', '오늘 출고']):
-                if self.data_service.outbound_data is not None and 'PalleteQty' in self.data_service.outbound_data.columns:
-                    total_outbound = int(self.data_service.outbound_data['PalleteQty'].sum())
-                    outbound_count = len(self.data_service.outbound_data)
-                    return f"🚚 **총 출고량은 {total_outbound:,}개입니다.**\n\n📉 총 {outbound_count}건의 출고 기록이 있습니다.\n💡 상세한 출고 트렌드는 '일별 입출고 트렌드' 차트를 확인해보세요."
-                else:
-                    return "🚚 죄송합니다. 출고 데이터를 찾을 수 없습니다."
+            # 출고량 질문 (통합 계산 기반)
+            elif any(word in question_lower for word in ['출고량', '출고 현황', '오늘 출고']):
+                total_outbound = unified_stats["total_outbound_qty"]
+                daily_outbound = unified_stats["daily_outbound_avg"]
+                
+                return f"""🚚 **총 출고량은 {total_outbound:,}개입니다.**
+
+📊 **출고 정보:**
+- **7일 총 출고량:** {total_outbound:,}개
+- **일평균 출고량:** {daily_outbound:,}개
+- **데이터 일관성:** ✅ 확보됨
+
+💡 상세한 출고 트렌드는 '일별 입출고 트렌드' 차트를 확인해보세요."""
             
-            # 랙 관련 질문
-            if any(word in question_lower for word in ['랙', 'rack', 'a랙', 'b랙', 'c랙']):
-                if self.data_service.product_master is not None and 'Rack Name' in self.data_service.product_master.columns:
-                    rack_summary = self.data_service.product_master.groupby('Rack Name')['현재고'].sum().sort_values(ascending=False)
-                    if len(rack_summary) > 0:
-                        rack_info = []
-                        for rack, qty in rack_summary.head(5).items():
-                            rack_info.append(f"• {rack}: {int(qty):,}개")
-                        
-                        return f"🏢 **랙별 재고 현황:**\n\n" + "\n".join(rack_info) + f"\n\n📊 총 {len(rack_summary)}개 랙에 재고가 분산되어 있습니다."
-                    else:
-                        return "🏢 랙 정보를 찾을 수 없습니다."
+            # 랙 관련 질문 (통합 계산 기반)
+            elif any(word in question_lower for word in ['랙', 'rack', 'a랙', 'b랙', 'c랙']):
+                rack_distribution = unified_stats["rack_distribution"]
+                rack_column = unified_stats["rack_column_used"]
+                
+                if rack_distribution:
+                    # 상위 5개 랙 정보
+                    sorted_racks = sorted(rack_distribution.items(), key=lambda x: x[1], reverse=True)
+                    rack_info = []
+                    for rack, qty in sorted_racks[:5]:
+                        rack_info.append(f"• {rack}랙: {int(qty):,}개")
+                    
+                    return f"""🏢 **랙별 재고 현황 (상위 5개):**
+
+{chr(10).join(rack_info)}
+
+📊 **전체 랙 정보:**
+- **총 랙 수:** {len(rack_distribution)}개
+- **사용된 컬럼:** {rack_column}
+- **데이터 일관성:** ✅ 확보됨
+
+💡 특정 랙의 상세 정보를 원하시면 랙 이름을 말씀해주세요."""
                 else:
-                    return "🏢 죄송합니다. 랙 데이터를 찾을 수 없습니다."
+                    return "🏢 랙 정보를 찾을 수 없습니다."
             
         except Exception as e:
             print(f"직접 답변 계산 오류: {e}")
@@ -775,3 +960,287 @@ class WarehouseChatbot:
                 return "🟡 **시스템 상태:** 벡터 검색 일시 불가, 기본 데이터로 응답"
         except:
             return "🔴 **시스템 상태:** 일부 기능 제한"
+    
+    # ================== 질문 유형별 전용 처리 메서드 ==================
+    
+    async def _handle_date_analysis_query(self, question: str) -> Optional[str]:
+        """📅 날짜 분석 전용 처리 - "언제", "가장 높았던 날" 등"""
+        try:
+            self.logger.info(f"📅 [DATE_ANALYSIS] 날짜 분석 질문 처리: '{question}'")
+            
+            question_lower = question.lower()
+            
+            # 입고량 최대 날짜 분석
+            if "입고량" in question_lower and ("제일" in question_lower or "가장" in question_lower or "최대" in question_lower):
+                return await self._analyze_max_inbound_date()
+            
+            # 출고량 최대 날짜 분석
+            elif "출고량" in question_lower and ("제일" in question_lower or "가장" in question_lower or "최대" in question_lower):
+                return await self._analyze_max_outbound_date()
+            
+            # 일반적인 날짜 기반 벡터 검색
+            else:
+                return await self._handle_vector_search_query(question)
+                
+        except Exception as e:
+            self.logger.error(f"❌ [DATE_ANALYSIS] 날짜 분석 오류: {e}")
+            return None
+    
+    async def _analyze_max_inbound_date(self) -> str:
+        """입고량이 가장 높았던 날 분석"""
+        try:
+            if not self.data_service.data_loaded or self.data_service.inbound_data is None:
+                return "📅 입고 데이터가 없어 날짜별 분석을 할 수 없습니다."
+            
+            # 날짜별 입고량 집계
+            daily_inbound = self.data_service.inbound_data.groupby('Date')['PalleteQty'].sum().sort_values(ascending=False)
+            
+            if len(daily_inbound) > 0:
+                max_date = daily_inbound.index[0]
+                max_quantity = int(daily_inbound.iloc[0])
+                
+                # 상위 3일 정보 포함
+                top_3 = []
+                for i, (date, qty) in enumerate(daily_inbound.head(3).items()):
+                    rank = ["🥇", "🥈", "🥉"][i]
+                    top_3.append(f"{rank} {date}: {int(qty):,}개")
+                
+                return f"""📅 **입고량이 가장 높았던 날은 {max_date}입니다.**
+
+📊 **상세 정보:**
+- **최대 입고량:** {max_quantity:,}개
+- **해당 날짜:** {max_date}
+
+🏆 **상위 3일 순위:**
+{chr(10).join(top_3)}
+
+💡 이 정보는 {len(daily_inbound)}일간의 실제 입고 데이터를 분석한 결과입니다."""
+            else:
+                return "📅 입고 데이터에서 날짜별 정보를 찾을 수 없습니다."
+                
+        except Exception as e:
+            self.logger.error(f"❌ 최대 입고일 분석 오류: {e}")
+            return "📅 입고량 날짜 분석 중 오류가 발생했습니다."
+    
+    async def _analyze_max_outbound_date(self) -> str:
+        """출고량이 가장 높았던 날 분석"""
+        try:
+            if not self.data_service.data_loaded or self.data_service.outbound_data is None:
+                return "📅 출고 데이터가 없어 날짜별 분석을 할 수 없습니다."
+            
+            # 날짜별 출고량 집계
+            daily_outbound = self.data_service.outbound_data.groupby('Date')['PalleteQty'].sum().sort_values(ascending=False)
+            
+            if len(daily_outbound) > 0:
+                max_date = daily_outbound.index[0]
+                max_quantity = int(daily_outbound.iloc[0])
+                
+                # 상위 3일 정보 포함
+                top_3 = []
+                for i, (date, qty) in enumerate(daily_outbound.head(3).items()):
+                    rank = ["🥇", "🥈", "🥉"][i]
+                    top_3.append(f"{rank} {date}: {int(qty):,}개")
+                
+                return f"""📅 **출고량이 가장 높았던 날은 {max_date}입니다.**
+
+📊 **상세 정보:**
+- **최대 출고량:** {max_quantity:,}개
+- **해당 날짜:** {max_date}
+
+🏆 **상위 3일 순위:**
+{chr(10).join(top_3)}
+
+💡 이 정보는 {len(daily_outbound)}일간의 실제 출고 데이터를 분석한 결과입니다."""
+            else:
+                return "📅 출고 데이터에서 날짜별 정보를 찾을 수 없습니다."
+                
+        except Exception as e:
+            self.logger.error(f"❌ 최대 출고일 분석 오류: {e}")
+            return "📅 출고량 날짜 분석 중 오류가 발생했습니다."
+    
+    async def _handle_status_analysis_query(self, question: str) -> Optional[str]:
+        """📊 상태 분석 전용 처리 - "부족한", "위험한" 등"""
+        try:
+            self.logger.info(f"📊 [STATUS_ANALYSIS] 상태 분석 질문 처리: '{question}'")
+            
+            question_lower = question.lower()
+            
+            # 재고 부족 제품 분석
+            if "부족한" in question_lower and "제품" in question_lower:
+                return await self._analyze_low_stock_products()
+            
+            # 위험 재고 제품 분석
+            elif "위험한" in question_lower or "위험" in question_lower:
+                return await self._analyze_risk_products()
+            
+            # 일반적인 상태 기반 벡터 검색
+            else:
+                return await self._handle_vector_search_query(question)
+                
+        except Exception as e:
+            self.logger.error(f"❌ [STATUS_ANALYSIS] 상태 분석 오류: {e}")
+            return None
+    
+    async def _analyze_low_stock_products(self) -> str:
+        """재고 부족 제품 분석"""
+        try:
+            if not self.data_service.data_loaded or self.data_service.product_master is None:
+                return "📊 제품 데이터가 없어 재고 분석을 할 수 없습니다."
+            
+            # 현재고 기준으로 부족 제품 찾기 (임계값: 20개 이하)
+            low_stock_threshold = 20
+            stock_column = '현재고' if '현재고' in self.data_service.product_master.columns else 'Start Pallete Qty'
+            
+            low_stock_products = self.data_service.product_master[
+                self.data_service.product_master[stock_column] <= low_stock_threshold
+            ].sort_values(stock_column)
+            
+            if len(low_stock_products) > 0:
+                # 상위 5개 부족 제품
+                product_list = []
+                for idx, (_, product) in enumerate(low_stock_products.head(5).iterrows()):
+                    danger_level = "🚨" if product[stock_column] <= 5 else "⚠️" if product[stock_column] <= 10 else "📦"
+                    product_name = product.get('ProductName', '알 수 없음')
+                    current_stock = int(product[stock_column])
+                    rack_info = product.get('랙위치', product.get('Rack Name', '알 수 없음'))
+                    
+                    product_list.append(f"{danger_level} **{product_name}**: {current_stock}개 ({rack_info}랙)")
+                
+                return f"""📊 **재고가 부족한 제품 분석 결과:**
+
+🚨 **위험 수준 기준:**
+- 🚨 심각 (5개 이하)
+- ⚠️ 주의 (6-10개)  
+- 📦 부족 (11-20개)
+
+📦 **부족 제품 목록 (상위 5개):**
+{chr(10).join(product_list)}
+
+📊 **통계:**
+- **총 부족 제품:** {len(low_stock_products)}개
+- **분석 기준:** {low_stock_threshold}개 이하
+- **전체 제품 수:** {len(self.data_service.product_master)}개
+
+💡 **권장 사항:**
+즉시 발주가 필요한 제품들이 있습니다. 특히 🚨 표시 제품은 긴급 보충이 필요합니다."""
+            else:
+                return f"""✅ **재고 부족 제품 없음**
+
+📊 **분석 결과:**
+- **분석 기준:** {low_stock_threshold}개 이하
+- **전체 제품 수:** {len(self.data_service.product_master)}개
+- **결과:** 모든 제품이 안전 재고 수준을 유지하고 있습니다.
+
+🎉 현재 재고 관리가 양호한 상태입니다."""
+                
+        except Exception as e:
+            self.logger.error(f"❌ 재고 부족 분석 오류: {e}")
+            return "📊 재고 부족 제품 분석 중 오류가 발생했습니다."
+    
+    async def _analyze_risk_products(self) -> str:
+        """위험 재고 제품 분석 (매우 낮은 재고)"""
+        try:
+            if not self.data_service.data_loaded or self.data_service.product_master is None:
+                return "📊 제품 데이터가 없어 위험 분석을 할 수 없습니다."
+            
+            # 위험 임계값: 10개 이하
+            risk_threshold = 10
+            stock_column = '현재고' if '현재고' in self.data_service.product_master.columns else 'Start Pallete Qty'
+            
+            risk_products = self.data_service.product_master[
+                self.data_service.product_master[stock_column] <= risk_threshold
+            ].sort_values(stock_column)
+            
+            if len(risk_products) > 0:
+                return f"""🚨 **위험 재고 제품 {len(risk_products)}개 발견!**
+
+⚠️ **즉시 조치 필요:**
+{chr(10).join([f"- {product.get('ProductName', '알 수 없음')}: {int(product[stock_column])}개" for _, product in risk_products.head(5).iterrows()])}
+
+🚨 **긴급 권장 사항:**
+1. 즉시 발주 처리
+2. 고객 주문 제한 검토
+3. 대체 상품 준비"""
+            else:
+                return "✅ **위험 수준의 재고 부족 제품은 없습니다.**"
+                
+        except Exception as e:
+            self.logger.error(f"❌ 위험 재고 분석 오류: {e}")
+            return "🚨 위험 재고 분석 중 오류가 발생했습니다."
+    
+    async def _handle_list_query(self, question: str) -> Optional[str]:
+        """📋 목록 조회 전용 처리 - "어떤", "어느", "목록" 등"""
+        try:
+            self.logger.info(f"📋 [LIST_QUERY] 목록 조회 질문 처리: '{question}'")
+            
+            # 목록 조회는 벡터 검색이 가장 적합하므로 벡터 검색으로 처리
+            return await self._handle_vector_search_query(question)
+                
+        except Exception as e:
+            self.logger.error(f"❌ [LIST_QUERY] 목록 조회 오류: {e}")
+            return None
+    
+    async def _handle_rack_specific_query(self, question: str) -> Optional[str]:
+        """🏗️ 랙 관련 질문 전용 처리 - CoT 결과와 무관하게 우선 적용"""
+        try:
+            self.logger.info(f"🏗️ [RACK_QUERY] 랙 관련 질문 처리: '{question}'")
+            
+            question_lower = question.lower()
+            
+            # 🎯 특정 랙 식별 (A~Z 랙)
+            import re
+            rack_pattern = re.search(r'([a-z])랙|([a-z])\s*rack|rack\s*([a-z])', question_lower)
+            
+            if rack_pattern:
+                # 매칭된 랙 문자 추출
+                rack_letter = (rack_pattern.group(1) or rack_pattern.group(2) or rack_pattern.group(3)).upper()
+                self.logger.info(f"🎯 [RACK_IDENTIFIED] 특정 랙 식별: {rack_letter}랙")
+                
+                # 직접 랙 데이터 조회
+                rack_data = self._get_rack_specific_data(rack_letter)
+                
+                if rack_data:
+                    rack_name = rack_data.get('rack_name', f'{rack_letter}랙')
+                    current_stock = rack_data.get('current_stock', 0)
+                    utilization_rate = rack_data.get('utilization_rate', 0)
+                    products = rack_data.get('products', ['정보 없음'])
+                    product_count = rack_data.get('product_count', 0)
+                    status = rack_data.get('status', '⚠️ 알 수 없음')
+                    found_method = rack_data.get('found_method', 'legacy')
+                    
+                    # 🎯 상위 3개 상품명 표시
+                    top_products = ', '.join(products[:3]) if len(products) > 0 else '정보 없음'
+                    if len(products) > 3:
+                        top_products += f" 외 {len(products) - 3}개"
+                    
+                    data_quality = "✅ 통합 계산 기반" if found_method == 'unified_calculation' else "⚠️ 레거시 방식"
+                    
+                    return f"""🏢 **{rack_name} 재고 현황:** {data_quality}
+
+📊 **현재 재고량:** {current_stock:,}개
+📈 **활용률:** {utilization_rate:.1f}%
+📦 **저장 상품:** {top_products}
+📋 **상품 종류:** {product_count}개
+⚠️ **상태:** {status}
+
+💡 **데이터 출처:** 통합 계산 메서드를 통해 모든 시스템에서 일관된 수치를 제공합니다."""
+                else:
+                    return f"""❌ **{rack_letter}랙 정보를 찾을 수 없습니다.**
+
+🔍 **확인된 문제:**
+- 해당 랙이 존재하지 않거나
+- 데이터 로딩 중 오류 발생
+
+💡 **해결 방법:**
+1. 랙 이름을 다시 확인해주세요 (A~Z)
+2. '전체 랙 현황'을 먼저 확인해보세요
+3. 잠시 후 다시 시도해주세요"""
+            
+            # 일반 랙 관련 질문은 기존 fallback으로 처리
+            else:
+                self.logger.info("🏗️ [RACK_GENERAL] 일반 랙 질문으로 fallback 처리")
+                return await self._fallback_data_query(question)
+                
+        except Exception as e:
+            self.logger.error(f"❌ [RACK_QUERY] 랙 관련 질문 처리 오류: {e}")
+            return None

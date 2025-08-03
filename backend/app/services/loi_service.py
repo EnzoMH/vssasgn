@@ -18,7 +18,10 @@ class LOIService:
         
     def calculate_loi_metrics(self) -> Dict[str, Any]:
         """전체 LOI 지표 계산"""
+        logger.info("📊 [LOI_CALC] LOI 지표 계산 시작")
+        
         if not self.data_service or not self.data_service.data_loaded:
+            logger.warning("⚠️ [LOI_ERROR] 데이터 서비스가 없거나 데이터가 로드되지 않음")
             return self._get_default_loi()
         
         try:
@@ -27,7 +30,10 @@ class LOIService:
             inbound_df = self.data_service.inbound_data
             outbound_df = self.data_service.outbound_data
             
+            logger.info(f"📊 [LOI_DATA] 데이터 크기 - 제품: {len(product_df) if product_df is not None else 0}, 입고: {len(inbound_df) if inbound_df is not None else 0}, 출고: {len(outbound_df) if outbound_df is not None else 0}")
+            
             # LOI 핵심 지표 계산
+            logger.info("🔄 [LOI_METRICS] 각종 LOI 지표 계산 중...")
             loi_metrics = {
                 "inventory_level": self._calculate_inventory_level(product_df),
                 "stock_coverage": self._calculate_stock_coverage(product_df, outbound_df),
@@ -39,12 +45,14 @@ class LOIService:
             }
             
             # 전체 LOI 점수 계산 (0-100)
+            logger.info("🎯 [LOI_SCORE] 전체 LOI 점수 계산")
             loi_metrics["overall_loi_score"] = self._calculate_overall_loi_score(loi_metrics)
             
+            logger.info(f"✅ [LOI_SUCCESS] LOI 계산 완료 - 전체 점수: {loi_metrics['overall_loi_score']}")
             return loi_metrics
             
         except Exception as e:
-            logger.error(f"LOI 지표 계산 오류: {e}")
+            logger.error(f"❌ [LOI_ERROR] LOI 지표 계산 오류: {e}")
             return self._get_default_loi()
     
     def _calculate_inventory_level(self, product_df: pd.DataFrame) -> Dict[str, Any]:

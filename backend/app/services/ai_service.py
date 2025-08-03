@@ -16,9 +16,11 @@ from dotenv import load_dotenv, find_dotenv
 dotenv_path = find_dotenv()
 if dotenv_path:
     load_dotenv(dotenv_path)
-    print(f"✅ .env 파일 로드됨: {dotenv_path}")
+    # .env 파일 로드 성공은 main.py에서 이미 로깅됨
+    pass
 else:
-    print("⚠️ .env 파일을 찾을 수 없습니다. 시스템 환경변수를 사용합니다.")
+    # .env 파일 없음 경고는 main.py에서 이미 로깅됨
+    pass
 
 # 안전한 환경변수 설정 - None 값 체크
 def safe_set_env_var(key_name: str):
@@ -36,10 +38,7 @@ for i in range(1, 5):
     if safe_set_env_var(key_name):
         api_keys_loaded.append(key_name)
 
-if api_keys_loaded:
-    print(f"✅ 로드된 API 키: {', '.join(api_keys_loaded)}")
-else:
-    print("⚠️ GEMINI API 키가 설정되지 않았습니다. AI 기능이 제한될 수 있습니다.")
+# API 키 로드 정보는 WarehouseAI 클래스에서 로깅됨
 
 # AI 모델 설정 (legacy/crad_lcrag/utils/ai_model_manager.py 참조)
 AI_MODEL_CONFIG = {
@@ -347,11 +346,16 @@ class WarehouseAI:
 
     async def answer_query(self, question: str, data_context: dict):
         """Gemini API를 통한 질의응답"""
+        self.logger.info(f"🤖 [AI_SERVICE] answer_query 시작: '{question}'")
+        self.logger.info(f"📊 [AI_CONTEXT] 데이터 컨텍스트: {list(data_context.keys()) if data_context else 'None'}")
+        
         if not self.gemini_models:
+            self.logger.error("❌ [AI_ERROR] 사용 가능한 AI 모델이 없습니다")
             return "오류: 사용 가능한 AI 모델이 없습니다."
 
         max_attempts = len(self.gemini_models)
         estimated_tokens = self.rate_limiter.estimate_tokens(question) # 질문 텍스트 기반 토큰 추정
+        self.logger.info(f"📈 [AI_TOKENS] 추정 토큰 수: {estimated_tokens}")
 
         for attempt in range(max_attempts):
             current_model_info = self._get_next_model()
@@ -359,10 +363,11 @@ class WarehouseAI:
                 continue
 
             api_key = current_model_info['api_key']
+            self.logger.info(f"🔑 [AI_MODEL] 시도 {attempt+1}/{max_attempts}: {current_model_info['name']}")
             
             # RateLimiter를 통해 권한 획득 시도
             if not await self.rate_limiter.acquire_permission(api_key, estimated_tokens):
-                self.logger.warning(f"⚠️ API 키 {api_key[:10]}... 요청 제한으로 인해 대기 또는 다른 키 시도.")
+                self.logger.warning(f"⚠️ [AI_RATE_LIMIT] API 키 {api_key[:10]}... 요청 제한으로 인해 대기 또는 다른 키 시도.")
                 # 여기서는 바로 다음 키로 넘어가거나, 짧게 대기 후 재시도할 수 있음
                 # 간단하게 다음 모델로 넘어가도록 처리
                 continue
@@ -371,12 +376,15 @@ class WarehouseAI:
                 model_instance = current_model_info['model']
                 # 벡터 DB 검색 결과가 있는지 확인
                 has_vector_search = data_context and 'vector_search' in data_context and data_context['vector_search'].get('success')
+                self.logger.info(f"🔍 [AI_VECTOR] 벡터 검색 결과 있음: {has_vector_search}")
                 
                 if has_vector_search:
                     # 벡터 DB 검색 결과가 있을 때 - 간단하고 직접적인 답변
                     vector_data = data_context['vector_search']
                     chart_data = vector_data.get('chart_data', {})
                     documents = vector_data.get('results', {}).get('documents', [[]])[0] if vector_data.get('results') else []
+                    
+                    self.logger.info(f"📊 [AI_VECTOR_DATA] 문서 {len(documents)}개, 차트데이터: {bool(chart_data)}")
                     
                     prompt = f"""
 당신은 창고 관리 AI 어시스턴트입니다. 실제 창고 데이터를 바탕으로 간단하고 명확한 답변을 제공하세요.
@@ -399,6 +407,7 @@ class WarehouseAI:
 - "오늘 입고량은 50개, 출고량은 30개로 순증가 20개입니다."
 - "재고가 부족한 제품은 제품A(5개 남음), 제품B(3개 남음)입니다."
 """
+                    self.logger.info(f"📝 [AI_PROMPT_VECTOR] 벡터 기반 프롬프트 생성 (길이: {len(prompt)}자)")
                 else:
                     # 벡터 DB 검색 결과가 없을 때 - 기존 데이터 분석 방식
                     prompt = f"""
@@ -415,50 +424,62 @@ class WarehouseAI:
 
 **질문:** {question}
 """
+                    self.logger.info(f"📝 [AI_PROMPT_BASIC] 기본 프롬프트 생성 (길이: {len(prompt)}자)")
+                
                 # Gemini API 호출
-                self.logger.info(f"🔄 {current_model_info['name']} API 호출 시작...")
-                self.logger.debug(f"📤 프롬프트 길이: {len(prompt)}")
+                self.logger.info(f"🔄 [AI_API_CALL] {current_model_info['name']} API 호출 시작...")
+                self.logger.info(f"📤 [AI_PROMPT_SIZE] 프롬프트 길이: {len(prompt)}자")
+                self.logger.debug(f"📝 [AI_PROMPT_CONTENT] 프롬프트 내용:\n{prompt[:300]}...")
                 
                 try:
                     # 간단한 API 호출
                     try:
                         response = await model_instance.generate_content_async(prompt)
+                        self.logger.info("✅ [AI_API_SUCCESS] Async API 호출 성공")
                     except AttributeError:
                         # generate_content_async가 없는 경우 sync 호출
-                        self.logger.info(f"🔄 Async 메서드 없음, sync 호출로 대체")
+                        self.logger.info(f"🔄 [AI_API_FALLBACK] Async 메서드 없음, sync 호출로 대체")
                         response = model_instance.generate_content(prompt)
+                        self.logger.info("✅ [AI_API_SUCCESS] Sync API 호출 성공")
                 except Exception as api_error:
-                    self.logger.warning(f"⚠️ API 호출 실패: {api_error}")
+                    self.logger.warning(f"⚠️ [AI_API_ERROR] API 호출 실패: {api_error}")
                     raise Exception(f"API 호출 실패: {api_error}")
                 
                 # 응답 상세 로깅
-                self.logger.debug(f"📥 응답 객체 타입: {type(response)}")
-                self.logger.debug(f"📥 응답 객체 속성: {[attr for attr in dir(response) if not attr.startswith('_')]}")
+                self.logger.debug(f"📥 [AI_RESPONSE_TYPE] 응답 객체 타입: {type(response)}")
+                self.logger.debug(f"📥 [AI_RESPONSE_ATTRS] 응답 객체 속성: {[attr for attr in dir(response) if not attr.startswith('_')]}")
                 
                 # 안전한 텍스트 추출
                 result_text = ""
                 if hasattr(response, 'text'):
                     result_text = response.text
+                    self.logger.info("📥 [AI_EXTRACT] response.text 사용")
                 elif hasattr(response, 'content'):
                     result_text = str(response.content)
+                    self.logger.info("📥 [AI_EXTRACT] response.content 사용")
                 elif hasattr(response, 'candidates') and response.candidates:
                     # Gemini 응답 구조에 따른 처리
+                    self.logger.info("📥 [AI_EXTRACT] candidates 구조 사용")
                     candidate = response.candidates[0]
                     if hasattr(candidate, 'content'):
                         if hasattr(candidate.content, 'parts'):
                             result_text = candidate.content.parts[0].text
+                            self.logger.info("📥 [AI_EXTRACT] candidate.content.parts[0].text 사용")
                         else:
                             result_text = str(candidate.content)
+                            self.logger.info("📥 [AI_EXTRACT] candidate.content 사용")
                 else:
                     result_text = str(response)
+                    self.logger.warning("⚠️ [AI_EXTRACT] str(response) 사용 (fallback)")
                 
-                self.logger.info(f"📝 응답 텍스트 길이: {len(result_text)}")
+                self.logger.info(f"📝 [AI_RESPONSE_SIZE] 응답 텍스트 길이: {len(result_text)}자")
                 
                 if not result_text or result_text.strip() == "":
-                    self.logger.error(f"❌ 빈 응답을 받았습니다!")
+                    self.logger.error(f"❌ [AI_ERROR] 빈 응답을 받았습니다!")
                     return "오류: Gemini API에서 빈 응답을 받았습니다."
                 
-                self.logger.info(f"✅ {current_model_info['name']} API 성공 - 응답 (일부): {result_text[:200]}...")
+                self.logger.info(f"✅ [AI_SUCCESS] {current_model_info['name']} API 성공")
+                self.logger.info(f"🎯 [AI_OUTPUT] 응답 내용: '{result_text[:200]}...'")
                 return result_text
 
             except Exception as e:
@@ -611,9 +632,12 @@ class WarehouseAI:
     
     async def generate_chart_config(self, user_request: str, available_data: dict) -> dict:
         """사용자 요청을 분석하여 차트 설정을 생성합니다."""
+        self.logger.info(f"📊 [CHART_GEN] 차트 생성 요청: '{user_request}'")
+        self.logger.info(f"📊 [CHART_DATA] 사용 가능한 데이터: {list(available_data.keys()) if available_data else 'None'}")
         
         # 사용 가능한 데이터 요약
         data_summary = self._summarize_available_data(available_data)
+        self.logger.info(f"📊 [CHART_SUMMARY] 데이터 요약 길이: {len(data_summary)}자")
         
         chart_prompt = f"""
 당신은 데이터 시각화 전문가입니다. 사용자의 자연어 요청을 분석하여 Chart.js 호환 차트 설정을 생성해주세요.

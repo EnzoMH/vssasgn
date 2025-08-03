@@ -3,6 +3,11 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import HTMLResponse
 from pydantic import BaseModel
+import time
+from functools import wraps
+from typing import Optional
+import hashlib
+from collections import defaultdict, deque
 from backend.app.utils.ai_chat import WarehouseChatbot
 from backend.app.services.data_service import DataService
 from backend.app.models.ml_models import DemandPredictor, ProductClusterer, AnomalyDetector # AnomalyDetector 추가
@@ -33,6 +38,130 @@ if dotenv_path:
     logger.info(f"✅ .env 파일 로드됨: {dotenv_path}")
 else:
     logger.warning("⚠️ .env 파일을 찾을 수 없습니다. 시스템 환경변수를 사용합니다.")
+
+# 📈 캐싱 시스템 설정
+cache_storage = {}  # 메모리 캐시 (실제 운영환경에서는 Redis 권장)
+CACHE_TTL = 300  # 5분 캐시 TTL
+
+def cache_key_generator(endpoint: str, params: dict) -> str:
+    """캐시 키 생성"""
+    key_data = f"{endpoint}:{sorted(params.items())}"
+    return hashlib.md5(key_data.encode()).hexdigest()
+
+def get_from_cache(key: str) -> Optional[dict]:
+    """캐시에서 데이터 조회"""
+    if key in cache_storage:
+        cached_data, timestamp = cache_storage[key]
+        if time.time() - timestamp < CACHE_TTL:
+            return cached_data
+        else:
+            del cache_storage[key]  # 만료된 캐시 삭제
+    return None
+
+def set_cache(key: str, data: dict):
+    """캐시에 데이터 저장"""
+    cache_storage[key] = (data, time.time())
+
+def cache_decorator(endpoint_name: str):
+    """개선된 캐싱 데코레이터"""
+    def decorator(func):
+        @wraps(func)
+        async def wrapper(*args, **kwargs):
+            # 캐시 키 생성 (Request 객체 제외하고 실제 파라미터만 사용)
+            cache_params = {k: v for k, v in kwargs.items() if k != 'request'}
+            
+            # AI 챗봇의 경우 질문 내용을 포함
+            if 'chat_request' in kwargs:
+                cache_params['question'] = kwargs['chat_request'].question
+            
+            cache_key = cache_key_generator(endpoint_name, cache_params)
+            
+            # 캐시에서 조회
+            cached_result = get_from_cache(cache_key)
+            if cached_result:
+                logger.info(f"🎯 [CACHE_HIT] {endpoint_name}: {cache_key[:8]}...")
+                # 캐시된 결과임을 표시
+                if isinstance(cached_result, dict):
+                    cached_result = cached_result.copy()
+                    cached_result["cached"] = True
+                return cached_result
+            
+            # 캐시 미스 - 실제 함수 실행
+            logger.info(f"🔄 [CACHE_MISS] {endpoint_name}: {cache_key[:8]}...")
+            result = await func(*args, **kwargs)
+            
+            # 결과를 캐시에 저장 (성공한 경우만)
+            if isinstance(result, dict) and not result.get("error"):
+                # 캐시 저장 전 cached 플래그 제거
+                cache_result = result.copy() if isinstance(result, dict) else result
+                if "cached" in cache_result:
+                    cache_result["cached"] = False
+                
+                set_cache(cache_key, cache_result)
+                logger.info(f"💾 [CACHE_SET] {endpoint_name}: {cache_key[:8]}...")
+            
+            return result
+        return wrapper
+    return decorator
+
+# 🚦 간단한 요청 제한 시스템
+rate_limit_storage = defaultdict(deque)  # IP별 요청 기록 저장
+RATE_LIMIT_WINDOW = 60  # 1분 윈도우
+
+def get_client_ip(request: Request) -> str:
+    """클라이언트 IP 주소 추출"""
+    # X-Forwarded-For 헤더에서 실제 IP 추출 (프록시 환경)
+    forwarded_for = request.headers.get("X-Forwarded-For")
+    if forwarded_for:
+        return forwarded_for.split(",")[0].strip()
+    return request.client.host
+
+def rate_limit_check(ip: str, limit: int) -> bool:
+    """요청 제한 체크"""
+    current_time = time.time()
+    
+    # 기존 요청 기록에서 윈도우 밖의 요청 제거
+    while rate_limit_storage[ip] and rate_limit_storage[ip][0] < current_time - RATE_LIMIT_WINDOW:
+        rate_limit_storage[ip].popleft()
+    
+    # 현재 요청 수가 제한을 초과하는지 확인
+    if len(rate_limit_storage[ip]) >= limit:
+        return False
+    
+    # 현재 요청 기록
+    rate_limit_storage[ip].append(current_time)
+    return True
+
+def rate_limiter(limit_per_minute: int):
+    """요청 제한 데코레이터"""
+    def decorator(func):
+        @wraps(func)
+        async def wrapper(*args, **kwargs):
+            # Request 객체 찾기
+            request = None
+            for arg in args:
+                if isinstance(arg, Request):
+                    request = arg
+                    break
+            
+            if not request:
+                for value in kwargs.values():
+                    if isinstance(value, Request):
+                        request = value
+                        break
+            
+            if request:
+                client_ip = get_client_ip(request)
+                if not rate_limit_check(client_ip, limit_per_minute):
+                    logger.warning(f"🚫 [RATE_LIMIT] IP {client_ip}: {limit_per_minute}/min 제한 초과")
+                    raise HTTPException(
+                        status_code=429, 
+                        detail=f"요청 제한 초과: 분당 {limit_per_minute}회까지 허용됩니다."
+                    )
+            
+            return await func(*args, **kwargs)
+        return wrapper
+    return decorator
 
 app = FastAPI(title="Warehouse Management API")
 
@@ -93,22 +222,23 @@ async def startup_event():
     except Exception as e:
         logger.warning(f"ML 모델 사전 학습 중 오류 발생: {e}")
     
-    # 벡터 데이터베이스 인덱싱
+    # 벡터 데이터베이스 인덱싱 (강제 리빌드로 데이터 일관성 확보)
     try:
         if data_service.data_loaded:
-            logger.info("벡터 데이터베이스 인덱싱 시작...")
-            indexing_success = await vector_db_service.index_warehouse_data()
+            logger.info("🔄 벡터 데이터베이스 강제 리빌드 시작...")
+            indexing_success = await vector_db_service.index_warehouse_data(force_rebuild=True)
             if indexing_success:
-                logger.info("✅ 벡터 데이터베이스 인덱싱 완료")
+                logger.info("✅ 벡터 데이터베이스 강제 리빌드 완료")
             else:
-                logger.warning("⚠️ 벡터 데이터베이스 인덱싱 실패")
+                logger.warning("⚠️ 벡터 데이터베이스 강제 리빌드 실패")
         else:
             logger.warning("⚠️ 데이터가 로드되지 않아 벡터 DB 인덱싱을 건너뜁니다.")
     except Exception as e:
         logger.error(f"❌ 벡터 DB 인덱싱 중 오류 발생: {e}")
 
 @app.get("/api/vector-db/status")
-async def get_vector_db_status():
+@rate_limiter(30)  # 분당 30회 요청 제한
+async def get_vector_db_status(request: Request):
     """벡터 데이터베이스 상태 확인"""
     try:
         status = vector_db_service.get_status()
@@ -116,6 +246,85 @@ async def get_vector_db_status():
     except Exception as e:
         logger.error(f"❌ 벡터 DB 상태 확인 중 오류 발생: {e}")
         return {"status": "error", "error": str(e)}
+
+# 🧹 캐시 관리 엔드포인트들
+@app.get("/api/cache/status")
+@rate_limiter(10)  # 분당 10회 요청 제한
+async def get_cache_status(request: Request):
+    """캐시 시스템 상태 조회"""
+    try:
+        current_time = time.time()
+        cache_info = {
+            "total_keys": len(cache_storage),
+            "cache_ttl_seconds": CACHE_TTL,
+            "cache_entries": []
+        }
+        
+        # 캐시 엔트리 정보 (최대 10개만 표시)
+        for key, (data, timestamp) in list(cache_storage.items())[:10]:
+            age = current_time - timestamp
+            ttl_remaining = max(0, CACHE_TTL - age)
+            cache_info["cache_entries"].append({
+                "key": key[:16] + "..." if len(key) > 16 else key,
+                "age_seconds": round(age, 1),
+                "ttl_remaining_seconds": round(ttl_remaining, 1),
+                "expired": ttl_remaining <= 0
+            })
+        
+        return cache_info
+    except Exception as e:
+        logger.error(f"❌ 캐시 상태 조회 중 오류 발생: {e}")
+        return {"error": str(e)}
+
+@app.post("/api/cache/clear")
+@rate_limiter(5)  # 분당 5회 요청 제한
+async def clear_cache(request: Request):
+    """캐시 전체 삭제"""
+    try:
+        cache_count = len(cache_storage)
+        cache_storage.clear()
+        logger.info(f"🧹 [CACHE_CLEAR] {cache_count}개 캐시 엔트리 삭제됨")
+        return {
+            "success": True,
+            "message": f"{cache_count}개 캐시 엔트리가 삭제되었습니다.",
+            "cleared_count": cache_count
+        }
+    except Exception as e:
+        logger.error(f"❌ 캐시 삭제 중 오류 발생: {e}")
+        return {"success": False, "error": str(e)}
+
+@app.get("/api/cache/stats")
+@rate_limiter(20)  # 분당 20회 요청 제한
+async def get_cache_stats(request: Request):
+    """캐시 통계 정보"""
+    try:
+        current_time = time.time()
+        active_count = 0
+        expired_count = 0
+        total_size = 0
+        
+        for key, (data, timestamp) in cache_storage.items():
+            age = current_time - timestamp
+            if age < CACHE_TTL:
+                active_count += 1
+            else:
+                expired_count += 1
+            
+            # 대략적인 데이터 크기 계산
+            import sys
+            total_size += sys.getsizeof(str(data))
+        
+        return {
+            "total_entries": len(cache_storage),
+            "active_entries": active_count,
+            "expired_entries": expired_count,
+            "total_size_bytes": total_size,
+            "cache_ttl_seconds": CACHE_TTL,
+            "cache_hit_efficiency": f"{(active_count / len(cache_storage) * 100):.1f}%" if cache_storage else "0%"
+        }
+    except Exception as e:
+        logger.error(f"❌ 캐시 통계 조회 중 오류 발생: {e}")
+        return {"error": str(e)}
 
 @app.post("/api/vector-db/reindex")
 async def reindex_vector_db():
@@ -305,7 +514,9 @@ async def get_loi_status():
         raise HTTPException(status_code=500, detail=f"LOI 상태 조회 중 오류 발생: {e}")
 
 @app.get("/api/dashboard/kpi")
-async def get_kpi_data():
+@rate_limiter(60)  # 분당 60회 요청 제한
+@cache_decorator("dashboard_kpi")
+async def get_kpi_data(request: Request):
     """실제 rawdata 기반 KPI 계산 및 반환"""
     if not data_service.data_loaded:
         raise HTTPException(status_code=404, detail="데이터가 로드되지 않았습니다.")
@@ -356,7 +567,9 @@ async def get_kpi_data():
         raise HTTPException(status_code=500, detail=f"KPI 계산 실패: {str(e)}")
 
 @app.get("/api/inventory/by-rack")
-async def get_inventory_by_rack():
+@rate_limiter(120)  # 분당 120회 요청 제한
+@cache_decorator("inventory_by_rack")
+async def get_inventory_by_rack(request: Request):
     """실제 rawdata 기반 랙별 재고 현황 조회"""
     if not data_service.data_loaded:
         raise HTTPException(status_code=404, detail="데이터가 로드되지 않았습니다.")
@@ -574,14 +787,16 @@ class ChatRequest(BaseModel):
     question: str
 
 @app.post("/api/ai/chat")
-async def ai_chat(request: ChatRequest):
-    logger.info(f"AI Chat 요청 수신: {request.question}")
+@rate_limiter(30)  # 분당 30회 요청 제한
+@cache_decorator("ai_chat")
+async def ai_chat(request: Request, chat_request: ChatRequest):
+    logger.info(f"🤖 AI Chat 요청: '{chat_request.question[:50]}...'")
     try:
-        response_text = await chatbot.process_query(request.question)
-        logger.info(f"AI Chat 응답 생성 완료.")
-        return {"answer": response_text}
+        response_text = await chatbot.process_query(chat_request.question)
+        logger.info(f"✅ AI Chat 응답 완료 (길이: {len(response_text)}자)")
+        return {"answer": response_text, "cached": False}
     except Exception as e:
-        logger.error(f"AI Chat 처리 중 오류 발생: {e}")
+        logger.error(f"❌ AI Chat 오류: {e}")
         raise HTTPException(status_code=500, detail=f"AI Chat 처리 중 오류 발생: {e}")
 
 @app.post("/api/product/cluster")
@@ -622,13 +837,16 @@ class ChartGenerationRequest(BaseModel):
 @app.post("/api/ai/generate-chart")
 async def generate_chart(request: ChartGenerationRequest):
     """LLM을 활용한 차트 설정 생성 API"""
-    if not data_service.data_loaded:
-        raise HTTPException(status_code=404, detail="데이터가 로드되지 않았습니다.")
+    logger.info(f"📊 [API_CHART] 차트 생성 요청: '{request.user_request}'")
+    logger.info(f"📝 [API_CHART_INPUT] 컨텍스트: '{request.context}'")
     
-    logger.info(f"차트 생성 요청: {request.user_request}")
+    if not data_service.data_loaded:
+        logger.error("❌ [API_CHART_ERROR] 데이터가 로드되지 않았습니다")
+        raise HTTPException(status_code=404, detail="데이터가 로드되지 않았습니다.")
     
     try:
         # 벡터 데이터베이스에서 관련 데이터 검색
+        logger.info("🔍 [API_CHART_VECTOR] 벡터 데이터베이스에서 관련 데이터 검색")
         vector_search_result = await vector_db_service.search_relevant_data(
             query=request.user_request,
             n_results=20
@@ -636,12 +854,14 @@ async def generate_chart(request: ChartGenerationRequest):
         
         # 검색된 실제 데이터가 있으면 사용, 없으면 기본 메타데이터 사용
         if vector_search_result.get("success") and vector_search_result.get("chart_data"):
+            logger.info("📈 [API_CHART_REAL] 실제 데이터로 차트 설정 생성")
             # 실제 데이터로 차트 설정 생성
             chart_result = await _generate_chart_from_real_data(
                 user_request=request.user_request,
                 search_result=vector_search_result
             )
         else:
+            logger.info("🔧 [API_CHART_META] 메타데이터로 AI 차트 생성")
             # 기존 방식: 메타데이터로 AI 생성
             available_data = await _prepare_available_data_info()
             chart_result = await ai_service.generate_chart_config(
@@ -650,14 +870,15 @@ async def generate_chart(request: ChartGenerationRequest):
             )
         
         if chart_result["success"]:
-            logger.info(f"차트 설정 생성 성공: {chart_result['chart_config']['chart_type']}")
+            logger.info(f"✅ [API_CHART_SUCCESS] 차트 설정 생성 성공: {chart_result['chart_config']['chart_type']}")
+            logger.info(f"📊 [API_CHART_CONFIG] 차트 구성: {list(chart_result['chart_config'].keys())}")
             return {
                 "success": True,
                 "chart_config": chart_result["chart_config"],
                 "message": chart_result["message"]
             }
         else:
-            logger.warning(f"차트 설정 생성 실패, 대체 설정 사용: {chart_result['error']}")
+            logger.warning(f"⚠️ [API_CHART_FALLBACK] 차트 설정 생성 실패, 대체 설정 사용: {chart_result['error']}")
             return {
                 "success": False,
                 "chart_config": chart_result["fallback_config"],
@@ -666,7 +887,7 @@ async def generate_chart(request: ChartGenerationRequest):
             }
             
     except Exception as e:
-        logger.error(f"차트 생성 API 처리 중 오류 발생: {e}")
+        logger.error(f"❌ [API_CHART_ERROR] 차트 생성 API 처리 중 오류 발생: {e}")
         raise HTTPException(status_code=500, detail=f"차트 생성 처리 중 오류 발생: {e}")
 
 async def _prepare_available_data_info() -> dict:

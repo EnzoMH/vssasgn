@@ -15,10 +15,10 @@ class DataService:
 
     async def load_all_data(self, rawdata_path: str = "rawdata"):
         if self.data_loaded:
-            print("데이터가 이미 로드되었습니다.")
+            logger.info("데이터가 이미 로드되었습니다.")
             return
 
-        print(f"데이터 로딩 시작 from {rawdata_path}...")
+        logger.info(f"데이터 로딩 시작 from {rawdata_path}...")
         all_inbound_dfs = []
         all_outbound_dfs = []
 
@@ -111,10 +111,12 @@ class DataService:
                 original_rows = len(self.inbound_data)
                 self.inbound_data.dropna(subset=['Date'], inplace=True)
                 if len(self.inbound_data) < original_rows:
-                    print(f"입고 데이터에서 {original_rows - len(self.inbound_data)} 개의 유효하지 않은 'Date' 값을 가진 행을 제거했습니다.")
+                    logger.info(f"📦 입고 데이터에서 {original_rows - len(self.inbound_data)} 개의 유효하지 않은 'Date' 값을 가진 행을 제거했습니다.")
+                # 🔧 날짜를 표준 문자열 형식으로 변환 (벡터 DB 검색 호환성)
+                self.inbound_data['Date'] = self.inbound_data['Date'].dt.strftime('%Y-%m-%d %H:%M:%S')
             # 'Unnamed:' 으로 시작하는 컬럼 제거
             self.inbound_data = self.inbound_data.loc[:, ~self.inbound_data.columns.str.startswith('Unnamed:')]
-            print(f"총 입고 데이터 로드 완료: {len(self.inbound_data)} 건")
+            logger.info(f"📦 총 입고 데이터 로드 완료: {len(self.inbound_data)} 건")
         if all_outbound_dfs:
             self.outbound_data = pd.concat(all_outbound_dfs, ignore_index=True)
             # 'Date' 컬럼이 datetime 형식인지 확인 및 변환
@@ -124,10 +126,12 @@ class DataService:
                 original_rows = len(self.outbound_data)
                 self.outbound_data.dropna(subset=['Date'], inplace=True)
                 if len(self.outbound_data) < original_rows:
-                    print(f"출고 데이터에서 {original_rows - len(self.outbound_data)} 개의 유효하지 않은 'Date' 값을 가진 행을 제거했습니다.")
+                    logger.info(f"🚚 출고 데이터에서 {original_rows - len(self.outbound_data)} 개의 유효하지 않은 'Date' 값을 가진 행을 제거했습니다.")
+                # 🔧 날짜를 표준 문자열 형식으로 변환 (벡터 DB 검색 호환성)
+                self.outbound_data['Date'] = self.outbound_data['Date'].dt.strftime('%Y-%m-%d %H:%M:%S')
             # 'Unnamed:' 으로 시작하는 컬럼 제거
             self.outbound_data = self.outbound_data.loc[:, ~self.outbound_data.columns.str.startswith('Unnamed:')]
-            print(f"총 출고 데이터 로드 완료: {len(self.outbound_data)} 건")
+            logger.info(f"🚚 총 출고 데이터 로드 완료: {len(self.outbound_data)} 건")
 
         if not self.product_master.empty:
             # ProductCode와 ProductName 불일치 확인 (간단한 경고)
@@ -143,47 +147,101 @@ class DataService:
                 print("현재고 데이터를 정확히 반영하려면 원본 파일(예: rawdata/상품데이터.xlsx 또는 product_data.csv)을 수정해야 합니다.")
 
         self.data_loaded = True
-        print("모든 데이터 로딩 완료.")
+        # 📊 로드된 데이터 날짜 범위 확인
+        if not self.inbound_data.empty and 'Date' in self.inbound_data.columns:
+            inbound_dates = pd.to_datetime(self.inbound_data['Date'], errors='coerce')
+            logger.info(f"📅 입고 데이터 날짜 범위: {inbound_dates.min()} ~ {inbound_dates.max()}")
+            logger.info(f"📅 입고 데이터 고유 날짜: {sorted(inbound_dates.dropna().dt.strftime('%Y-%m-%d').unique())}")
+        
+        if not self.outbound_data.empty and 'Date' in self.outbound_data.columns:
+            outbound_dates = pd.to_datetime(self.outbound_data['Date'], errors='coerce')
+            logger.info(f"📅 출고 데이터 날짜 범위: {outbound_dates.min()} ~ {outbound_dates.max()}")
+            logger.info(f"📅 출고 데이터 고유 날짜: {sorted(outbound_dates.dropna().dt.strftime('%Y-%m-%d').unique())}")
+        
+        logger.info("모든 데이터 로딩 완료.")
 
-    def get_current_summary(self):
-        """현재 창고 상태 요약 정보 반환 (수정된 계산 로직)"""
+    def get_unified_inventory_stats(self):
+        """📊 통합 재고 계산 메서드 - 모든 계산의 단일 소스"""
         if not self.data_loaded:
             return {
                 "error": "데이터가 로드되지 않았습니다",
+                "calculation_method": "none",
+                "data_loaded": False
+            }
+        
+        try:
+            # 🔧 통합 계산 로직
+            total_inbound_qty = self.inbound_data['PalleteQty'].sum() if 'PalleteQty' in self.inbound_data.columns else 0
+            total_outbound_qty = self.outbound_data['PalleteQty'].sum() if 'PalleteQty' in self.outbound_data.columns else 0
+            
+            # 📊 재고 계산 방식 결정 (일관성 확보)
+            stock_column = '현재고' if '현재고' in self.product_master.columns else 'Start Pallete Qty'
+            base_inventory = self.product_master[stock_column].sum() if stock_column in self.product_master.columns else 0
+            
+            # 🎯 단일 재고 계산 방식: 현재고 컬럼 기준 (로그에서 확인된 실제 데이터)
+            unified_total_inventory = int(base_inventory)  # 현재고 컬럼 값 그대로 사용
+            
+            # 📈 랙별 데이터 일관성 확보
+            rack_column_options = ['랙위치', 'Rack Name', 'Rack Code Name']
+            rack_column = None
+            for col in rack_column_options:
+                if col in self.product_master.columns:
+                    rack_column = col
+                    break
+            
+            rack_distribution = {}
+            if rack_column:
+                rack_distribution = self.product_master.groupby(rack_column)[stock_column].sum().to_dict()
+            
+            return {
+                "calculation_method": "unified_current_stock",
+                "data_loaded": True,
+                "total_inventory": unified_total_inventory,
+                "base_inventory": int(base_inventory),
+                "total_inbound_qty": int(total_inbound_qty),
+                "total_outbound_qty": int(total_outbound_qty),
+                "calculated_net_inventory": int(base_inventory + total_inbound_qty - total_outbound_qty),
+                "daily_inbound_avg": int(total_inbound_qty / 7) if total_inbound_qty > 0 else 0,
+                "daily_outbound_avg": int(total_outbound_qty / 7) if total_outbound_qty > 0 else 0,
+                "total_products": len(self.product_master),
+                "rack_column_used": rack_column,
+                "rack_distribution": rack_distribution,
+                "available_racks": list(self.product_master[rack_column].unique()) if rack_column else [],
+                "stock_column_used": stock_column
+            }
+            
+        except Exception as e:
+            logger.error(f"❌ 통합 재고 계산 오류: {e}")
+            return {"error": str(e), "calculation_method": "failed"}
+
+    def get_current_summary(self):
+        """현재 창고 상태 요약 정보 반환 (통합 계산 기반으로 수정)"""
+        # 🔄 통합 계산 메서드 사용
+        unified_stats = self.get_unified_inventory_stats()
+        
+        if "error" in unified_stats:
+            return {
+                "error": unified_stats["error"],
                 "total_products": 0,
                 "total_inventory": 0,
                 "daily_inbound": 0,
                 "daily_outbound": 0
             }
         
-        try:
-            # 실제 입출고 수량 기반 계산
-            total_inbound_qty = self.inbound_data['PalleteQty'].sum() if 'PalleteQty' in self.inbound_data.columns else 0
-            total_outbound_qty = self.outbound_data['PalleteQty'].sum() if 'PalleteQty' in self.outbound_data.columns else 0
-            
-            # 실제 재고량 = 시작 재고 + 입고 - 출고
-            stock_column = '현재고' if '현재고' in self.product_master.columns else 'Start Pallete Qty'
-            start_inventory = self.product_master[stock_column].sum() if stock_column in self.product_master.columns else 0
-            actual_inventory = int(start_inventory + total_inbound_qty - total_outbound_qty)
-            
-            # 7일 평균 일일 처리량 (실제 수량 기준)
-            daily_inbound_avg = int(total_inbound_qty / 7) if total_inbound_qty > 0 else 0
-            daily_outbound_avg = int(total_outbound_qty / 7) if total_outbound_qty > 0 else 0
-            
-            summary = {
-                "total_products": len(self.product_master) if self.product_master is not None else 0,
-                "total_inventory": actual_inventory,
-                "daily_inbound": daily_inbound_avg,
-                "daily_outbound": daily_outbound_avg,
-                "available_racks": list(self.product_master['랙위치'].unique()) if '랙위치' in self.product_master.columns else [],
-                "total_inbound_qty": int(total_inbound_qty),
-                "total_outbound_qty": int(total_outbound_qty)
-            }
-            print(f"📊 수정된 계산 결과: 총재고={actual_inventory}, 일평균입고={daily_inbound_avg}, 일평균출고={daily_outbound_avg}")
-            return summary
-        except Exception as e:
-            print(f"요약 정보 생성 중 오류: {e}")
-            return {"error": str(e)}
+        # 📊 일관된 결과 반환
+        summary = {
+            "total_products": unified_stats["total_products"],
+            "total_inventory": unified_stats["total_inventory"],  # 통합된 재고량 사용
+            "daily_inbound": unified_stats["daily_inbound_avg"],
+            "daily_outbound": unified_stats["daily_outbound_avg"],
+            "available_racks": unified_stats["available_racks"],
+            "total_inbound_qty": unified_stats["total_inbound_qty"],
+            "total_outbound_qty": unified_stats["total_outbound_qty"],
+            "calculation_method": unified_stats["calculation_method"]  # 디버깅용
+        }
+        
+        logger.info(f"📊 [UNIFIED] 통합 계산 결과: 총재고={summary['total_inventory']}, 일평균입고={summary['daily_inbound']}, 일평균출고={summary['daily_outbound']}")
+        return summary
     
     def calculate_daily_turnover_rate(self):
         """일별 재고회전율 계산 (수정된 로직 - 실제 수량 기준)"""
@@ -211,49 +269,36 @@ class DataService:
             return 0.0
     
     def calculate_rack_utilization(self):
-        """랙별 활용률 계산 (수정된 로직 - 실제 데이터 기반)"""
-        if not self.data_loaded:
-            print("❌ 데이터가 로드되지 않았습니다.")
+        """랙별 활용률 계산 (통합 계산 기반으로 수정)"""
+        # 🔄 통합 계산 메서드 사용
+        unified_stats = self.get_unified_inventory_stats()
+        
+        if "error" in unified_stats:
+            logger.error(f"❌ 데이터가 로드되지 않았습니다: {unified_stats['error']}")
             return {}
             
         try:
-            # 디버깅: 현재 데이터 상태 확인
-            print(f"📊 product_master 크기: {len(self.product_master) if self.product_master is not None else 0}")
-            print(f"📊 product_master 컬럼들: {list(self.product_master.columns) if self.product_master is not None else []}")
+            # 📊 통합 데이터에서 랙별 정보 가져오기
+            rack_distribution = unified_stats["rack_distribution"]
+            rack_column = unified_stats["rack_column_used"]
+            total_inventory = unified_stats["total_inventory"]
             
-            # Rack Name 컬럼 사용 (rawdata 구조에 맞춤)
-            rack_column = 'Rack Name' if 'Rack Name' in self.product_master.columns else '랙위치'
-            if rack_column not in self.product_master.columns:
-                print(f"❌ 랙 정보 컬럼을 찾을 수 없습니다. 사용 가능한 컬럼: {list(self.product_master.columns)}")
+            logger.info(f"📊 [UNIFIED_RACK] 사용 랙 컬럼: {rack_column}")
+            logger.info(f"📊 [UNIFIED_RACK] 랙별 분포: {rack_distribution}")
+            
+            if not rack_distribution:
+                logger.warning("⚠️ 랙별 분포 데이터가 없습니다.")
                 return {}
             
-            # 랙별 현재 재고량 집계 (현재고 컬럼 기준)
-            print(f"📊 사용 랙 컬럼: {rack_column}")
-            stock_column = '현재고' if '현재고' in self.product_master.columns else 'Start Pallete Qty'
-            print(f"📊 사용 재고 컬럼: {stock_column}")
-            rack_inventory = self.product_master.groupby(rack_column)[stock_column].sum()
-            print(f"📊 랙별 재고 집계 결과: {dict(rack_inventory)}")
-            
-            # 빈 결과 확인 및 fallback
-            if len(rack_inventory) == 0:
-                print("⚠️ 랙별 집계 결과가 비어있습니다. 기본 데이터로 대체합니다.")
-                # 기본 A-Z 랙 데이터 생성
-                rack_inventory = pd.Series({chr(65 + i): 40 for i in range(26)})  # A=40, B=40, ..., Z=40
-                print(f"📊 기본 랙 데이터 생성: {dict(rack_inventory)}")
-            
-            # 입출고 데이터로 실제 현재 재고 계산 추가 로직 (향후 개선)
-            # 현재는 시작 재고 기준으로 계산
-            
-            # 현실적인 최대용량 설정 (A-Z 26개 랙 기준)
-            total_racks = len(rack_inventory)
-            avg_capacity_per_rack = 50  # 랙당 평균 50개 용량으로 현실적 설정
+            # 현실적인 최대용량 설정
+            avg_capacity_per_rack = 50  # 랙당 평균 50개 용량
             
             rack_utilization = {}
             total_current_stock = 0
             total_max_capacity = 0
             
-            for rack in rack_inventory.index:
-                current_stock = int(rack_inventory[rack])
+            for rack, current_stock in rack_distribution.items():
+                current_stock = int(current_stock)
                 max_capacity = avg_capacity_per_rack
                 utilization_rate = (current_stock / max_capacity) * 100
                 
@@ -268,16 +313,22 @@ class DataService:
             
             # 전체 활용률 계산
             overall_utilization = (total_current_stock / total_max_capacity) * 100 if total_max_capacity > 0 else 0
-            print(f"📊 랙 활용률: 전체={overall_utilization:.1f}%, 총재고={total_current_stock}, 총용량={total_max_capacity}")
+            
+            # 📊 일관성 검증
+            if total_current_stock != total_inventory:
+                logger.warning(f"⚠️ [CONSISTENCY_CHECK] 재고 불일치 감지: 랙별합계={total_current_stock} vs 통합계산={total_inventory}")
+            
+            logger.info(f"📊 [UNIFIED_RACK] 랙 활용률: 전체={overall_utilization:.1f}%, 총재고={total_current_stock}, 총용량={total_max_capacity}")
             
             return rack_utilization
+            
         except Exception as e:
-            print(f"랙 활용률 계산 중 오류: {e}")
+            logger.error(f"❌ 랙 활용률 계산 중 오류: {e}")
             return {}
 
     def get_relevant_data(self, intent: str):
         if not self.data_loaded:
-            print("경고: 데이터가 아직 로드되지 않았습니다. load_all_data()를 먼저 호출하세요.")
+            logger.warning("데이터가 아직 로드되지 않았습니다. load_all_data()를 먼저 호출하세요.")
             return {"context": "데이터 없음"}
 
         if intent == "inventory":
@@ -355,6 +406,7 @@ class DataService:
     def get_daily_trends_summary(self):
         """실제 rawdata 기반 일별 입출고 트렌드 계산"""
         if not self.data_loaded:
+            logger.warning("⚠️ 데이터가 로드되지 않았습니다.")
             return None
             
         try:
@@ -364,17 +416,45 @@ class DataService:
             # 날짜별 입고/출고량 집계
             daily_trends = []
             
+            # 입고/출고 데이터 날짜 컬럼 타입 확인 및 변환
+            for data_name, data_df in [("inbound", self.inbound_data), ("outbound", self.outbound_data)]:
+                if data_df is not None and not data_df.empty and 'Date' in data_df.columns:
+                    # 날짜 컬럼을 문자열로 변환 (만약 datetime이나 다른 타입인 경우)
+                    if data_df['Date'].dtype != 'object':
+                        logger.info(f"📅 {data_name} Date 컬럼 타입 변환: {data_df['Date'].dtype} → string")
+                        data_df['Date'] = data_df['Date'].astype(str)
+            
             # 2025.01.01 ~ 2025.01.07 데이터 처리
             for day in range(1, 8):
                 date_str = f"2025.01.{day:02d}"
+                date_patterns = [f"2025.01.{day:02d}", f"2025-01-{day:02d}", f"01/{day:02d}/2025", f"2025/01/{day:02d}"]
                 
-                # 입고 데이터 집계
-                inbound_day = self.inbound_data[self.inbound_data['Date'].str.contains(f"2025.01.{day:02d}", na=False)]
-                total_inbound = inbound_day['PalleteQty'].sum() if not inbound_day.empty else 0
+                total_inbound = 0
+                total_outbound = 0
                 
-                # 출고 데이터 집계
-                outbound_day = self.outbound_data[self.outbound_data['Date'].str.contains(f"2025.01.{day:02d}", na=False)]
-                total_outbound = outbound_day['PalleteQty'].sum() if not outbound_day.empty else 0
+                # 입고 데이터 집계 (안전한 날짜 매칭)
+                if self.inbound_data is not None and not self.inbound_data.empty and 'Date' in self.inbound_data.columns:
+                    for pattern in date_patterns:
+                        try:
+                            inbound_day = self.inbound_data[self.inbound_data['Date'].str.contains(pattern, na=False, regex=False)]
+                            if not inbound_day.empty:
+                                total_inbound = inbound_day['PalleteQty'].sum() if 'PalleteQty' in inbound_day.columns else 0
+                                break
+                        except Exception as pattern_error:
+                            logger.debug(f"패턴 {pattern} 매칭 실패: {pattern_error}")
+                            continue
+                
+                # 출고 데이터 집계 (안전한 날짜 매칭)
+                if self.outbound_data is not None and not self.outbound_data.empty and 'Date' in self.outbound_data.columns:
+                    for pattern in date_patterns:
+                        try:
+                            outbound_day = self.outbound_data[self.outbound_data['Date'].str.contains(pattern, na=False, regex=False)]
+                            if not outbound_day.empty:
+                                total_outbound = outbound_day['PalleteQty'].sum() if 'PalleteQty' in outbound_day.columns else 0
+                                break
+                        except Exception as pattern_error:
+                            logger.debug(f"패턴 {pattern} 매칭 실패: {pattern_error}")
+                            continue
                 
                 daily_trends.append({
                     'date': date_str,
@@ -383,8 +463,14 @@ class DataService:
                     'net_change': int(total_inbound - total_outbound)
                 })
             
+            logger.info(f"✅ 일별 트렌드 계산 완료: {len(daily_trends)}일 데이터")
             return daily_trends
             
         except Exception as e:
-            logger.error(f"일별 트렌드 계산 오류: {e}")
-            return None 
+            logger.error(f"❌ 일별 트렌드 계산 오류: {e}")
+            logger.warning("⚠️ 일별 트렌드 데이터 없음, 기본값 반환")
+            # 기본값 반환 (7일간 데이터)
+            return [
+                {'date': f"2025.01.{day:02d}", 'inbound': 0, 'outbound': 0, 'net_change': 0}
+                for day in range(1, 8)
+            ] 
