@@ -50,14 +50,17 @@ class WarehouseChatbot:
             self.logger.info(f"🧠 SELF-RAG 질의 처리 시작: {question[:50]}...")
             
             # 🚀 1단계: SELF-RAG 스마트 처리 (할루시네이션 방지)
+            self_rag_success = False
             try:
                 self.logger.info("🔬 SELF-RAG 스마트 처리 시도")
                 self_rag_result = await self.langchain_service.smart_process_query(question)
-                if self_rag_result and not self_rag_result.startswith("오류"):
+                if self_rag_result and not self_rag_result.startswith("오류") and "처리 중 오류" not in self_rag_result:
                     self.logger.info("✅ SELF-RAG 처리 성공")
                     return self_rag_result
+                else:
+                    self.logger.warning(f"⚠️ SELF-RAG 결과 품질 부족: {self_rag_result[:100] if self_rag_result else 'None'}...")
             except Exception as e:
-                self.logger.warning(f"⚠️ SELF-RAG 처리 실패, fallback 사용: {e}")
+                self.logger.warning(f"⚠️ SELF-RAG 처리 실패, 강화된 fallback 사용: {e}")
             
             # 2단계: 직접 답변 가능한 간단한 질문 체크
             direct_result = await self._handle_direct_query(question)
@@ -65,14 +68,20 @@ class WarehouseChatbot:
                 self.logger.info("📊 직접 답변으로 처리 완료")
                 return direct_result
             
-            # 3단계: 기존 벡터 검색 방식 (fallback)
+            # 🔥 3단계: 강화된 벡터 검색 fallback (SELF-RAG 실패 시 더 적극적 활용)
+            self.logger.info("🔄 강화된 벡터 검색 fallback 시작")
+            enhanced_vector_result = await self._handle_enhanced_vector_fallback(question)
+            if enhanced_vector_result:
+                return enhanced_vector_result
+            
+            # 4단계: 기존 벡터 검색 방식 (추가 fallback)
             if self._requires_immediate_vector_search(question) or self._is_data_inquiry(question):
                 self.logger.info("🔍 기존 벡터 검색 방식 사용")
                 vector_result = await self._handle_vector_search_query(question)
                 if vector_result:
                     return vector_result
             
-            # 4단계: 최후의 일반 LLM 처리
+            # 5단계: 최후의 일반 LLM 처리
             self.logger.info("💬 일반 LLM 체인으로 처리")
             return await self._handle_general_query(question)
             
@@ -647,6 +656,115 @@ class WarehouseChatbot:
         except Exception as e:
             self.logger.error(f"SELF-RAG 처리 실패: {e}")
             return None
+    
+    async def _handle_enhanced_vector_fallback(self, question: str) -> Optional[str]:
+        """🔥 강화된 벡터 검색 fallback - SELF-RAG 실패 시 전체 벡터 검색 활용"""
+        if not (self.vector_db_service and self.vector_db_service.is_initialized):
+            self.logger.warning("벡터 DB 서비스 없음 - enhanced fallback 불가")
+            return None
+        
+        try:
+            self.logger.info(f"🔍 강화된 벡터 fallback 처리: {question[:50]}...")
+            
+            # 🚀 1단계: 더 넓은 범위로 벡터 검색
+            search_result = await self.vector_db_service.search_relevant_data(
+                query=question,
+                n_results=25  # SELF-RAG 실패 시 더 많은 문서 수집
+            )
+            
+            if not search_result.get("success") or search_result.get("found_documents", 0) == 0:
+                self.logger.warning("강화된 벡터 검색도 실패")
+                return None
+            
+            # 🚀 2단계: 검색 결과를 더 상세하게 분석
+            enhanced_context = self._build_enhanced_fallback_context(search_result, question)
+            
+            # 🚀 3단계: AI에게 더 구체적인 지시사항과 함께 답변 요청
+            fallback_prompt = f"""
+당신은 창고 관리 전문 AI입니다. SELF-RAG 시스템이 일시적으로 사용할 수 없어 기존 벡터 검색 결과를 바탕으로 답변합니다.
+
+**현재 상황:**
+- 현재 날짜: {self.langchain_service.current_datetime.strftime('%Y년 %m월 %d일 %H시 %M분')}
+- 데이터 범위: 2025년 1월 1일~7일 (과거 데이터)
+- 고급 처리 실패로 기본 벡터 검색 결과 활용
+
+**질문:** {question}
+
+{enhanced_context}
+
+**강화된 답변 규칙:**
+1. 🕐 **현재 날짜 필수 명시**: {self.langchain_service.current_datetime.strftime('%Y년 %m월 %d일')}
+2. 📅 **데이터 날짜 구분**: "과거 데이터(2025년 1월)"임을 반드시 명시
+3. 🔍 **구체적 정보 활용**: 회사명, 상품명, 수량 등 검색된 구체적 정보 최대한 활용
+4. ✅ **상세 답변**: 간단히 답하지 말고 검색된 정보를 바탕으로 상세하게 설명
+5. ⚠️ **불확실성 표시**: 추정이나 불확실한 내용은 명시적으로 구분
+6. 📊 **출처 명시**: 검색된 문서 수와 정보 출처 표시
+
+**답변 시작 예시:**
+"현재 날짜({self.langchain_service.current_datetime.strftime('%Y년 %m월 %d일')})와 검색된 과거 데이터(2025년 1월)를 바탕으로 말씀드리면..."
+
+답변:"""
+            
+            response = await self.llm_client.answer_simple_query(fallback_prompt, {"enhanced_fallback": True})
+            
+            # 검증 정보 추가
+            found_docs = search_result.get("found_documents", 0)
+            response += f"\n\n🔍 *강화된 fallback으로 {found_docs}개 문서를 분석한 결과입니다.*"
+            response += f"\n⚠️ *고급 처리 시스템 일시 불가로 기본 벡터 검색 결과를 활용했습니다.*"
+            
+            # 응답 정제 적용
+            cleaned_response = self.langchain_service._clean_response(
+                response, question, 
+                is_simple_question=self.langchain_service._is_simple_question_type(question)
+            )
+            
+            self.logger.info("✅ 강화된 벡터 fallback 성공")
+            return cleaned_response
+            
+        except Exception as e:
+            self.logger.error(f"강화된 벡터 fallback 실패: {e}")
+            return None
+    
+    def _build_enhanced_fallback_context(self, search_result: dict, question: str) -> str:
+        """강화된 fallback용 컨텍스트 구성"""
+        documents = search_result.get("documents", [])
+        metadata = search_result.get("metadata_summary", {})
+        chart_data = search_result.get("chart_data", {})
+        found_docs = search_result.get("found_documents", 0)
+        
+        context_parts = []
+        
+        # 검색 결과 요약
+        context_parts.append(f"**검색 결과 요약:**")
+        context_parts.append(f"- 총 검색된 관련 문서: {found_docs}개 (전체 2,900개 중)")
+        context_parts.append(f"- 검색 키워드: {question}")
+        context_parts.append("")
+        
+        # 핵심 문서 내용 (더 많이 포함)
+        if documents:
+            context_parts.append(f"**핵심 관련 문서 내용 (상위 {min(len(documents), 8)}개):**")
+            for i, doc in enumerate(documents[:8], 1):
+                context_parts.append(f"{i}. {doc.strip()}")
+            context_parts.append("")
+        
+        # 메타데이터 정보
+        if metadata:
+            context_parts.append(f"**데이터 메타 정보:**")
+            for key, value in metadata.items():
+                context_parts.append(f"- {key}: {value}")
+            context_parts.append("")
+        
+        # 차트 데이터 (집계 정보)
+        if chart_data:
+            context_parts.append(f"**집계 데이터:**")
+            if 'title' in chart_data:
+                context_parts.append(f"- 차트 제목: {chart_data['title']}")
+            if 'data' in chart_data and 'labels' in chart_data:
+                data_dict = dict(zip(chart_data.get('labels', []), chart_data.get('data', [])))
+                context_parts.append(f"- 집계 결과: {data_dict}")
+            context_parts.append("")
+        
+        return "\n".join(context_parts)
     
     def _get_system_status(self) -> str:
         """현재 시스템 상태 요약"""
